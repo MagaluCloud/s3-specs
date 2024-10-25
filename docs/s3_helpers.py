@@ -23,3 +23,16 @@ def delete_bucket_and_wait(s3_client, bucket_name):
     waiter = s3_client.get_waiter('bucket_not_exists')
     waiter.wait(Bucket=bucket_name)
     print(f"Bucket '{bucket_name}' confirmed as deleted.")
+
+def create_bucket_and_wait(s3_client, bucket_name):
+    try:
+        s3_client.create_bucket(Bucket=bucket_name)
+    except s3_client.exceptions.BucketAlreadyOwnedByYou:
+        print(f"Bucket '{bucket_name}' already exists and is owned by you.")
+    except s3_client.exceptions.BucketAlreadyExists:
+        raise Exception(f"Bucket '{bucket_name}' already exists and is owned by someone else.")
+
+    waiter = s3_client.get_waiter('bucket_exists')
+    waiter.wait(Bucket=bucket_name)
+    print(f"Bucket '{bucket_name}' confirmed as created.")
+
