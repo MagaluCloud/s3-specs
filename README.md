@@ -32,3 +32,12 @@ Follow these steps to submit a contribution:
 - add your name to the AUTHORS file
 - open a pull request
 
+## Use S3-Specs as a testing tool on a terminal
+
+You can run any specification from the `docs` directly using the papermill CLI tool, 
+see [executing a notebook](https://github.com/nteract/papermill?tab=readme-ov-file#executing-a-notebook)
+for details, for example:
+
+```
+poetry run papermill docs/list-buckets.ipynb /tmp/result.ipynb -y "profile_name: br-se1"
+```
