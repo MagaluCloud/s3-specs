@@ -25,7 +25,8 @@ Follow these steps to submit a contribution:
 - install the dependencies
   - `poetry install`
 - launch the interactive environment
-  - `poetry run jupyter docs`
+  - `poetry shell`
+  - `jupyter lab docs/list-buckets.ipynb`
 - write a new .ipynb document, or duplicate an existing one
 - run your cells and check that the expected results are ok
   - parametrize accordingly, secrets and other arguments should be variables to be filled by **papermill**

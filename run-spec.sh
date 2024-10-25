@@ -13,6 +13,9 @@ EXECUTION_NAME=$(basename "$YAML_PARAMS" .yaml)
 PAPERMILL_OUTPUT_FOLDER="/tmp"
 OUTPUT_FOLDER="docs"
 
+# Add docs to the PYTHONPATH
+export PYTHONPATH=$PYTHONPATH:$(pwd)/docs
+
 # Step 1: Run the notebook with Papermill using the YAML file for parameters
 EXECUTED_NOTEBOOK="${PAPERMILL_OUTPUT_FOLDER}/$(basename "$NOTEBOOK_PATH" .ipynb)_${EXECUTION_NAME}.ipynb"
 papermill $NOTEBOOK_PATH $EXECUTED_NOTEBOOK -y "$(cat $YAML_PARAMS)"
