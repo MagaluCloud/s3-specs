@@ -1,4 +1,5 @@
-.ipynb_checkpoints/
-__pycache__/
-docs/.ipynb_checkpoints/
-docs/__pycache__/
+# Ignore all .ipynb_checkpoints folders anywhere in the project
+**/.ipynb_checkpoints/
+
+# Ignore all __pycache__ folders anywhere in the project
+**/__pycache__/
