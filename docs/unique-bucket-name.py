@@ -1,3 +1,12 @@
+# ---
+# jupyter:
+#   kernelspec:
+#     name: my-poetry-env
+#     display_name: Python 3
+#   language_info:
+#     name: python
+# ---
+
 # # Unique Bucket Names (create bucket)
 #
 # Buckets can be created with the **create_bucket** method on **boto3**, and are expected to fail with a `BucketAlreadyExists` error if there's already another bucket created, by any user of the system on any region, with the same name. The bucket names namespace is global.

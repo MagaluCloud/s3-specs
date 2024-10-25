@@ -1,3 +1,12 @@
+# ---
+# jupyter:
+#   kernelspec:
+#     name: my-poetry-env
+#     display_name: Python 3
+#   language_info:
+#     name: python
+# ---
+
 # # List buckets
 # List all buckets from a profile[<sup>1</sup>](./glossary#profile)
 

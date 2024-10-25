@@ -2,11 +2,8 @@
 
 Buckets can be created with the **create_bucket** method on **boto3**, and are expected to fail with a `BucketAlreadyExists` error if there's already another bucket created, by any user of the system on any region, with the same name. The bucket names namespace is global.
 
-## Setup
-
 
 ```python
-# Parameters
 profile_name = "default"
 ```
 
@@ -16,6 +13,8 @@ profile_name = "default"
 profile_name = "br-se1"
 
 ```
+
+## Setup
 
 
 ```python
@@ -30,11 +29,10 @@ s3_client = create_s3_client(profile_name)
 # Generate a unique bucket name
 bucket_name = generate_unique_bucket_name(base_name="test-unique-bucket-name")
 print(f'test bucket will be named {bucket_name}')
-
 ```
 
-    execution started at 2024-10-25 12:05:07.372537
-    test bucket will be named test-unique-bucket-name-2ed5fa
+    execution started at 2024-10-25 15:12:14.857429
+    test bucket will be named test-unique-bucket-name-b7c03e
 
 
 ## Examples
@@ -64,8 +62,8 @@ print(f"Bucket '{bucket_name}' confirmed as created.")
     Bucket creation initiated.
 
 
-    Created with Location: /test-unique-bucket-name-2ed5fa
-    Bucket 'test-unique-bucket-name-2ed5fa' confirmed as created.
+    Created with Location: /test-unique-bucket-name-b7c03e
+    Bucket 'test-unique-bucket-name-b7c03e' confirmed as created.
 
 
 ### Create the same bucket
@@ -81,7 +79,7 @@ except s3_client.exceptions.BucketAlreadyExists:
     print(f"Bucket '{bucket_name}' already exists, as expected.")
 ```
 
-    Bucket 'test-unique-bucket-name-2ed5fa' already exists, as expected.
+    Bucket 'test-unique-bucket-name-b7c03e' already exists, as expected.
 
 
 ## Teardown
@@ -100,10 +98,10 @@ waiter.wait(Bucket=bucket_name)
 print(f"Bucket '{bucket_name}' confirmed as deleted.")
 ```
 
-    Bucket 'test-unique-bucket-name-2ed5fa' confirmed as deleted.
+    Bucket 'test-unique-bucket-name-b7c03e' confirmed as deleted.
 
 
 ## References
 
-- https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/create_bucket.html
-- https://boto3.amazonaws.com/v1/documentation/api/latest/guide/error-handling.html
+- [Boto3 Documentation: create_bucket](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/create_bucket.html)
+- [Boto3 Documentation: Error Handling](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/error-handling.html)

@@ -1,11 +1,8 @@
 # List buckets
 List all buckets from a profile[<sup>1</sup>](./glossary#profile)
 
-## Setup
-
 
 ```python
-# Parameters
 profile_name = "default"
 ```
 
@@ -16,22 +13,21 @@ profile_name = "br-ne1"
 
 ```
 
-
-```python
-import datetime
-print(f'execution started at {datetime.datetime.now()}')
-```
-
-    execution started at 2024-10-25 10:00:07.887638
-
+## Setup
 
 
 ```python
-# Client instantiation
-import boto3
-session = boto3.Session(profile_name=profile_name)
-s3_client = session.client('s3')
+# Import shared functions
+from s3_helpers import print_timestamp, create_s3_client
+
+print_timestamp()
+
+# Create S3 client
+s3_client = create_s3_client(profile_name)
 ```
+
+    execution started at 2024-10-25 15:13:44.401397
+
 
 ## Example
 
@@ -39,17 +35,18 @@ s3_client = session.client('s3')
 ```python
 response = s3_client.list_buckets()
 buckets = response.get('Buckets')
-print(f"Profile '{profile_name}' has {len(buckets)} buckets.")
+buckets_count = len(buckets)
+print(f"Profile '{profile_name}' has {buckets_count} buckets.")
 
-import random
-print(f"One of those buckets is named {random.choice(buckets).get('Name')}")
+if buckets_count > 0:
+    import random
+    print(f"One of those buckets is named {random.choice(buckets).get('Name')}")
 ```
 
-    Profile 'br-ne1' has 19 buckets.
-    One of those buckets is named test-br-ne1-1729485828
+    Profile 'br-ne1' has 1 buckets.
+    One of those buckets is named test-093-1729876048-aws
 
 
 ## References
 
-- https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/list_buckets.html
-  
+- [Boto3 Documentation: list_bucket](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/list_buckets.html)
