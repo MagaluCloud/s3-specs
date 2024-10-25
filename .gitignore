@@ -1,2 +1,4 @@
+.ipynb_checkpoints/
+__pycache__/
 docs/.ipynb_checkpoints/
 docs/__pycache__/
