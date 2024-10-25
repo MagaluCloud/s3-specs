@@ -17,7 +17,11 @@ nbconvert = "^7.16.4"
 papermill = "^2.6.0"
 boto3 = "^1.35.48"
 uuid = "^1.30"
+jupytext = "^1.16.4"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.jupytext]
+formats = "ipynb,py:light"
