@@ -30,7 +30,7 @@ import requests
 from s3_helpers import delete_object_and_wait
 def run_example(example_name):
     if __name__ == "__main__":
-        pytest.main(["-qq", "-s", f"{docs_dir}/presigned-urls_test.py::{example_name}"])
+        pytest.main(["-qq", "--color", "no", "-s", "--profile", f"{profile_name}", f"{docs_dir}/presigned-urls_test.py::{example_name}"])
 ```
 
 ## Exemplos
@@ -68,12 +68,12 @@ def test_presigned_get_url(s3_client, bucket_with_one_object):
 run_example("test_presigned_get_url")
 ```
 
-    Presigned GET URL created: https://br-ne1.magaluobjects.com/fixture-bucket-074886/test-object.txt?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=e5402a7c-b0c8-45a3-a18e-3c39de9ca061%2F20241027%2Fbr-ne1%2Fs3%2Faws4_request&X-Amz-Date=20241027T052704Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=2f480cd610016a3ae09f0e77960ad1be3ed616d1c36300ca9d3aab2c6a183357
+    Presigned GET URL created: https://br-ne1.magaluobjects.com/fixture-bucket-36a2f7/test-object.txt?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ee669d54-508d-4028-99c8-ba008dce028d%2F20241027%2Fbr-ne1%2Fs3%2Faws4_request&X-Amz-Date=20241027T060053Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=479ecb1dccf12109576ef9579dbd4a884c8753dcfcae07b9e79adc1bb8477241
     Starting GET request...
 
 
     Object downloaded: b'Sample content for testing presigned URLs.'
-    [32m.[0m
+    .
 
     
 
@@ -120,14 +120,14 @@ def test_presigned_put_url(s3_client, existing_bucket_name):
 run_example("test_presigned_put_url")
 ```
 
-    Presigned PUT URL created: https://br-ne1.magaluobjects.com/existing-bucket-04196e/test-upload-object.txt?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=e5402a7c-b0c8-45a3-a18e-3c39de9ca061%2F20241027%2Fbr-ne1%2Fs3%2Faws4_request&X-Amz-Date=20241027T052707Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=1d04ca07979def4748c4a351e68773dc3c8fe9895a480fa39bed98826209b44f
+    Presigned PUT URL created: https://br-ne1.magaluobjects.com/existing-bucket-428712/test-upload-object.txt?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ee669d54-508d-4028-99c8-ba008dce028d%2F20241027%2Fbr-ne1%2Fs3%2Faws4_request&X-Amz-Date=20241027T060057Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=9d17de266e5c2b7068228a29499ba49d22b52702a286d7c0f73001707b496401
     Starting PUT request...
 
 
     Object 'test-upload-object.txt' uploaded successfully and content verified.
 
 
-    [32m.[0m
+    .
 
     
 
