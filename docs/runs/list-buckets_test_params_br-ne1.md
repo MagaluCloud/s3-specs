@@ -10,6 +10,7 @@ profile_name = "default"
 ```python
 # Parameters
 profile_name = "br-ne1"
+docs_dir = "./docs"
 
 ```
 
@@ -26,9 +27,6 @@ else:
     print_timestamp()
     s3_client = create_s3_client(profile_name)
 ```
-
-    execution started at 2024-10-25 17:41:57.352072
-
 
 ## Example
 
@@ -52,8 +50,8 @@ if __name__ == "__main__":
     test_list_buckets(s3_client, profile_name)
 ```
 
-    Profile 'br-ne1' has 1 buckets.
-    One of those buckets is named test-045-1729888909-mgc
+    Profile 'br-ne1' has 10 buckets.
+    One of those buckets is named test-br-ne1-1730004060555
 
 
 ## References

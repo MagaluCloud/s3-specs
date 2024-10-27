@@ -11,6 +11,7 @@ profile_name = "default"
 ```python
 # Parameters
 profile_name = "br-se1"
+docs_dir = "./docs"
 
 ```
 
@@ -27,8 +28,7 @@ if __name__ == "__main__":
     print(f'test bucket will be named {bucket_name}')
 ```
 
-    execution started at 2024-10-25 17:42:21.910052
-    test bucket will be named test-unique-bucket-name-986ff6
+    test bucket will be named test-unique-bucket-name-ca6eb7
 
 
 ## Examples
@@ -63,8 +63,8 @@ if __name__ == "__main__":
     Bucket creation initiated.
 
 
-    Created with Location: /test-unique-bucket-name-986ff6
-    Bucket 'test-unique-bucket-name-986ff6' confirmed as created.
+    Created with Location: /test-unique-bucket-name-ca6eb7
+    Bucket 'test-unique-bucket-name-ca6eb7' confirmed as created.
 
 
 ### Create the same bucket
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     test_create_same_bucket(s3_client, bucket_name)
 ```
 
-    Bucket 'test-unique-bucket-name-986ff6' already exists, as expected.
+    Bucket 'test-unique-bucket-name-ca6eb7' already exists, as expected.
 
 
 ## Teardown
@@ -91,9 +91,6 @@ if __name__ == "__main__":
 if __name__ == "__main__":
     delete_bucket_and_wait(s3_client, bucket_name)
 ```
-
-    Bucket 'test-unique-bucket-name-986ff6' confirmed as deleted.
-
 
 ## References
 
