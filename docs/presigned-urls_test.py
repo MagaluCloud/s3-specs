@@ -29,7 +29,7 @@ import requests
 from s3_helpers import delete_object_and_wait
 def run_example(example_name):
     if __name__ == "__main__":
-        pytest.main(["-qq", "-s", f"{docs_dir}/presigned-urls_test.py::{example_name}"])
+        pytest.main(["-qq", "--color", "no", "-s", "--profile", f"{profile_name}", f"{docs_dir}/presigned-urls_test.py::{example_name}"])
 # -
 
 # ## Exemplos
