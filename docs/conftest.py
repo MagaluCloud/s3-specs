@@ -15,7 +15,7 @@ def s3_client(request):
 @pytest.fixture
 def bucket_name(request, s3_client):
     test_name = request.node.name.replace("_", "-")
-    unique_name = generate_unique_bucket_name(base_name=f"test-{test_name}")
+    unique_name = generate_unique_bucket_name(base_name=f"{test_name}")
 
     # Yield the bucket name for the test to use
     yield unique_name
