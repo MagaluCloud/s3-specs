@@ -1,7 +1,16 @@
 import boto3
+import botocore
 import pytest
+import time
 import logging
-from s3_helpers import generate_unique_bucket_name, delete_bucket_and_wait, create_bucket_and_wait, delete_object_and_wait
+from s3_helpers import (
+    generate_unique_bucket_name,
+    delete_bucket_and_wait,
+    create_bucket_and_wait,
+    delete_object_and_wait,
+    put_object_and_wait,
+    cleanup_old_buckets,
+)
 
 def pytest_addoption(parser):
     parser.addoption("--profile", action="store", default="default", help="AWS profile name")
@@ -46,7 +55,7 @@ def bucket_with_one_object(s3_client):
     # Define the object key and content, then upload the object
     object_key = "test-object.txt"
     content = b"Sample content for testing presigned URLs."
-    s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=content)
+    put_object_and_wait(s3_client, bucket_name, object_key, content)
 
     # Yield the bucket name and object details to the test
     yield bucket_name, object_key, content
@@ -54,4 +63,3 @@ def bucket_with_one_object(s3_client):
     # Teardown: Delete the object and bucket after the test
     delete_object_and_wait(s3_client, bucket_name, object_key)
     delete_bucket_and_wait(s3_client, bucket_name)
-
