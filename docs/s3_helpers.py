@@ -3,18 +3,19 @@ from datetime import datetime, timedelta
 import uuid
 import logging
 import pytest
+import yaml
 
-def run_example(dunder_name, spec_name, example_name, profile_name="default", docs_dir="."):
+def run_example(dunder_name, spec_name, example_name, config="params.yaml"):
     if dunder_name == "__main__":
-        pytest.main(["-qq", "--color", "no", "-s", "--log-cli-level", "INFO", "--profile", f"{profile_name}", f"{docs_dir}/{spec_name}_test.py::{example_name}"])
+        with open(config, "r") as f:
+            params = yaml.safe_load(f)
+        profile_name = params.get("profile_name", "default")
+        docs_dir = params.get("docs_dir", ".")
+        pytest.main(["-qq", "--color", "no", "-s", "--log-cli-level", "INFO", "--config", f"{config}", f"{docs_dir}/{spec_name}_test.py::{example_name}"])
         # pytest.main(["-qq", "--color", "no", "-s", "--profile", f"{profile_name}", f"{docs_dir}/{spec_name}_test.py::{example_name}"])
 
 def print_timestamp():
     logging.info(f'execution started at {datetime.datetime.now()}')
-
-def create_s3_client(profile_name):
-    session = boto3.Session(profile_name=profile_name)
-    return session.client('s3')
 
 def generate_unique_bucket_name(base_name="my-unique-bucket"):
     unique_id = uuid.uuid4().hex[:6]  # Short unique suffix
@@ -31,9 +32,19 @@ def delete_bucket_and_wait(s3_client, bucket_name):
     waiter.wait(Bucket=bucket_name)
     logging.info(f"Bucket '{bucket_name}' confirmed as deleted.")
 
+def create_bucket(s3_client, bucket_name):
+    # anything different than us-east-1 must have LocationConstraint on aws
+    region = s3_client.meta.region_name
+    if (region != "us-east-1"):
+        return s3_client.create_bucket(
+            Bucket=bucket_name,
+            CreateBucketConfiguration={'LocationConstraint': region}
+        )
+    return s3_client.create_bucket(Bucket=bucket_name)
+
 def create_bucket_and_wait(s3_client, bucket_name):
     try:
-        s3_client.create_bucket(Bucket=bucket_name)
+        create_bucket(s3_client, bucket_name)
     except s3_client.exceptions.BucketAlreadyOwnedByYou:
         logging.info(f"Bucket '{bucket_name}' already exists and is owned by you.")
     except s3_client.exceptions.BucketAlreadyExists:
@@ -57,7 +68,7 @@ def delete_object_and_wait(s3_client, bucket_name, object_key):
 def put_object_and_wait(s3_client, bucket_name, object_key, content):
     # Put the object in the bucket
     put_response = s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=content)
-    version_id = put_response["VersionId"]
+    version_id = put_response.get("VersionId")
 
     # Wait for the object to exist
     waiter = s3_client.get_waiter('object_exists')

@@ -2,6 +2,7 @@ import boto3
 import botocore
 import pytest
 import time
+import yaml
 import logging
 from s3_helpers import (
     generate_unique_bucket_name,
@@ -12,12 +13,19 @@ from s3_helpers import (
     cleanup_old_buckets,
 )
 
+@pytest.fixture(scope="session")
+def test_params(request):
+    config_file = request.config.getoption("--config")
+    with open(config_file, "r") as f:
+        params = yaml.safe_load(f)
+    return params
+
 def pytest_addoption(parser):
-    parser.addoption("--profile", action="store", default="default", help="AWS profile name")
+    parser.addoption("--config", action="store", default="params.yaml", help="Path to YAML config file")
 
 @pytest.fixture
-def s3_client(request):
-    profile_name = request.config.getoption("--profile")
+def s3_client(test_params):
+    profile_name = test_params["profile_name"]
     session = boto3.Session(profile_name=profile_name)
     return session.client("s3")
 

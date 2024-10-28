@@ -19,9 +19,7 @@
 # ## Exemplos
 
 # + tags=["parameters"]
-profile_name = "default"
-lock_mode = "GOVERNANCE"
-docs_dir = "."
+config = "../params_aws-east-1.yaml"
 # -
 
 # +
@@ -52,8 +50,10 @@ from s3_helpers import (
 
 # +
 @pytest.fixture
-def versioned_bucket_with_lock_config(s3_client, lock_mode="GOVERNANCE"):
+def versioned_bucket_with_lock_config(s3_client, test_params):
     base_name = "versioned-bucket-with-lock"
+    lock_mode = test_params["lock_mode"]
+
 
     # Clean up old buckets, from past days (we are using 1 day retention, so if the lock mode is not
     # GOVERNANCE, we are not able to teardown immediately after the test)
@@ -128,7 +128,7 @@ def test_simple_delete_with_lock(versioned_bucket_with_lock_config, s3_client):
     assert response_status == 204, "Expected HTTPStatusCode 204 for successful simple delete."
     logging.info(f"Simple delete (delete marker) added successfully for object '{second_object_key}'.")
 
-run_example(__name__, "locking", "test_simple_delete_with_lock", profile_name=profile_name, docs_dir=docs_dir)
+run_example(__name__, "locking", "test_simple_delete_with_lock", config=config)
 # -
 
 # #### Permanent Delete
@@ -158,7 +158,7 @@ def test_delete_object_after_locking(versioned_bucket_with_lock_config, s3_clien
     assert error_code == "AccessDenied", f"Expected AccessDenied, got {error_code}"
     logging.info(f"Permanent deletion blocked as expected for new locked object '{second_object_key}' with version ID {second_version_id}")
 
-run_example(__name__, "locking", "test_delete_object_after_locking", profile_name=profile_name, docs_dir=docs_dir)
+run_example(__name__, "locking", "test_delete_object_after_locking", config=config)
 # -
 
 
@@ -168,8 +168,9 @@ run_example(__name__, "locking", "test_delete_object_after_locking", profile_nam
 # **get_object_lock_configuration**
 
 # +
-def test_verify_object_lock_configuration(versioned_bucket_with_lock_config, s3_client):
+def test_verify_object_lock_configuration(versioned_bucket_with_lock_config, s3_client, test_params):
     bucket_name, _, _, _, _, _, _ = versioned_bucket_with_lock_config
+    lock_mode = test_params["lock_mode"]
 
     # Retrieve and verify the applied bucket-level Object Lock configuration
     logging.info("Retrieving Object Lock configuration from bucket...")
@@ -178,7 +179,7 @@ def test_verify_object_lock_configuration(versioned_bucket_with_lock_config, s3_
     assert applied_config["ObjectLockConfiguration"]["Rule"]["DefaultRetention"]["Mode"] == lock_mode, f"Expected retention mode to be {lock_mode}."
     assert applied_config["ObjectLockConfiguration"]["Rule"]["DefaultRetention"]["Days"] == 1, "Expected retention period of 1 day."
     logging.info("Verified that Object Lock configuration was applied as expected.")
-run_example(__name__, "locking", "test_verify_object_lock_configuration", profile_name=profile_name, docs_dir=docs_dir)
+run_example(__name__, "locking", "test_verify_object_lock_configuration", config=config)
 # -
 
 # ### Conferindo a politica de retenção de objetos específicos
@@ -188,8 +189,9 @@ run_example(__name__, "locking", "test_verify_object_lock_configuration", profil
 # Objetos pre-existentes, de antes da configuração do bucket não exibem estas informações.
 
 # +
-def test_verify_object_retention(versioned_bucket_with_lock_config, s3_client):
+def test_verify_object_retention(versioned_bucket_with_lock_config, s3_client, test_params):
     bucket_name, first_object_key, second_object_key, _, _, _, _ = versioned_bucket_with_lock_config
+    lock_mode = test_params["lock_mode"]
 
     # Objects from before the config don't have retention data
     logging.info(f"Fetching data of the pre-existing object with a head request...")
@@ -212,7 +214,7 @@ def test_verify_object_retention(versioned_bucket_with_lock_config, s3_client):
     assert head_response['ObjectLockMode'] == lock_mode, f"Expected lock mode to be {lock_mode}"
     logging.info(f"Retention verified as applied with mode {head_response['ObjectLockMode']} "
           f"and retain until {head_response['ObjectLockRetainUntilDate']}.")
-run_example(__name__, "locking", "test_verify_object_retention", profile_name=profile_name, docs_dir=docs_dir)
+run_example(__name__, "locking", "test_verify_object_retention", config=config)
 # -
 
 # ### Configuração de Object Locking em Bucket Não-Versionado
@@ -222,7 +224,8 @@ run_example(__name__, "locking", "test_verify_object_retention", profile_name=pr
 # bucket comum (não versionado), deve retornar um erro do tipo `InvalidBucketState`.
 
 # +
-def test_configure_bucket_lock_on_regular_bucket(s3_client, existing_bucket_name):
+def test_configure_bucket_lock_on_regular_bucket(s3_client, existing_bucket_name, test_params):
+    lock_mode = test_params["lock_mode"]
     # Set up Bucket Lock configuration
     bucket_lock_config = {
         "ObjectLockEnabled": "Enabled",
@@ -246,7 +249,7 @@ def test_configure_bucket_lock_on_regular_bucket(s3_client, existing_bucket_name
     assert "InvalidBucketState" in str(exc_info.value), "Expected InvalidBucketState error not raised."
     logging.info("Correctly raised InvalidBucketState error for non-versioned bucket.")
 
-run_example(__name__, "locking", "test_configure_bucket_lock_on_regular_bucket", profile_name=profile_name, docs_dir=docs_dir)
+run_example(__name__, "locking", "test_configure_bucket_lock_on_regular_bucket", config=config)
 # -
 
 
