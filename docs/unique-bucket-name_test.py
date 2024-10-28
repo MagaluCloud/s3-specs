@@ -13,22 +13,15 @@
 
 
 # + tags=["parameters"]
-profile_name = "default"
+config = "../params/br-ne1.yaml"
+docs_dir = "."
 # -
-
-
-# + [markdown] jp-MarkdownHeadingCollapsed=true tags=[]
-# ## Setup
-
 
 # +
 import pytest
-if __name__ == "__main__":
-    from s3_helpers import print_timestamp, create_s3_client, generate_unique_bucket_name, delete_bucket_and_wait
-    print_timestamp()
-    s3_client = create_s3_client(profile_name)
-    bucket_name = generate_unique_bucket_name(base_name="test-unique-bucket-name")
-    print(f'test bucket will be named {bucket_name}')
+import botocore
+import logging
+from s3_helpers import run_example, create_bucket
 # -
 
 
@@ -47,43 +40,42 @@ def test_create_bucket(s3_client, bucket_name):
     except s3_client.exceptions.NoSuchBucket:
         pass
 
-    print(f"Bucket creation initiated.")
-    response = s3_client.create_bucket(Bucket=bucket_name)
+    logging.info(f"Bucket creation initiated.")
+    response = create_bucket(s3_client, bucket_name)
     assert response.get("Location"), "Bucket location should be returned upon creation."
-    print(f'Created with Location: {response.get("Location")}')
+    logging.info(f'Created with Location: {response.get("Location")}')
 
     # Use waiter to confirm the bucket exists
     waiter = s3_client.get_waiter('bucket_exists')
     waiter.wait(Bucket=bucket_name)
-    print(f"Bucket '{bucket_name}' confirmed as created.")
+    logging.info(f"Bucket '{bucket_name}' confirmed as created.")
 
-if __name__ == "__main__":
-    test_create_bucket(s3_client, bucket_name)
+run_example(__name__, "unique-bucket-name", "test_create_bucket", config=config, docs_dir=docs_dir)
 # -
 
 
 # ### Create the same bucket
 # Attempt to create the same bucket again - Expect failure
 
-
 # +
 def test_create_same_bucket(s3_client, existing_bucket_name):
-    with pytest.raises(s3_client.exceptions.BucketAlreadyExists):
-        s3_client.create_bucket(Bucket=existing_bucket_name)
-    print(f"Bucket '{existing_bucket_name}' already exists, as expected.")
+    logging.info(existing_bucket_name)
 
-if __name__ == "__main__":
-    test_create_same_bucket(s3_client, bucket_name)
-# -
+    if s3_client.meta.region_name == "us-east-1":
+        response = create_bucket(s3_client, existing_bucket_name)
+        assert response, "Create bucket with the same name on AWS on region US East (N. Virginia) should succeed"
+        return
 
+    with pytest.raises(botocore.exceptions.ClientError) as exc_info:
+        response = create_bucket(s3_client, existing_bucket_name)
 
-# + [markdown] jp-MarkdownHeadingCollapsed=true tags=["parameters"]
-# ## Teardown
+    # Verify AccessDenied for the newly uploaded locked object
+    error_code = exc_info.value.response['Error']['Code']
+    # MagaluClod may return BucketAlreadyExists
+    assert error_code in ["BucketAlreadyOwnedByYou", "BucketAlreadyExists"], f"Expected BucketAlreadyOwnedByYou, got {error_code}"
+    logging.info(f"Bucket '{existing_bucket_name}' already exists, as expected.")
 
-
-# +
-if __name__ == "__main__":
-    delete_bucket_and_wait(s3_client, bucket_name)
+run_example(__name__, "unique-bucket-name", "test_create_same_bucket", config=config, docs_dir=docs_dir)
 # -
 
 
