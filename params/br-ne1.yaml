@@ -1,2 +1,3 @@
 profile_name: "br-ne1"
 docs_dir: "./docs"
+lock_mode: "COMPLIANCE"

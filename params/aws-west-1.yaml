@@ -1,0 +1,3 @@
+profile_name: "aws-west-1"
+docs_dir: "."
+lock_mode: "GOVERNANCE"
