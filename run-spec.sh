@@ -23,7 +23,7 @@ NOTEBOOK_PATH=$TEMP_NOTEBOOK
 
 # Step 1: Run the notebook with Papermill using the YAML file for parameters
 EXECUTED_NOTEBOOK="${PAPERMILL_OUTPUT_FOLDER}/$(basename "$NOTEBOOK_PATH" .ipynb)_${EXECUTION_NAME}.ipynb"
-papermill $NOTEBOOK_PATH $EXECUTED_NOTEBOOK -y "config: $YAML_PARAMS" -k my-poetry-env
+papermill $NOTEBOOK_PATH $EXECUTED_NOTEBOOK -y "config: $YAML_PARAMS" -y"docs_dir: docs" -k my-poetry-env
 
 # Step 2: Convert the executed notebook to the specified format
 jupyter nbconvert --to $OUTPUT_FORMAT $EXECUTED_NOTEBOOK --output-dir $OUTPUT_FOLDER

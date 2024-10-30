@@ -1,3 +1,4 @@
+import os
 import boto3
 import botocore
 import pytest
@@ -13,15 +14,20 @@ from s3_helpers import (
     cleanup_old_buckets,
 )
 
-@pytest.fixture(scope="session")
+def pytest_addoption(parser):
+    parser.addoption("--config", action="store", help="Path to the YAML config file")
+
+@pytest.fixture
 def test_params(request):
-    config_file = request.config.getoption("--config")
-    with open(config_file, "r") as f:
+    # Check for --config parameter from pytest
+    config_path = request.config.getoption("--config")
+    if not config_path:
+        # Fallback to papermill parameter if --config isn't provided
+        config_path = os.environ.get("CONFIG_PATH", "params.yaml")
+
+    with open(config_path, "r") as f:
         params = yaml.safe_load(f)
     return params
-
-def pytest_addoption(parser):
-    parser.addoption("--config", action="store", default="params.yaml", help="Path to YAML config file")
 
 @pytest.fixture
 def s3_client(test_params):

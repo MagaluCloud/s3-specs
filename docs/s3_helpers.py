@@ -1,3 +1,4 @@
+import os
 import boto3
 from datetime import datetime, timedelta
 import uuid
@@ -5,17 +6,19 @@ import logging
 import pytest
 import yaml
 
-def run_example(dunder_name, spec_name, example_name, config="params.yaml"):
+def run_example(dunder_name, spec_name, example_name, config="params.yaml", docs_dir="."):
     if dunder_name == "__main__":
-        with open(config, "r") as f:
-            params = yaml.safe_load(f)
-        profile_name = params.get("profile_name", "default")
-        docs_dir = params.get("docs_dir", ".")
-        pytest.main(["-qq", "--color", "no", "-s", "--log-cli-level", "INFO", "--config", f"{config}", f"{docs_dir}/{spec_name}_test.py::{example_name}"])
-        # pytest.main(["-qq", "--color", "no", "-s", "--profile", f"{profile_name}", f"{docs_dir}/{spec_name}_test.py::{example_name}"])
+        # When executing a notebook pass config path as env var instead of pytest custom arg
+        os.environ["CONFIG_PATH"] = config
 
-def print_timestamp():
-    logging.info(f'execution started at {datetime.datetime.now()}')
+        # Run pytest without the --config argument
+        pytest.main([
+            "-qq", 
+            "--color", "no", 
+            "-s", 
+            "--log-cli-level", "INFO",
+            f"{docs_dir}/{spec_name}_test.py::{example_name}"
+        ])
 
 def generate_unique_bucket_name(base_name="my-unique-bucket"):
     unique_id = uuid.uuid4().hex[:6]  # Short unique suffix
