@@ -93,7 +93,8 @@ def cleanup_old_buckets(s3_client, base_name, retention_days=1):
             if creation_date < datetime.now(creation_date.tzinfo) - timedelta(days=retention_days):
                 try:
                     # Attempt to delete older bucket if lock has expired
-                    delete_all_objects(s3_client, bucket['Name'])
+                    # delete_all_objects(s3_client, bucket['Name'])
+                    boto3.resource('s3').Bucket(bucket['Name']).objects.all().delete()
                     s3_client.delete_bucket(Bucket=bucket['Name'])
                     logging.info(f"Deleted old bucket '{bucket['Name']}' created on {creation_date}")
                 except s3_client.exceptions.ClientError as e:
