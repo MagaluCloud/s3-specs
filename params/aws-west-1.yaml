@@ -1,3 +1,6 @@
-profile_name: "aws-west-1"
 docs_dir: "."
-lock_mode: "GOVERNANCE"
+default_profile_index: 0
+profiles:
+  -
+    profile_name: "aws-west-1"
+    lock_mode: "GOVERNANCE"

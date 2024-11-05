@@ -1,3 +1,6 @@
-profile_name: "br-ne1"
 docs_dir: "./docs"
-lock_mode: "COMPLIANCE"
+default_profile_index: 0
+profiles:
+  -
+    profile_name: "br-ne1"
+    lock_mode: "COMPLIANCE"
