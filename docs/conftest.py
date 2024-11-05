@@ -39,6 +39,14 @@ def lock_mode(default_profile):
     return default_profile["lock_mode"]
 
 @pytest.fixture
+def profile_name(default_profile):
+    return (
+        default_profile.get("profile_name")
+        if default_profile.get("profile_name")
+        else pytest.skip("This test requires a profile name")
+    )
+
+@pytest.fixture
 def s3_client(default_profile):
 
     # config can have just a profile name and it will use an existing .aws/config and .aws/credentials
