@@ -6,6 +6,8 @@
 - unique-bucket-name
   - [with br-ne1 params](./runs/unique-bucket-name_test_br-ne1.md)
   - [with br-se1 params](./runs/unique-bucket-name_test_br-se1.md)
+  - [with aws-east-1 params](./runs/unique-bucket-name_test_aws-east-1.md)
+  - [with aws-west-1 params](./runs/unique-bucket-name_test_aws-west-1.md)
 
 ## Old / needs refactor:
   - presigned-urls

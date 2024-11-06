@@ -30,10 +30,34 @@ def test_params(request):
     return params
 
 @pytest.fixture
-def s3_client(test_params):
-    profile_name = test_params["profile_name"]
-    session = boto3.Session(profile_name=profile_name)
-    return session.client("s3")
+def default_profile(test_params):
+    default_profile_index = test_params.get("default_profile_index", 0)
+    return test_params["profiles"][default_profile_index]
+
+@pytest.fixture
+def lock_mode(default_profile):
+    return default_profile["lock_mode"]
+
+@pytest.fixture
+def s3_client(default_profile):
+
+    # config can have just a profile name and it will use an existing .aws/config and .aws/credentials
+    profile_name = default_profile.get("profile_name", None)
+    if profile_name:
+        session = boto3.Session(profile_name=profile_name)
+        return session.client("s3")
+
+    # or it can have endpoint, region and credentials on the config instead
+    region_name = default_profile.get("region_name")
+    aws_access_key_id = default_profile.get("aws_access_key_id")
+    aws_secret_access_key = default_profile.get("aws_secret_access_key")
+    session = boto3.Session(
+        region_name=region_name,
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key
+    )
+    endpoint_url = default_profile.get("endpoint_url")
+    return session.client("s3", endpoint_url=endpoint_url)
 
 @pytest.fixture
 def bucket_name(request, s3_client):

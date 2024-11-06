@@ -52,10 +52,8 @@ Isto facilitará a demonstração de que regras de retenção do buckect só se 
 
 ```python
 @pytest.fixture
-def versioned_bucket_with_lock_config(s3_client, test_params):
+def versioned_bucket_with_lock_config(s3_client, lock_mode):
     base_name = "versioned-bucket-with-lock"
-    lock_mode = test_params["lock_mode"]
-
 
     # Clean up old buckets, from past days (we are using 1 day retention, so if the lock mode is not
     # GOVERNANCE, we are not able to teardown immediately after the test)
@@ -145,49 +143,47 @@ run_example(__name__, "locking", "test_simple_delete_with_lock", config=config, 
     INFO     botocore.configprovider:configprovider.py:974 Found endpoint for s3 via: config_global.
 
 
-    INFO     root:s3_helpers.py:58 Bucket 'versioned-bucket-with-lock-506025' confirmed as created.
+    INFO     root:s3_helpers.py:58 Bucket 'versioned-bucket-with-lock-0bd78c' confirmed as created.
 
 
-    INFO     root:s3_helpers.py:79 Object 'pre-lock-object.txt' in bucket 'versioned-bucket-with-lock-506025' confirmed as uploaded.
+    INFO     root:s3_helpers.py:79 Object 'pre-lock-object.txt' in bucket 'versioned-bucket-with-lock-0bd78c' confirmed as uploaded.
 
 
-    INFO     root:locking_test.py:92 Bucket 'versioned-bucket-with-lock-506025' locked with mode GOVERNANCE. Status: 200
+    INFO     root:locking_test.py:90 Bucket 'versioned-bucket-with-lock-0bd78c' locked with mode GOVERNANCE. Status: 200
 
 
-    INFO     root:s3_helpers.py:79 Object 'post-lock-object.txt' in bucket 'versioned-bucket-with-lock-506025' confirmed as uploaded.
+    INFO     root:s3_helpers.py:79 Object 'post-lock-object.txt' in bucket 'versioned-bucket-with-lock-0bd78c' confirmed as uploaded.
 
 
-    INFO     root:locking_test.py:98 Uploaded post-lock object: versioned-bucket-with-lock-506025/post-lock-object.txt with version ID YOENdIpMwRFyWg.TXaRO_FI0v5mpBg.l
+    INFO     root:locking_test.py:96 Uploaded post-lock object: versioned-bucket-with-lock-0bd78c/post-lock-object.txt with version ID 9i.umVj7L1Q3mcscpvLXeoYSGj95qOG0
 
 
     -------------------------------- live log call ---------------------------------
-    INFO     root:locking_test.py:119 Attempting simple delete (delete marker) on pre-lock object: versioned-bucket-with-lock-506025/pre-lock-object.txt
+    INFO     root:locking_test.py:117 Attempting simple delete (delete marker) on pre-lock object: versioned-bucket-with-lock-0bd78c/pre-lock-object.txt
 
 
-    INFO     root:locking_test.py:123 Simple delete (delete marker) added successfully for object 'pre-lock-object.txt'.
+    INFO     root:locking_test.py:121 Simple delete (delete marker) added successfully for object 'pre-lock-object.txt'.
 
 
-    INFO     root:locking_test.py:126 Attempting simple delete (delete marker) on object: versioned-bucket-with-lock-506025/post-lock-object.txt
+    INFO     root:locking_test.py:124 Attempting simple delete (delete marker) on object: versioned-bucket-with-lock-0bd78c/post-lock-object.txt
 
 
-    INFO     root:locking_test.py:130 Simple delete (delete marker) added successfully for object 'post-lock-object.txt'.
+    INFO     root:locking_test.py:128 Simple delete (delete marker) added successfully for object 'post-lock-object.txt'.
 
 
     PASSED
 
     
-
-
     ------------------------------ live log teardown -------------------------------
-    INFO     root:s3_helpers.py:112 Deleting objects in 'versioned-bucket-with-lock-506025' with BypassGovernanceRetention.
+    INFO     root:s3_helpers.py:113 Deleting objects in 'versioned-bucket-with-lock-0bd78c' with BypassGovernanceRetention.
 
 
-    INFO     root:s3_helpers.py:132 Deleting bucket: versioned-bucket-with-lock-506025
+    INFO     root:s3_helpers.py:133 Deleting bucket: versioned-bucket-with-lock-0bd78c
 
 
     
     
-    ============================== 1 passed in 5.95s ===============================
+    ============================== 1 passed in 5.55s ===============================
 
 
 #### Permanent Delete
@@ -232,41 +228,41 @@ run_example(__name__, "locking", "test_delete_object_after_locking", config=conf
     INFO     botocore.configprovider:configprovider.py:974 Found endpoint for s3 via: config_global.
 
 
-    INFO     root:s3_helpers.py:58 Bucket 'versioned-bucket-with-lock-7494cc' confirmed as created.
+    INFO     root:s3_helpers.py:58 Bucket 'versioned-bucket-with-lock-0699a3' confirmed as created.
 
 
-    INFO     root:s3_helpers.py:79 Object 'pre-lock-object.txt' in bucket 'versioned-bucket-with-lock-7494cc' confirmed as uploaded.
+    INFO     root:s3_helpers.py:79 Object 'pre-lock-object.txt' in bucket 'versioned-bucket-with-lock-0699a3' confirmed as uploaded.
 
 
-    INFO     root:locking_test.py:92 Bucket 'versioned-bucket-with-lock-7494cc' locked with mode GOVERNANCE. Status: 200
+    INFO     root:locking_test.py:90 Bucket 'versioned-bucket-with-lock-0699a3' locked with mode GOVERNANCE. Status: 200
 
 
-    INFO     root:s3_helpers.py:79 Object 'post-lock-object.txt' in bucket 'versioned-bucket-with-lock-7494cc' confirmed as uploaded.
+    INFO     root:s3_helpers.py:79 Object 'post-lock-object.txt' in bucket 'versioned-bucket-with-lock-0699a3' confirmed as uploaded.
 
 
-    INFO     root:locking_test.py:98 Uploaded post-lock object: versioned-bucket-with-lock-7494cc/post-lock-object.txt with version ID kVnO0OQ7.TPffZ7NvhiCZRCp8M3QjO1y
+    INFO     root:locking_test.py:96 Uploaded post-lock object: versioned-bucket-with-lock-0699a3/post-lock-object.txt with version ID FR3qLus16va6YAkTF97C1Bmrt.lFfwoD
 
 
     -------------------------------- live log call ---------------------------------
-    INFO     root:locking_test.py:151 delete response status: 204
+    INFO     root:locking_test.py:149 delete response status: 204
 
 
-    INFO     root:locking_test.py:160 Permanent deletion blocked as expected for new locked object 'post-lock-object.txt' with version ID kVnO0OQ7.TPffZ7NvhiCZRCp8M3QjO1y
+    INFO     root:locking_test.py:158 Permanent deletion blocked as expected for new locked object 'post-lock-object.txt' with version ID FR3qLus16va6YAkTF97C1Bmrt.lFfwoD
 
 
     PASSED
 
     
     ------------------------------ live log teardown -------------------------------
-    INFO     root:s3_helpers.py:112 Deleting objects in 'versioned-bucket-with-lock-7494cc' with BypassGovernanceRetention.
+    INFO     root:s3_helpers.py:113 Deleting objects in 'versioned-bucket-with-lock-0699a3' with BypassGovernanceRetention.
 
 
-    INFO     root:s3_helpers.py:132 Deleting bucket: versioned-bucket-with-lock-7494cc
+    INFO     root:s3_helpers.py:133 Deleting bucket: versioned-bucket-with-lock-0699a3
 
 
     
     
-    ============================== 1 passed in 5.20s ===============================
+    ============================== 1 passed in 4.56s ===============================
 
 
 ### Conferindo a existência de uma configuração de tranca no bucket
@@ -276,9 +272,8 @@ run_example(__name__, "locking", "test_delete_object_after_locking", config=conf
 
 
 ```python
-def test_verify_object_lock_configuration(versioned_bucket_with_lock_config, s3_client, test_params):
+def test_verify_object_lock_configuration(versioned_bucket_with_lock_config, s3_client, lock_mode):
     bucket_name, _, _, _, _, _, _ = versioned_bucket_with_lock_config
-    lock_mode = test_params["lock_mode"]
 
     # Retrieve and verify the applied bucket-level Object Lock configuration
     logging.info("Retrieving Object Lock configuration from bucket...")
@@ -301,41 +296,41 @@ run_example(__name__, "locking", "test_verify_object_lock_configuration", config
     INFO     botocore.configprovider:configprovider.py:974 Found endpoint for s3 via: config_global.
 
 
-    INFO     root:s3_helpers.py:58 Bucket 'versioned-bucket-with-lock-c8b2b8' confirmed as created.
+    INFO     root:s3_helpers.py:58 Bucket 'versioned-bucket-with-lock-8e44e3' confirmed as created.
 
 
-    INFO     root:s3_helpers.py:79 Object 'pre-lock-object.txt' in bucket 'versioned-bucket-with-lock-c8b2b8' confirmed as uploaded.
+    INFO     root:s3_helpers.py:79 Object 'pre-lock-object.txt' in bucket 'versioned-bucket-with-lock-8e44e3' confirmed as uploaded.
 
 
-    INFO     root:locking_test.py:92 Bucket 'versioned-bucket-with-lock-c8b2b8' locked with mode GOVERNANCE. Status: 200
+    INFO     root:locking_test.py:90 Bucket 'versioned-bucket-with-lock-8e44e3' locked with mode GOVERNANCE. Status: 200
 
 
-    INFO     root:s3_helpers.py:79 Object 'post-lock-object.txt' in bucket 'versioned-bucket-with-lock-c8b2b8' confirmed as uploaded.
+    INFO     root:s3_helpers.py:79 Object 'post-lock-object.txt' in bucket 'versioned-bucket-with-lock-8e44e3' confirmed as uploaded.
 
 
-    INFO     root:locking_test.py:98 Uploaded post-lock object: versioned-bucket-with-lock-c8b2b8/post-lock-object.txt with version ID rQaojY3zEmnxO5qfqszO.aQu9crUzvBj
+    INFO     root:locking_test.py:96 Uploaded post-lock object: versioned-bucket-with-lock-8e44e3/post-lock-object.txt with version ID ludgNyKpQWA_yx7s9A8lRKKH9mv04gq0
 
 
     -------------------------------- live log call ---------------------------------
-    INFO     root:locking_test.py:177 Retrieving Object Lock configuration from bucket...
+    INFO     root:locking_test.py:174 Retrieving Object Lock configuration from bucket...
 
 
-    INFO     root:locking_test.py:182 Verified that Object Lock configuration was applied as expected.
+    INFO     root:locking_test.py:179 Verified that Object Lock configuration was applied as expected.
 
 
     PASSED
 
     
     ------------------------------ live log teardown -------------------------------
-    INFO     root:s3_helpers.py:112 Deleting objects in 'versioned-bucket-with-lock-c8b2b8' with BypassGovernanceRetention.
+    INFO     root:s3_helpers.py:113 Deleting objects in 'versioned-bucket-with-lock-8e44e3' with BypassGovernanceRetention.
 
 
-    INFO     root:s3_helpers.py:132 Deleting bucket: versioned-bucket-with-lock-c8b2b8
+    INFO     root:s3_helpers.py:133 Deleting bucket: versioned-bucket-with-lock-8e44e3
 
 
     
     
-    ============================== 1 passed in 5.30s ===============================
+    ============================== 1 passed in 4.22s ===============================
 
 
 ### Conferindo a politica de retenção de objetos específicos
@@ -346,9 +341,8 @@ Objetos pre-existentes, de antes da configuração do bucket não exibem estas i
 
 
 ```python
-def test_verify_object_retention(versioned_bucket_with_lock_config, s3_client, test_params):
+def test_verify_object_retention(versioned_bucket_with_lock_config, s3_client, lock_mode):
     bucket_name, first_object_key, second_object_key, _, _, _, _ = versioned_bucket_with_lock_config
-    lock_mode = test_params["lock_mode"]
 
     # Objects from before the config don't have retention data
     logging.info(f"Fetching data of the pre-existing object with a head request...")
@@ -385,53 +379,53 @@ run_example(__name__, "locking", "test_verify_object_retention", config=config, 
     INFO     botocore.configprovider:configprovider.py:974 Found endpoint for s3 via: config_global.
 
 
-    INFO     root:s3_helpers.py:58 Bucket 'versioned-bucket-with-lock-e75777' confirmed as created.
+    INFO     root:s3_helpers.py:58 Bucket 'versioned-bucket-with-lock-68272c' confirmed as created.
 
 
-    INFO     root:s3_helpers.py:79 Object 'pre-lock-object.txt' in bucket 'versioned-bucket-with-lock-e75777' confirmed as uploaded.
+    INFO     root:s3_helpers.py:79 Object 'pre-lock-object.txt' in bucket 'versioned-bucket-with-lock-68272c' confirmed as uploaded.
 
 
-    INFO     root:locking_test.py:92 Bucket 'versioned-bucket-with-lock-e75777' locked with mode GOVERNANCE. Status: 200
+    INFO     root:locking_test.py:90 Bucket 'versioned-bucket-with-lock-68272c' locked with mode GOVERNANCE. Status: 200
 
 
-    INFO     root:s3_helpers.py:79 Object 'post-lock-object.txt' in bucket 'versioned-bucket-with-lock-e75777' confirmed as uploaded.
+    INFO     root:s3_helpers.py:79 Object 'post-lock-object.txt' in bucket 'versioned-bucket-with-lock-68272c' confirmed as uploaded.
 
 
-    INFO     root:locking_test.py:98 Uploaded post-lock object: versioned-bucket-with-lock-e75777/post-lock-object.txt with version ID zBN1Epu383tj77vMZbY_Jf.frN3UP2qb
+    INFO     root:locking_test.py:96 Uploaded post-lock object: versioned-bucket-with-lock-68272c/post-lock-object.txt with version ID AZEkTX3OQG43LNOnXau8CTqY2tgk1_5X
 
 
     -------------------------------- live log call ---------------------------------
-    INFO     root:locking_test.py:198 Fetching data of the pre-existing object with a head request...
+    INFO     root:locking_test.py:194 Fetching data of the pre-existing object with a head request...
 
 
-    INFO     root:locking_test.py:202 Retention data not present on the pre-existing object as expected.
+    INFO     root:locking_test.py:198 Retention data not present on the pre-existing object as expected.
 
 
-    INFO     root:locking_test.py:205 Retrieving object retention details...
+    INFO     root:locking_test.py:201 Retrieving object retention details...
 
 
-    INFO     root:locking_test.py:208 Retention verified as applied with mode GOVERNANCE and retain until 2024-10-31 01:39:18.849000+00:00.
+    INFO     root:locking_test.py:204 Retention verified as applied with mode GOVERNANCE and retain until 2024-11-07 18:11:59.679000+00:00.
 
 
-    INFO     root:locking_test.py:212 Fetching data of the new object with a head request...
+    INFO     root:locking_test.py:208 Fetching data of the new object with a head request...
 
 
-    INFO     root:locking_test.py:216 Retention verified as applied with mode GOVERNANCE and retain until 2024-10-31 01:39:18.849000+00:00.
+    INFO     root:locking_test.py:212 Retention verified as applied with mode GOVERNANCE and retain until 2024-11-07 18:11:59.679000+00:00.
 
 
     PASSED
 
     
     ------------------------------ live log teardown -------------------------------
-    INFO     root:s3_helpers.py:112 Deleting objects in 'versioned-bucket-with-lock-e75777' with BypassGovernanceRetention.
+    INFO     root:s3_helpers.py:113 Deleting objects in 'versioned-bucket-with-lock-68272c' with BypassGovernanceRetention.
 
 
-    INFO     root:s3_helpers.py:132 Deleting bucket: versioned-bucket-with-lock-e75777
+    INFO     root:s3_helpers.py:133 Deleting bucket: versioned-bucket-with-lock-68272c
 
 
     
     
-    ============================== 1 passed in 5.55s ===============================
+    ============================== 1 passed in 4.52s ===============================
 
 
 ### Configuração de Object Locking em Bucket Não-Versionado
@@ -442,8 +436,7 @@ bucket comum (não versionado), deve retornar um erro do tipo `InvalidBucketStat
 
 
 ```python
-def test_configure_bucket_lock_on_regular_bucket(s3_client, existing_bucket_name, test_params):
-    lock_mode = test_params["lock_mode"]
+def test_configure_bucket_lock_on_regular_bucket(s3_client, existing_bucket_name, lock_mode):
     # Set up Bucket Lock configuration
     bucket_lock_config = {
         "ObjectLockEnabled": "Enabled",
@@ -481,26 +474,26 @@ run_example(__name__, "locking", "test_configure_bucket_lock_on_regular_bucket",
     INFO     botocore.configprovider:configprovider.py:974 Found endpoint for s3 via: config_global.
 
 
-    INFO     root:s3_helpers.py:58 Bucket 'existing-bucket-95825f' confirmed as created.
+    INFO     root:s3_helpers.py:58 Bucket 'existing-bucket-c54418' confirmed as created.
 
 
     -------------------------------- live log call ---------------------------------
-    INFO     root:locking_test.py:242 Attempting to apply Object Lock configuration on a non-versioned bucket...
+    INFO     root:locking_test.py:237 Attempting to apply Object Lock configuration on a non-versioned bucket...
 
 
-    INFO     root:locking_test.py:251 Correctly raised InvalidBucketState error for non-versioned bucket.
+    INFO     root:locking_test.py:246 Correctly raised InvalidBucketState error for non-versioned bucket.
 
 
     PASSED
 
     
     ------------------------------ live log teardown -------------------------------
-    INFO     root:s3_helpers.py:36 Bucket 'existing-bucket-95825f' confirmed as deleted.
+    INFO     root:s3_helpers.py:36 Bucket 'existing-bucket-c54418' confirmed as deleted.
 
 
     
     
-    ============================== 1 passed in 3.14s ===============================
+    ============================== 1 passed in 2.03s ===============================
 
 
 ## Referências

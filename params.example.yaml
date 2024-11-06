@@ -1,0 +1,21 @@
+docs_dir: "."
+default_profile_index: 2
+profiles:
+  -
+    profile_name: "br-ne1"
+    lock_mode: "COMPLIANCE"
+  -
+    profile_name: "br-se1"
+    lock_mode: "COMPLIANCE"
+  -
+    profile_name: "aws-east-1"
+    lock_mode: "GOVERNANCE"
+  -
+    profile_name: "aws-west-1"
+    lock_mode: "GOVERNANCE"
+  -
+    region_name: "br-se1"
+    endpoint_url: "https://br-se1.magaluobjects.com/"
+    aws_access_key_id: "YOUR-KEY-ID-HERE"
+    aws_secret_access_key: "YOUR-SECRET-KEY-HERE"
+    lock_mode: "COMPLIANCE"

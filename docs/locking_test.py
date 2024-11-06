@@ -51,10 +51,8 @@ from s3_helpers import (
 
 # +
 @pytest.fixture
-def versioned_bucket_with_lock_config(s3_client, test_params):
+def versioned_bucket_with_lock_config(s3_client, lock_mode):
     base_name = "versioned-bucket-with-lock"
-    lock_mode = test_params["lock_mode"]
-
 
     # Clean up old buckets, from past days (we are using 1 day retention, so if the lock mode is not
     # GOVERNANCE, we are not able to teardown immediately after the test)
@@ -169,9 +167,8 @@ run_example(__name__, "locking", "test_delete_object_after_locking", config=conf
 # **get_object_lock_configuration**
 
 # +
-def test_verify_object_lock_configuration(versioned_bucket_with_lock_config, s3_client, test_params):
+def test_verify_object_lock_configuration(versioned_bucket_with_lock_config, s3_client, lock_mode):
     bucket_name, _, _, _, _, _, _ = versioned_bucket_with_lock_config
-    lock_mode = test_params["lock_mode"]
 
     # Retrieve and verify the applied bucket-level Object Lock configuration
     logging.info("Retrieving Object Lock configuration from bucket...")
@@ -190,9 +187,8 @@ run_example(__name__, "locking", "test_verify_object_lock_configuration", config
 # Objetos pre-existentes, de antes da configuração do bucket não exibem estas informações.
 
 # +
-def test_verify_object_retention(versioned_bucket_with_lock_config, s3_client, test_params):
+def test_verify_object_retention(versioned_bucket_with_lock_config, s3_client, lock_mode):
     bucket_name, first_object_key, second_object_key, _, _, _, _ = versioned_bucket_with_lock_config
-    lock_mode = test_params["lock_mode"]
 
     # Objects from before the config don't have retention data
     logging.info(f"Fetching data of the pre-existing object with a head request...")
@@ -225,8 +221,7 @@ run_example(__name__, "locking", "test_verify_object_retention", config=config, 
 # bucket comum (não versionado), deve retornar um erro do tipo `InvalidBucketState`.
 
 # +
-def test_configure_bucket_lock_on_regular_bucket(s3_client, existing_bucket_name, test_params):
-    lock_mode = test_params["lock_mode"]
+def test_configure_bucket_lock_on_regular_bucket(s3_client, existing_bucket_name, lock_mode):
     # Set up Bucket Lock configuration
     bucket_lock_config = {
         "ObjectLockEnabled": "Enabled",
