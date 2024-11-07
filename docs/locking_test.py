@@ -14,10 +14,15 @@
 #
 # Isto é usado para garantir **conformidade** (compliance) com requisitos legais ou simplesmente
 # garantir uma proteção extra contra modificações ou exclusão.
+#
+# ## Pontos importantes
+# 
+# - Object Locking só pode ser utilizado em buckets com versionamento habilitado
+# - A configuração do periodo de retenção, quando adicionada como regra do bucket, só será aplicada
+# em novos objetos, incluidos após a configuração
+# - Uma configuração de locking existir, não previne deletes simples (delete marker), pois estes
+# não removem dados, a trava é apenas para deletes permanentes (delete com a version ID).
  
-
-# ## Exemplos
-
 # + tags=["parameters"]
 config = "../params/aws-east-1.yaml"
 # -

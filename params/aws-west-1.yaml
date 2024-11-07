@@ -4,3 +4,4 @@ profiles:
   -
     profile_name: "aws-west-1"
     lock_mode: "GOVERNANCE"
+    mgc_path: "../magalu/mgc/cli/mgc"
