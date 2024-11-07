@@ -8,53 +8,76 @@
 # ---
 
 # # List buckets
-# List all buckets from a profile[<sup>1</sup>](./glossary#profile)
+#
+# Lista os buckets de um perfil[<sup>1</sup>](../glossary#profile)
 
 
 # + tags=["parameters"]
-profile_name = "default"
+config = "../params/br-ne1.yaml"
+docs_dir = "."
 # -
-
-
-# + [markdown] jp-MarkdownHeadingCollapsed=true
-# ## Setup
-
 
 # +
 import random
-
-if __name__ != "__main__":
-    import pytest
-else:
-    from s3_helpers import print_timestamp, create_s3_client
-    print_timestamp()
-    s3_client = create_s3_client(profile_name)
+import logging
+import subprocess
+import pytest
+from shlex import split, quote
+from s3_helpers import run_example
 # -
 
-
-# ## Example
-
+# ## Exemplos
+#
+# ### Boto3
+#
+# O comando para listar buckets no boto3 é o `list_buckets`.
 
 # +
-def test_list_buckets(s3_client, profile_name="default"):
+def test_boto_list_buckets(s3_client, profile_name):
     response = s3_client.list_buckets()
+    response_status = response["ResponseMetadata"]["HTTPStatusCode"]
+    assert response_status == 200, "Expected HTTPStatusCode 200 for successful bucket list."
     buckets = response.get('Buckets')
-
     assert isinstance(buckets, list), "Expected 'Buckets' to be a list."
     buckets_count = len(buckets)
     assert isinstance(buckets_count, int), "Expected buckets count to be an integer."
-    print(f"Profile '{profile_name}' has {buckets_count} buckets.")
+    logging.info(f"Bucket list returned with status {response_status} and a list of {buckets_count} buckets")
 
     if buckets_count > 0:
         bucket_name = random.choice(buckets).get('Name')
         assert isinstance(bucket_name, str) and bucket_name, "Expected bucket name to be a non-empty string."
-        print(f"One of those buckets is named {random.choice(buckets).get('Name')}")
+        logging.info(f"One of those buckets is named {random.choice(buckets).get('Name')}")
 
-if __name__ == "__main__":
-    test_list_buckets(s3_client, profile_name)
+run_example(__name__, "list-buckets", "test_boto_list_buckets", config=config, docs_dir=docs_dir)
+# -
+# ### Rclone e AWS CLI
+#
+# O comando para listar buckets no rclone é o `lsd`.
+# Os comandos para listar buckets na awscli são `s3 ls` e `s3api list-buckets`.
+#
+# **Exemplos:**
+
+commands = [
+    "rclone lsd {profile_name}:",
+    "aws s3 ls --profile {profile_name}",
+    "aws s3api list-buckets --profile {profile_name}",
+]
+
+# +
+@pytest.mark.parametrize("cmd_template", commands)
+def test_cli_list_buckets(cmd_template, profile_name):
+    cmd = split(cmd_template.format(profile_name=profile_name))
+    result = subprocess.run(cmd, capture_output=True, text=True)
+
+    assert result.returncode == 0, f"Command failed with error: {result.stderr}"
+    logging.info(f"Output from {cmd_template}: {result.stdout}")
+
+run_example(__name__, "list-buckets", "test_cli_list_buckets", config=config, docs_dir=docs_dir)
 # -
 
-
-# ## References
+# ## Referências
 #
 # - [Boto3 Documentation: list_bucket](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/list_buckets.html)
+# - [rclone lsd](https://rclone.org/commands/rclone_lsd/)
+# - [aws cli ls](https://docs.aws.amazon.com/cli/latest/reference/s3/ls.html)
+# - [aws cli list-buckets](https://docs.aws.amazon.com/cli/latest/reference/s3api/list-buckets.html)
