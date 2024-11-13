@@ -5,6 +5,7 @@ import pytest
 import time
 import yaml
 import logging
+import subprocess
 from s3_helpers import (
     generate_unique_bucket_name,
     delete_bucket_and_wait,
@@ -12,6 +13,7 @@ from s3_helpers import (
     delete_object_and_wait,
     put_object_and_wait,
     cleanup_old_buckets,
+    teardown_versioned_bucket_with_lock_config,
 )
 
 def pytest_addoption(parser):
@@ -45,6 +47,19 @@ def profile_name(default_profile):
         if default_profile.get("profile_name")
         else pytest.skip("This test requires a profile name")
     )
+
+@pytest.fixture
+def mgc_path(default_profile):
+    return default_profile.get("mgc_path", "mgc")
+
+@pytest.fixture
+def active_mgc_workspace(profile_name, mgc_path):
+    # set the profile
+    result = subprocess.run([mgc_path, "workspace", "set", profile_name],
+                            capture_output=True, text=True)
+    if result.returncode != 0:
+        pytest.skip("This test requires an mgc profile name")
+    return profile_name
 
 @pytest.fixture
 def s3_client(default_profile):
@@ -109,3 +124,25 @@ def bucket_with_one_object(s3_client):
     # Teardown: Delete the object and bucket after the test
     delete_object_and_wait(s3_client, bucket_name, object_key)
     delete_bucket_and_wait(s3_client, bucket_name)
+
+@pytest.fixture
+def versioned_bucket_name_to_lock(s3_client, lock_mode):
+    base_name = "versioned-bucket"
+
+    # Clean up old buckets, from past days (we are using 1 day retention, so if the lock mode is not
+    # GOVERNANCE, we are not able to teardown immediately after the test)
+    cleanup_old_buckets(s3_client, base_name)
+
+    # Generate a unique name and create a versioned bucket
+    bucket_name = generate_unique_bucket_name(base_name=base_name)
+    create_bucket_and_wait(s3_client, bucket_name)
+    s3_client.put_bucket_versioning(
+        Bucket=bucket_name,
+        VersioningConfiguration={"Status": "Enabled"}
+    )
+
+    # Yield details for tests to use
+    yield bucket_name
+
+    # cleanup whatever is possible given the lock mode
+    teardown_versioned_bucket_with_lock_config(s3_client, bucket_name, lock_mode)
