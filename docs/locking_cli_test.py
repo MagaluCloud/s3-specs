@@ -52,7 +52,7 @@ run_example(__name__, "locking_cli", "test_set_bucket_default_lock", config=conf
 # #### Bucket com trava para utilizar nos próximos exemplos
 
 @pytest.fixture
-def bucket_with_lock(versioned_bucket_name_to_lock, mgc_path, active_mgc_workspace, s3_client):
+def bucket_with_lock(versioned_bucket_name_to_lock, mgc_path, active_mgc_workspace):
     bucket_name = versioned_bucket_name_to_lock
     cmd = split(
         f"{mgc_path} object buckets object-lock set {bucket_name} --days 1"
