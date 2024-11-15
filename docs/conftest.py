@@ -13,8 +13,8 @@ from s3_helpers import (
     delete_object_and_wait,
     put_object_and_wait,
     cleanup_old_buckets,
-    teardown_versioned_bucket_with_lock_config,
 )
+from datetime import datetime, timedelta
 
 def pytest_addoption(parser):
     parser.addoption("--config", action="store", help="Path to the YAML config file")
@@ -126,12 +126,48 @@ def bucket_with_one_object(s3_client):
     delete_bucket_and_wait(s3_client, bucket_name)
 
 @pytest.fixture
-def versioned_bucket_name_to_lock(s3_client, lock_mode):
-    base_name = "versioned-bucket"
+def versioned_bucket_with_one_object(s3_client, lock_mode):
+    """
+    Fixture to create a versioned bucket with one object for testing.
+    
+    :param s3_client: Boto3 S3 client
+    :param lock_mode: Lock mode for the bucket or objects (e.g., 'GOVERNANCE', 'COMPLIANCE')
+    :return: Tuple containing bucket name, object key, and object version ID
+    """
+    base_name = "versioned-bucket-with-one-object"
+    bucket_name = generate_unique_bucket_name(base_name=base_name)
 
-    # Clean up old buckets, from past days (we are using 1 day retention, so if the lock mode is not
-    # GOVERNANCE, we are not able to teardown immediately after the test)
-    cleanup_old_buckets(s3_client, base_name)
+    # Create bucket and enable versioning
+    create_bucket_and_wait(s3_client, bucket_name)
+    s3_client.put_bucket_versioning(
+        Bucket=bucket_name,
+        VersioningConfiguration={"Status": "Enabled"}
+    )
+
+    # Upload a single object and get it's version
+    object_key = "test-object.txt"
+    content = b"Sample content for testing versioned object."
+    object_version = put_object_and_wait(s3_client, bucket_name, object_key, content)
+
+    # Yield details to tests
+    yield bucket_name, object_key, object_version
+
+    # Cleanup
+    try:
+        cleanup_old_buckets(s3_client, base_name, lock_mode)
+    except Exception as e:
+        print(f"Cleanup error {e}")
+
+@pytest.fixture
+def lockeable_bucket_name(s3_client, lock_mode):
+    """
+    Fixture to create a versioned bucket for tests that will set default bucket object-lock configurations.
+
+    :param s3_client: Boto3 S3 client
+    :param lock_mode: Lock mode ('GOVERNANCE', 'COMPLIANCE', or None)
+    :return: The name of the created bucket
+    """
+    base_name = "lockeable-bucket"
 
     # Generate a unique name and create a versioned bucket
     bucket_name = generate_unique_bucket_name(base_name=base_name)
@@ -141,8 +177,49 @@ def versioned_bucket_name_to_lock(s3_client, lock_mode):
         VersioningConfiguration={"Status": "Enabled"}
     )
 
-    # Yield details for tests to use
+    logging.info(f"Created versioned bucket: {bucket_name}")
+
+    # Yield the bucket name for tests
     yield bucket_name
 
-    # cleanup whatever is possible given the lock mode
-    teardown_versioned_bucket_with_lock_config(s3_client, bucket_name, lock_mode)
+    # Cleanup after tests
+    try:
+        cleanup_old_buckets(s3_client, base_name, lock_mode)
+    except Exception as e:
+        logging.error(f"Cleanup error for bucket '{bucket_name}': {e}")
+
+@pytest.fixture
+def bucket_with_lock(lockeable_bucket_name, s3_client, lock_mode):
+    """
+    Fixture to create a bucket with Object Lock and a default retention configuration.
+
+    :param lockeable_bucket_name: Name of the lockable bucket.
+    :param s3_client: Boto3 S3 client.
+    :param lock_mode: Lock mode ('GOVERNANCE' or 'COMPLIANCE').
+    :return: The name of the bucket with Object Lock enabled.
+    """
+    bucket_name = lockeable_bucket_name
+
+    # Enable Object Lock configuration with a default retention rule
+    retention_days = 1
+    s3_client.put_object_lock_configuration(
+        Bucket=bucket_name,
+        ObjectLockConfiguration={
+            "ObjectLockEnabled": "Enabled",
+            "Rule": {
+                "DefaultRetention": {
+                    "Mode": lock_mode,
+                    "Days": retention_days
+                }
+            }
+        }
+    )
+
+    logging.info(f"Bucket '{bucket_name}' configured with Object Lock and default retention.")
+
+    yield bucket_name
+
+    # TBD teardown
+
+
+

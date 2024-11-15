@@ -15,17 +15,19 @@
 
 # + tags=["parameters"]
 config = "../params/aws-east-1.yaml"
-docs_dir = "."
 # -
 
-# ## Exemplos
-
+# + {"jupyter": {"source_hidden": true}}
 import pytest
 import logging
 import subprocess
 import json
 from shlex import split, quote
-from s3_helpers import run_example
+from s3_helpers import run_example, get_spec_path
+# -
+
+# ## Exemplos
+
 
 # ### Configurar uma trava padrão
 #
@@ -38,22 +40,22 @@ commands = [
 ]
 
 @pytest.mark.parametrize("cmd_template", commands)
-def test_set_bucket_default_lock(cmd_template, active_mgc_workspace, mgc_path, versioned_bucket_name_to_lock):
+def test_set_bucket_default_lock(cmd_template, active_mgc_workspace, mgc_path, lockeable_bucket_name):
     days = "1"
-    cmd = split(cmd_template.format(mgc_path=mgc_path, bucket_name=versioned_bucket_name_to_lock, days=days))
+    cmd = split(cmd_template.format(mgc_path=mgc_path, bucket_name=lockeable_bucket_name, days=days))
 
     result = subprocess.run(cmd, capture_output=True, text=True)
 
     assert result.returncode == 0, f"Command failed with error: {result.stderr}"
     logging.info(f"Output from {cmd_template}: {result.stdout}")
 
-run_example(__name__, "locking_cli", "test_set_bucket_default_lock", config=config, docs_dir=docs_dir)
+run_example(__name__, "test_set_bucket_default_lock", config=config)
 
 # #### Bucket com trava para utilizar nos próximos exemplos
 
 @pytest.fixture
-def bucket_with_lock(versioned_bucket_name_to_lock, mgc_path, active_mgc_workspace):
-    bucket_name = versioned_bucket_name_to_lock
+def bucket_with_lock(lockeable_bucket_name, mgc_path, active_mgc_workspace):
+    bucket_name = lockeable_bucket_name
     cmd = split(
         f"{mgc_path} object buckets object-lock set {bucket_name} --days 1"
     )
@@ -78,7 +80,7 @@ def test_get_bucket_default_lock(cmd_template, active_mgc_workspace, mgc_path, b
     assert result.returncode == 0, f"Command failed with error: {result.stderr}"
     logging.info(f"Output from {cmd_template}: {result.stdout}")
 
-run_example(__name__, "locking_cli", "test_get_bucket_default_lock", config=config, docs_dir=docs_dir)
+run_example(__name__, "test_get_bucket_default_lock", config=config)
 
 
 # ### Soft delete vs permanent delete
@@ -94,7 +96,7 @@ run_example(__name__, "locking_cli", "test_get_bucket_default_lock", config=conf
 def bucket_with_lock_and_object(active_mgc_workspace, mgc_path, bucket_with_lock):
     bucket_name = bucket_with_lock
     object_key = "key1"
-    src = f"{docs_dir}/index.md"
+    src = f"{get_spec_path()}/index.md"
     dst = f"{bucket_name}/{object_key}"
 
     # Upload a file to the versioned bucket
@@ -121,6 +123,8 @@ commands = [
     "{mgc_path} object-storage objects delete {bucket_name}/{object_key} --no-confirm",
 ]
 
+# É esperado que o comando de delete comum (soft delete, sem version) retorne sucesso.
+
 @pytest.mark.parametrize("cmd_template", commands)
 def test_simple_delete_object_on_locked_bucket(cmd_template, active_mgc_workspace, mgc_path, bucket_with_lock_and_object):
     bucket_name, object_key, _ = bucket_with_lock_and_object
@@ -130,7 +134,7 @@ def test_simple_delete_object_on_locked_bucket(cmd_template, active_mgc_workspac
     assert result.returncode == 0, f"Command failed with error: {result.stderr}"
     logging.info(f"Output from {cmd}: {result.stdout}")
 
-run_example(__name__, "locking_cli", "test_simple_delete_object_on_locked_bucket", config=config, docs_dir=docs_dir)
+run_example(__name__, "test_simple_delete_object_on_locked_bucket", config=config)
 
 # #### Permanent delete
 #
@@ -140,6 +144,8 @@ run_example(__name__, "locking_cli", "test_simple_delete_object_on_locked_bucket
 commands = [
     "{mgc_path} object-storage objects delete {bucket_name}/{object_key} --no-confirm --obj-version {object_version}",
 ]
+
+# É esperado que a versão do objeto continue presente mesmo após um comando de permanent delete (delete version)
 
 @pytest.mark.parametrize("cmd_template", commands)
 def test_permanent_delete_object_on_locked_bucket(cmd_template, active_mgc_workspace, mgc_path, bucket_with_lock_and_object):
@@ -156,4 +162,4 @@ def test_permanent_delete_object_on_locked_bucket(cmd_template, active_mgc_works
     result = subprocess.run(split(cmd_str), capture_output=True, text=True)
     assert object_version in result.stdout, "Unexpected output: {result.stdout}"
 
-run_example(__name__, "locking_cli", "test_permanent_delete_object_on_locked_bucket", config=config, docs_dir=docs_dir)
+run_example(__name__, "test_permanent_delete_object_on_locked_bucket", config=config)
