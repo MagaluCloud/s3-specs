@@ -14,12 +14,12 @@ python = "^3.12"
 notebook = "^7.2.2"
 ipykernel = "^6.29.5"
 nbconvert = "^7.16.4"
-papermill = "^2.6.0"
 boto3 = "^1.35.48"
 uuid = "^1.30"
 jupytext = "^1.16.4"
 pytest = "^8.3.3"
 requests = "^2.32.3"
+ipynbname = "^2024.1.0.0"
 
 [build-system]
 requires = ["poetry-core"]
