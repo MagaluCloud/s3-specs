@@ -5,8 +5,18 @@ import uuid
 import logging
 import pytest
 import yaml
+from pathlib import Path
+import ipynbname
+import json
 
-def run_example(dunder_name, spec_name, example_name, config="params.yaml", docs_dir="."):
+def get_spec_path():
+    spec_path = os.getenv("SPEC_PATH")
+    if spec_path:
+        return Path(spec_path).resolve()
+    # Fallback for live Jupyter Lab Notebook execution
+    return str(ipynbname.path())
+
+def run_example(dunder_name, test_name, config="../params.example.yaml"):
     if dunder_name == "__main__":
         # When executing a notebook pass config path as env var instead of pytest custom arg
         os.environ["CONFIG_PATH"] = config
@@ -15,10 +25,11 @@ def run_example(dunder_name, spec_name, example_name, config="params.yaml", docs
         pytest.main([
             "-qq", 
             "--color", "no", 
-            "-s", 
-            "--log-cli-level", "INFO",
-            f"{docs_dir}/{spec_name}_test.py::{example_name}"
+            # "-s", 
+            # "--log-cli-level", "INFO",
+            f"{get_spec_path()}::{test_name}"
         ])
+ 
 
 def generate_unique_bucket_name(base_name="my-unique-bucket"):
     unique_id = uuid.uuid4().hex[:6]  # Short unique suffix

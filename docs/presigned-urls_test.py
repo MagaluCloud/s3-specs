@@ -19,17 +19,14 @@
 # envie arquivos diretamente para o S3, sem que a aplicação precise expor suas credenciais de acesso.
 
 # + tags=["parameters"]
-profile_name = "default"
-docs_dir = "."
+config = "../params/br-ne1.yaml"
 # -
 
-# +
-import pytest
+# + {"jupyter": {"source_hidden": true}}
+from s3_helpers import run_example, delete_object_and_wait
 import requests
-from s3_helpers import delete_object_and_wait
-def run_example(example_name):
-    if __name__ == "__main__":
-        pytest.main(["-qq", "--color", "no", "-s", "--profile", f"{profile_name}", f"{docs_dir}/presigned-urls_test.py::{example_name}"])
+import os
+config = os.getenv("CONFIG", config)
 # -
 
 # ## Exemplos
@@ -63,7 +60,7 @@ def test_presigned_get_url(s3_client, bucket_with_one_object):
     assert response.content == content, "Downloaded content does not match the original content."
     print(f"Object downloaded: {content}")
 
-run_example("test_presigned_get_url")
+run_example(__name__, "test_presigned_get_url", config=config)
 # -
 
 # ### Presigned PUT URL
@@ -104,7 +101,7 @@ def test_presigned_put_url(s3_client, existing_bucket_name):
     # Cleanup: delete the uploaded object
     delete_object_and_wait(s3_client, bucket_name, object_key)
 
-run_example("test_presigned_put_url")
+run_example(__name__, "test_presigned_put_url", config=config)
 # -
 
 

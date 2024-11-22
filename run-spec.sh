@@ -6,25 +6,28 @@ if [ "$#" -ne 3 ]; then
     exit 1
 fi
 
-NOTEBOOK_PATH=$1
-YAML_PARAMS=$2
+SPEC_PATH=$(realpath $1)
+YAML_PARAMS=$(realpath $2)
 OUTPUT_FORMAT=$3
+SPEC_NAME=$(basename "$SPEC_PATH" .py)
 EXECUTION_NAME=$(basename "$YAML_PARAMS" .yaml)
-PAPERMILL_OUTPUT_FOLDER="/tmp"
 OUTPUT_FOLDER="docs/runs"
 
 # Add docs to the PYTHONPATH
 export PYTHONPATH=$PYTHONPATH:$(pwd)/docs
+export SPEC_PATH=${SPEC_PATH}
+export CONFIG=${YAML_PARAMS}
 
-# Convert .py to .ipynb
-TEMP_NOTEBOOK="/tmp/$(basename "$NOTEBOOK_PATH" .py).ipynb"
-jupytext --to ipynb --output $TEMP_NOTEBOOK $NOTEBOOK_PATH
-NOTEBOOK_PATH=$TEMP_NOTEBOOK
+# Convert .py to .ipynb and execute it
+EXECUTED_NOTEBOOK="/tmp/${SPEC_NAME}_${EXECUTION_NAME}.ipynb"
+jupytext --to notebook --execute --output $EXECUTED_NOTEBOOK $SPEC_PATH --warn-only
 
-# Step 1: Run the notebook with Papermill using the YAML file for parameters
-EXECUTED_NOTEBOOK="${PAPERMILL_OUTPUT_FOLDER}/$(basename "$NOTEBOOK_PATH" .ipynb)_${EXECUTION_NAME}.ipynb"
-papermill $NOTEBOOK_PATH $EXECUTED_NOTEBOOK -y "config: $YAML_PARAMS" -y"docs_dir: docs" -k my-poetry-env
+# Parse the executed notebook for errors
+if grep -qE '"ename":|Traceback|ERROR|E ' $EXECUTED_NOTEBOOK; then
+    echo -e "\033[31mError: Notebook execution failed. See $EXECUTED_NOTEBOOK for details.\033[0m"
+    exit 1
+fi
 
-# Step 2: Convert the executed notebook to the specified format
+# Convert the executed notebook to the specified format
 jupyter nbconvert --to $OUTPUT_FORMAT $EXECUTED_NOTEBOOK --output-dir $OUTPUT_FOLDER
 
