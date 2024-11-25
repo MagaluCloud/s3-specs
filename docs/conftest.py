@@ -159,6 +159,22 @@ def versioned_bucket_with_one_object(s3_client, lock_mode):
         print(f"Cleanup error {e}")
 
 @pytest.fixture
+def bucket_with_one_object_and_lock_enabled(s3_client, lock_mode, versioned_bucket_with_one_object):
+    bucket_name, object_key, object_version = versioned_bucket_with_one_object
+    # Enable bucket lock configuration if not already set
+    s3_client.put_object_lock_configuration(
+        Bucket=bucket_name,
+        ObjectLockConfiguration={
+            'ObjectLockEnabled': 'Enabled',
+        }
+    )
+    logging.info(f"Object lock configuration enabled for bucket: {bucket_name}")
+
+    # Yield details to tests
+    yield bucket_name, object_key, object_version
+
+
+@pytest.fixture
 def lockeable_bucket_name(s3_client, lock_mode):
     """
     Fixture to create a versioned bucket for tests that will set default bucket object-lock configurations.
@@ -217,9 +233,5 @@ def bucket_with_lock(lockeable_bucket_name, s3_client, lock_mode):
 
     logging.info(f"Bucket '{bucket_name}' configured with Object Lock and default retention.")
 
+    # Yield the bucket name for tests
     yield bucket_name
-
-    # TBD teardown
-
-
-

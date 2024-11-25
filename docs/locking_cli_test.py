@@ -18,12 +18,14 @@ config = "../params/aws-east-1.yaml"
 # -
 
 # + {"jupyter": {"source_hidden": true}}
+import boto3
 import pytest
 import logging
 import subprocess
 import json
 from shlex import split, quote
 from s3_helpers import run_example, get_spec_path
+from datetime import datetime, timedelta, timezone
 # -
 
 # ## Exemplos
@@ -51,19 +53,6 @@ def test_set_bucket_default_lock(cmd_template, active_mgc_workspace, mgc_path, l
 
 run_example(__name__, "test_set_bucket_default_lock", config=config)
 
-# #### Bucket com trava para utilizar nos próximos exemplos
-
-@pytest.fixture
-def bucket_with_lock(lockeable_bucket_name, mgc_path, active_mgc_workspace):
-    bucket_name = lockeable_bucket_name
-    cmd = split(
-        f"{mgc_path} object buckets object-lock set {bucket_name} --days 1"
-    )
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    assert result.returncode == 0, f"Command failed with error: {result.stderr}"
-
-    return bucket_name
-
 # ### Consultar a configuração de locking em um bucket
 #
 # Na mgc cli, o comando para consultar os parametros do locking padrão de um bucket é o
@@ -82,13 +71,53 @@ def test_get_bucket_default_lock(cmd_template, active_mgc_workspace, mgc_path, b
 
 run_example(__name__, "test_get_bucket_default_lock", config=config)
 
-
-# ### Soft delete vs permanent delete
+# ### Configurar uma trava em apenas um objeto específico
 #
-# Em um bucket com regra de object-lock, deletes simples ainda são permitidos,
-# por conta do bucket ser versionado estes não destroem dados, apenas adicionam
-# uma marca (delete marker). Já tentativas de deletar uma versão específica
-# de um objeto (permanent delete) são barradas pela trava.
+# Para setar uma regra de retenção a apenas um objeto em específico, utilize
+# o comando `object-storage objects object-lock set`, exemplos:
+
+commands = [
+    "{mgc_path} object-storage objects object-lock set {bucket_name}/{object_key} --retain-until-date={retain_until_date}",
+]
+
+@pytest.mark.parametrize("cmd_template", commands)
+def test_set_object_lock(cmd_template, active_mgc_workspace, mgc_path, bucket_with_one_object_and_lock_enabled, s3_client):
+    # Set the retain-until date 24 hours from now
+    retain_until_date = (datetime.now(timezone.utc) + timedelta(days=1)).strftime("%Y-%m-%d")
+
+
+    # Unpack bucket name, object key, and version from fixture
+    bucket_name, object_key, object_version = bucket_with_one_object_and_lock_enabled
+
+    # Format the CLI command
+    cmd = split(cmd_template.format(
+        mgc_path=mgc_path,
+        bucket_name=bucket_name,
+        object_key=object_key,
+        retain_until_date=retain_until_date
+    ))
+
+    # Run the CLI command
+    result = subprocess.run(cmd, capture_output=True, text=True)
+
+    # Ensure the command executed successfully
+    assert result.returncode == 0, f"Command failed with error: {result.stderr}"
+    logging.info(f"Output from {cmd_template}: {result.stdout}")
+
+    # Verify the object lock configuration using the s3_client fixture
+    response = s3_client.head_object(Bucket=bucket_name, Key=object_key)
+
+    # Ensure the object lock configuration matches the expected retain-until date
+    assert 'ObjectLockRetainUntilDate' in response, "Object lock configuration not found in object metadata"
+    returned_date = response['ObjectLockRetainUntilDate'].date().isoformat()
+    assert returned_date == retain_until_date, (
+        f"Expected retain-until-date {retain_until_date}, but got {returned_date.isoformat()}"
+    )
+
+    logging.info("Object lock configuration verified successfully.")
+
+run_example(__name__, "test_set_bucket_default_lock", config=config)
+
 
 # #### Bucket versionado, com trava e um object para utilizar nos próximos exemplos
 
@@ -114,6 +143,31 @@ def bucket_with_lock_and_object(active_mgc_workspace, mgc_path, bucket_with_lock
     object_version = versions_output[0].get("VersionID")
 
     return bucket_name, object_key, object_version
+
+# ### Consultar a trava de um objeto específico
+#
+# Na mgc cli, o comando para consultar os parametros do locking de um bucket é o
+# `objects object-lock get`, exemplo:
+
+commands = [
+    "{mgc_path} object-storage objects object-lock get {bucket_name}/{object_key}",
+]
+
+@pytest.mark.parametrize("cmd_template", commands)
+def test_get_object_lock(cmd_template, active_mgc_workspace, mgc_path, bucket_with_lock_and_object):
+    bucket_name, object_key, _ = bucket_with_lock_and_object
+    cmd = split(cmd_template.format(mgc_path=mgc_path, bucket_name=bucket_name, object_key=object_key))
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    assert result.returncode == 0, f"Command failed with error: {result.stderr}"
+    logging.info(f"Output from {cmd_template}: {result.stdout}")
+
+run_example(__name__, "test_get_object_lock", config=config)
+# ### Soft delete vs permanent delete
+#
+# Em um bucket com regra de object-lock, deletes simples ainda são permitidos,
+# por conta do bucket ser versionado estes não destroem dados, apenas adicionam
+# uma marca (delete marker). Já tentativas de deletar uma versão específica
+# de um objeto (permanent delete) são barradas pela trava.
 
 # #### Soft delete
 #
