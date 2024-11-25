@@ -40,7 +40,7 @@ from s3_helpers import (
     generate_unique_bucket_name,
     create_bucket_and_wait,
     put_object_and_wait,
-    teardown_versioned_bucket_with_lock_config,
+    cleanup_old_buckets,
 )
 config = os.getenv("CONFIG", config)
 # -
@@ -105,7 +105,7 @@ def versioned_bucket_with_lock_config(s3_client, lock_mode):
     yield bucket_name, first_object_key, second_object_key, first_version_id, second_version_id, pre_lock_content, post_lock_content
 
     # cleanup whatever is possible given the lock mode
-    teardown_versioned_bucket_with_lock_config(s3_client, bucket_name, lock_mode)
+    cleanup_old_buckets(s3_client, bucket_name, lock_mode)
 # -
 
 # ### Remoção de objetos em um bucket com lock configuration
