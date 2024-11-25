@@ -1,6 +1,5 @@
 import os
 import boto3
-import botocore
 import pytest
 import time
 import yaml
@@ -15,6 +14,8 @@ from s3_helpers import (
     cleanup_old_buckets,
 )
 from datetime import datetime, timedelta
+from botocore.exceptions import ClientError
+
 
 def pytest_addoption(parser):
     parser.addoption("--config", action="store", help="Path to the YAML config file")
@@ -233,5 +234,29 @@ def bucket_with_lock(lockeable_bucket_name, s3_client, lock_mode):
 
     logging.info(f"Bucket '{bucket_name}' configured with Object Lock and default retention.")
 
-    # Yield the bucket name for tests
-    yield bucket_name
+    return bucket_name
+
+@pytest.fixture
+def bucket_with_lock_and_object(s3_client, bucket_with_lock):
+    """
+    Prepares an S3 bucket with object locking enabled and uploads a dynamically
+    generated object with versioning.
+
+    :param s3_client: boto3 S3 client fixture.
+    :param bucket_with_lock: Name of the bucket with versioning and object locking enabled.
+    :return: Tuple of (bucket_name, object_key, object_version).
+    """
+    bucket_name = bucket_with_lock
+    object_key = "test-object.txt"
+    object_content = "This is a dynamically generated object for testing."
+
+    # Upload the generated object to the bucket
+    response = s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=object_content)
+    object_version = response.get("VersionId")
+
+    # Verify that the object is uploaded and has a version ID
+    if not object_version:
+        pytest.fail("Uploaded object does not have a version ID")
+
+    # Return bucket name, object key, and version ID
+    return bucket_name, object_key, object_version

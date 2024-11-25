@@ -19,7 +19,7 @@ def get_spec_path():
         return str(ipynbname.path())
     except Exception:
         # fallback to local path
-        return "."
+        return "./"
 
 def run_example(dunder_name, test_name, config="../params.example.yaml"):
     if dunder_name == "__main__":

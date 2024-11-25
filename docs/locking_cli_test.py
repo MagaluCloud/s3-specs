@@ -23,6 +23,7 @@ import pytest
 import logging
 import subprocess
 import json
+import os
 from shlex import split, quote
 from s3_helpers import run_example, get_spec_path
 from datetime import datetime, timedelta, timezone
@@ -41,6 +42,7 @@ commands = [
     "{mgc_path} os buckets object-lock set --dst {bucket_name} --days {days}",
 ]
 
+# + {"jupyter": {"source_hidden": true}}
 @pytest.mark.parametrize("cmd_template", commands)
 def test_set_bucket_default_lock(cmd_template, active_mgc_workspace, mgc_path, lockeable_bucket_name):
     days = "1"
@@ -52,6 +54,7 @@ def test_set_bucket_default_lock(cmd_template, active_mgc_workspace, mgc_path, l
     logging.info(f"Output from {cmd_template}: {result.stdout}")
 
 run_example(__name__, "test_set_bucket_default_lock", config=config)
+# -
 
 # ### Consultar a configuração de locking em um bucket
 #
@@ -62,6 +65,7 @@ commands = [
     "{mgc_path} object-storage buckets object-lock get {bucket_name}",
 ]
 
+# + {"jupyter": {"source_hidden": true}}
 @pytest.mark.parametrize("cmd_template", commands)
 def test_get_bucket_default_lock(cmd_template, active_mgc_workspace, mgc_path, bucket_with_lock):
     cmd = split(cmd_template.format(mgc_path=mgc_path, bucket_name=bucket_with_lock))
@@ -70,6 +74,7 @@ def test_get_bucket_default_lock(cmd_template, active_mgc_workspace, mgc_path, b
     logging.info(f"Output from {cmd_template}: {result.stdout}")
 
 run_example(__name__, "test_get_bucket_default_lock", config=config)
+# -
 
 # ### Configurar uma trava em apenas um objeto específico
 #
@@ -80,6 +85,7 @@ commands = [
     "{mgc_path} object-storage objects object-lock set {bucket_name}/{object_key} --retain-until-date={retain_until_date}",
 ]
 
+# + {"jupyter": {"source_hidden": true}}
 @pytest.mark.parametrize("cmd_template", commands)
 def test_set_object_lock(cmd_template, active_mgc_workspace, mgc_path, bucket_with_one_object_and_lock_enabled, s3_client):
     # Set the retain-until date 24 hours from now
@@ -117,32 +123,7 @@ def test_set_object_lock(cmd_template, active_mgc_workspace, mgc_path, bucket_wi
     logging.info("Object lock configuration verified successfully.")
 
 run_example(__name__, "test_set_bucket_default_lock", config=config)
-
-
-# #### Bucket versionado, com trava e um object para utilizar nos próximos exemplos
-
-@pytest.fixture
-def bucket_with_lock_and_object(active_mgc_workspace, mgc_path, bucket_with_lock):
-    bucket_name = bucket_with_lock
-    object_key = "key1"
-    src = f"{get_spec_path()}/index.md"
-    dst = f"{bucket_name}/{object_key}"
-
-    # Upload a file to the versioned bucket
-    cmd_str = f"{mgc_path} object-storage objects upload {src} {dst}"
-    result = subprocess.run(split(cmd_str), capture_output=True, text=True)
-    assert result.returncode == 0, f"Command failed with error: {result.stderr}"
-
-    # List the object versions
-    cmd_str = f"{mgc_path} object-storage objects versions {dst} --raw"
-    result = subprocess.run(split(cmd_str), capture_output=True, text=True)
-    assert result.returncode == 0, f"Command failed with error: {result.stderr}"
-
-    # Retrieve the only version id in the list
-    versions_output = json.loads(result.stdout)
-    object_version = versions_output[0].get("VersionID")
-
-    return bucket_name, object_key, object_version
+# -
 
 # ### Consultar a trava de um objeto específico
 #
@@ -153,6 +134,7 @@ commands = [
     "{mgc_path} object-storage objects object-lock get {bucket_name}/{object_key}",
 ]
 
+# + {"jupyter": {"source_hidden": true}}
 @pytest.mark.parametrize("cmd_template", commands)
 def test_get_object_lock(cmd_template, active_mgc_workspace, mgc_path, bucket_with_lock_and_object):
     bucket_name, object_key, _ = bucket_with_lock_and_object
@@ -162,6 +144,8 @@ def test_get_object_lock(cmd_template, active_mgc_workspace, mgc_path, bucket_wi
     logging.info(f"Output from {cmd_template}: {result.stdout}")
 
 run_example(__name__, "test_get_object_lock", config=config)
+# -
+
 # ### Soft delete vs permanent delete
 #
 # Em um bucket com regra de object-lock, deletes simples ainda são permitidos,
@@ -179,6 +163,7 @@ commands = [
 
 # É esperado que o comando de delete comum (soft delete, sem version) retorne sucesso.
 
+# + {"jupyter": {"source_hidden": true}}
 @pytest.mark.parametrize("cmd_template", commands)
 def test_simple_delete_object_on_locked_bucket(cmd_template, active_mgc_workspace, mgc_path, bucket_with_lock_and_object):
     bucket_name, object_key, _ = bucket_with_lock_and_object
@@ -189,6 +174,7 @@ def test_simple_delete_object_on_locked_bucket(cmd_template, active_mgc_workspac
     logging.info(f"Output from {cmd}: {result.stdout}")
 
 run_example(__name__, "test_simple_delete_object_on_locked_bucket", config=config)
+# -
 
 # #### Permanent delete
 #
@@ -201,6 +187,7 @@ commands = [
 
 # É esperado que a versão do objeto continue presente mesmo após um comando de permanent delete (delete version)
 
+# + {"jupyter": {"source_hidden": true}}
 @pytest.mark.parametrize("cmd_template", commands)
 def test_permanent_delete_object_on_locked_bucket(cmd_template, active_mgc_workspace, mgc_path, bucket_with_lock_and_object):
     bucket_name, object_key, object_version = bucket_with_lock_and_object
@@ -217,3 +204,4 @@ def test_permanent_delete_object_on_locked_bucket(cmd_template, active_mgc_works
     assert object_version in result.stdout, "Unexpected output: {result.stdout}"
 
 run_example(__name__, "test_permanent_delete_object_on_locked_bucket", config=config)
+# -
