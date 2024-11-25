@@ -100,7 +100,7 @@ def test_set_object_lock(cmd_template, active_mgc_workspace, mgc_path, bucket_wi
         mgc_path=mgc_path,
         bucket_name=bucket_name,
         object_key=object_key,
-        retain_until_date=retain_until_date
+        retain_until_date=retain_until_date,
     ))
 
     # Run the CLI command
