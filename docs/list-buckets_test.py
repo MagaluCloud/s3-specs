@@ -14,16 +14,17 @@
 
 # + tags=["parameters"]
 config = "../params/br-ne1.yaml"
-docs_dir = "."
 # -
 
-# +
+# + {"jupyter": {"source_hidden": true}}
+import pytest
 import random
+import os
 import logging
 import subprocess
-import pytest
 from shlex import split, quote
 from s3_helpers import run_example
+config = os.getenv("CONFIG", config)
 # -
 
 # ## Exemplos
@@ -48,7 +49,9 @@ def test_boto_list_buckets(s3_client, profile_name):
         assert isinstance(bucket_name, str) and bucket_name, "Expected bucket name to be a non-empty string."
         logging.info(f"One of those buckets is named {random.choice(buckets).get('Name')}")
 
-run_example(__name__, "list-buckets", "test_boto_list_buckets", config=config, docs_dir=docs_dir)
+run_example(__name__, "test_boto_list_buckets", config=config)
+
+
 # -
 # ### Rclone e AWS CLI
 #
@@ -72,7 +75,7 @@ def test_cli_list_buckets(cmd_template, profile_name):
     assert result.returncode == 0, f"Command failed with error: {result.stderr}"
     logging.info(f"Output from {cmd_template}: {result.stdout}")
 
-run_example(__name__, "list-buckets", "test_cli_list_buckets", config=config, docs_dir=docs_dir)
+run_example(__name__, "test_cli_list_buckets", config=config)
 # -
 
 # ## Referências

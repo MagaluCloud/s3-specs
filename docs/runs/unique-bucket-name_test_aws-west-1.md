@@ -5,15 +5,6 @@ Buckets can be created with the **create_bucket** method on **boto3**, and are e
 
 ```python
 config = "../params/br-ne1.yaml"
-docs_dir = "."
-```
-
-
-```python
-# Parameters
-config = "params/aws-west-1.yaml"
-docs_dir = "docs"
-
 ```
 
 
@@ -21,7 +12,9 @@ docs_dir = "docs"
 import pytest
 import botocore
 import logging
+import os
 from s3_helpers import run_example, create_bucket
+config = os.getenv("CONFIG", config)
 ```
 
 ## Examples
@@ -49,37 +42,14 @@ def test_create_bucket(s3_client, bucket_name):
     waiter.wait(Bucket=bucket_name)
     logging.info(f"Bucket '{bucket_name}' confirmed as created.")
 
-run_example(__name__, "unique-bucket-name", "test_create_bucket", config=config, docs_dir=docs_dir)
+run_example(__name__, "test_create_bucket", config=config)
 ```
 
-    
-    docs/unique-bucket-name_test.py::test_create_bucket 
+    .
+
+                                                                            [100%]
 
     
-    -------------------------------- live log setup --------------------------------
-    INFO     botocore.credentials:credentials.py:1278 Found credentials in shared credentials file: ~/.aws/credentials
-
-
-    -------------------------------- live log call ---------------------------------
-    INFO     root:unique-bucket-name_test.py:43 Bucket creation initiated.
-
-
-    INFO     root:unique-bucket-name_test.py:46 Created with Location: http://test-create-bucket-5e9324.s3.amazonaws.com/
-
-
-    INFO     root:unique-bucket-name_test.py:51 Bucket 'test-create-bucket-5e9324' confirmed as created.
-
-
-    PASSED
-
-    
-    ------------------------------ live log teardown -------------------------------
-    INFO     root:s3_helpers.py:36 Bucket 'test-create-bucket-5e9324' confirmed as deleted.
-
-
-    
-    
-    ============================== 1 passed in 2.59s ===============================
 
 
 ### Create the same bucket
@@ -104,37 +74,14 @@ def test_create_same_bucket(s3_client, existing_bucket_name):
     assert error_code in ["BucketAlreadyOwnedByYou", "BucketAlreadyExists"], f"Expected BucketAlreadyOwnedByYou, got {error_code}"
     logging.info(f"Bucket '{existing_bucket_name}' already exists, as expected.")
 
-run_example(__name__, "unique-bucket-name", "test_create_same_bucket", config=config, docs_dir=docs_dir)
+run_example(__name__, "test_create_same_bucket", config=config)
 ```
 
-    
-    docs/unique-bucket-name_test.py::test_create_same_bucket 
+    .
+
+                                                                            [100%]
 
     
-    -------------------------------- live log setup --------------------------------
-    INFO     botocore.credentials:credentials.py:1278 Found credentials in shared credentials file: ~/.aws/credentials
-
-
-    INFO     root:s3_helpers.py:58 Bucket 'existing-bucket-a10848' confirmed as created.
-
-
-    -------------------------------- live log call ---------------------------------
-    INFO     root:unique-bucket-name_test.py:62 existing-bucket-a10848
-
-
-    INFO     root:unique-bucket-name_test.py:76 Bucket 'existing-bucket-a10848' already exists, as expected.
-
-
-    PASSED
-
-    
-    ------------------------------ live log teardown -------------------------------
-    INFO     root:s3_helpers.py:36 Bucket 'existing-bucket-a10848' confirmed as deleted.
-
-
-    
-    
-    ============================== 1 passed in 2.82s ===============================
 
 
 ## References

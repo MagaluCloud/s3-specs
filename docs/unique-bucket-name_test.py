@@ -14,14 +14,15 @@
 
 # + tags=["parameters"]
 config = "../params/br-ne1.yaml"
-docs_dir = "."
 # -
 
-# +
+# + {"jupyter": {"source_hidden": true}}
 import pytest
 import botocore
 import logging
+import os
 from s3_helpers import run_example, create_bucket
+config = os.getenv("CONFIG", config)
 # -
 
 
@@ -50,7 +51,7 @@ def test_create_bucket(s3_client, bucket_name):
     waiter.wait(Bucket=bucket_name)
     logging.info(f"Bucket '{bucket_name}' confirmed as created.")
 
-run_example(__name__, "unique-bucket-name", "test_create_bucket", config=config, docs_dir=docs_dir)
+run_example(__name__, "test_create_bucket", config=config)
 # -
 
 
@@ -75,7 +76,7 @@ def test_create_same_bucket(s3_client, existing_bucket_name):
     assert error_code in ["BucketAlreadyOwnedByYou", "BucketAlreadyExists"], f"Expected BucketAlreadyOwnedByYou, got {error_code}"
     logging.info(f"Bucket '{existing_bucket_name}' already exists, as expected.")
 
-run_example(__name__, "unique-bucket-name", "test_create_same_bucket", config=config, docs_dir=docs_dir)
+run_example(__name__, "test_create_same_bucket", config=config)
 # -
 
 

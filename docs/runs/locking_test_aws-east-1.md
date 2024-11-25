@@ -11,20 +11,12 @@ garantir uma proteção extra contra modificações ou exclusão.
 
 ```python
 config = "../params/aws-east-1.yaml"
-docs_dir = "."
-```
-
-
-```python
-# Parameters
-config = "params/aws-east-1.yaml"
-docs_dir = "docs"
-
 ```
 
 
 ```python
 import boto3
+import os
 import botocore
 import pytest
 import logging
@@ -37,6 +29,7 @@ from s3_helpers import (
     put_object_and_wait,
     teardown_versioned_bucket_with_lock_config,
 )
+config = os.getenv("CONFIG", config)
 ```
 
 ### Configuração de Object Locking em Bucket Versionado
@@ -129,61 +122,14 @@ def test_simple_delete_with_lock(versioned_bucket_with_lock_config, s3_client):
     assert response_status == 204, "Expected HTTPStatusCode 204 for successful simple delete."
     logging.info(f"Simple delete (delete marker) added successfully for object '{second_object_key}'.")
 
-run_example(__name__, "locking", "test_simple_delete_with_lock", config=config, docs_dir=docs_dir)
+run_example(__name__, "test_simple_delete_with_lock", config=config)
 ```
 
-    
-    docs/locking_test.py::test_simple_delete_with_lock 
+    .
+
+                                                                            [100%]
 
     
-    -------------------------------- live log setup --------------------------------
-    INFO     botocore.credentials:credentials.py:1278 Found credentials in shared credentials file: ~/.aws/credentials
-
-
-    INFO     botocore.configprovider:configprovider.py:974 Found endpoint for s3 via: config_global.
-
-
-    INFO     root:s3_helpers.py:58 Bucket 'versioned-bucket-with-lock-0bd78c' confirmed as created.
-
-
-    INFO     root:s3_helpers.py:79 Object 'pre-lock-object.txt' in bucket 'versioned-bucket-with-lock-0bd78c' confirmed as uploaded.
-
-
-    INFO     root:locking_test.py:90 Bucket 'versioned-bucket-with-lock-0bd78c' locked with mode GOVERNANCE. Status: 200
-
-
-    INFO     root:s3_helpers.py:79 Object 'post-lock-object.txt' in bucket 'versioned-bucket-with-lock-0bd78c' confirmed as uploaded.
-
-
-    INFO     root:locking_test.py:96 Uploaded post-lock object: versioned-bucket-with-lock-0bd78c/post-lock-object.txt with version ID 9i.umVj7L1Q3mcscpvLXeoYSGj95qOG0
-
-
-    -------------------------------- live log call ---------------------------------
-    INFO     root:locking_test.py:117 Attempting simple delete (delete marker) on pre-lock object: versioned-bucket-with-lock-0bd78c/pre-lock-object.txt
-
-
-    INFO     root:locking_test.py:121 Simple delete (delete marker) added successfully for object 'pre-lock-object.txt'.
-
-
-    INFO     root:locking_test.py:124 Attempting simple delete (delete marker) on object: versioned-bucket-with-lock-0bd78c/post-lock-object.txt
-
-
-    INFO     root:locking_test.py:128 Simple delete (delete marker) added successfully for object 'post-lock-object.txt'.
-
-
-    PASSED
-
-    
-    ------------------------------ live log teardown -------------------------------
-    INFO     root:s3_helpers.py:113 Deleting objects in 'versioned-bucket-with-lock-0bd78c' with BypassGovernanceRetention.
-
-
-    INFO     root:s3_helpers.py:133 Deleting bucket: versioned-bucket-with-lock-0bd78c
-
-
-    
-    
-    ============================== 1 passed in 5.55s ===============================
 
 
 #### Permanent Delete
@@ -214,55 +160,14 @@ def test_delete_object_after_locking(versioned_bucket_with_lock_config, s3_clien
     assert error_code == "AccessDenied", f"Expected AccessDenied, got {error_code}"
     logging.info(f"Permanent deletion blocked as expected for new locked object '{second_object_key}' with version ID {second_version_id}")
 
-run_example(__name__, "locking", "test_delete_object_after_locking", config=config, docs_dir=docs_dir)
+run_example(__name__, "test_delete_object_after_locking", config=config)
 ```
 
-    
-    docs/locking_test.py::test_delete_object_after_locking 
+    .
+
+                                                                            [100%]
 
     
-    -------------------------------- live log setup --------------------------------
-    INFO     botocore.credentials:credentials.py:1278 Found credentials in shared credentials file: ~/.aws/credentials
-
-
-    INFO     botocore.configprovider:configprovider.py:974 Found endpoint for s3 via: config_global.
-
-
-    INFO     root:s3_helpers.py:58 Bucket 'versioned-bucket-with-lock-0699a3' confirmed as created.
-
-
-    INFO     root:s3_helpers.py:79 Object 'pre-lock-object.txt' in bucket 'versioned-bucket-with-lock-0699a3' confirmed as uploaded.
-
-
-    INFO     root:locking_test.py:90 Bucket 'versioned-bucket-with-lock-0699a3' locked with mode GOVERNANCE. Status: 200
-
-
-    INFO     root:s3_helpers.py:79 Object 'post-lock-object.txt' in bucket 'versioned-bucket-with-lock-0699a3' confirmed as uploaded.
-
-
-    INFO     root:locking_test.py:96 Uploaded post-lock object: versioned-bucket-with-lock-0699a3/post-lock-object.txt with version ID FR3qLus16va6YAkTF97C1Bmrt.lFfwoD
-
-
-    -------------------------------- live log call ---------------------------------
-    INFO     root:locking_test.py:149 delete response status: 204
-
-
-    INFO     root:locking_test.py:158 Permanent deletion blocked as expected for new locked object 'post-lock-object.txt' with version ID FR3qLus16va6YAkTF97C1Bmrt.lFfwoD
-
-
-    PASSED
-
-    
-    ------------------------------ live log teardown -------------------------------
-    INFO     root:s3_helpers.py:113 Deleting objects in 'versioned-bucket-with-lock-0699a3' with BypassGovernanceRetention.
-
-
-    INFO     root:s3_helpers.py:133 Deleting bucket: versioned-bucket-with-lock-0699a3
-
-
-    
-    
-    ============================== 1 passed in 4.56s ===============================
 
 
 ### Conferindo a existência de uma configuração de tranca no bucket
@@ -282,55 +187,14 @@ def test_verify_object_lock_configuration(versioned_bucket_with_lock_config, s3_
     assert applied_config["ObjectLockConfiguration"]["Rule"]["DefaultRetention"]["Mode"] == lock_mode, f"Expected retention mode to be {lock_mode}."
     assert applied_config["ObjectLockConfiguration"]["Rule"]["DefaultRetention"]["Days"] == 1, "Expected retention period of 1 day."
     logging.info("Verified that Object Lock configuration was applied as expected.")
-run_example(__name__, "locking", "test_verify_object_lock_configuration", config=config, docs_dir=docs_dir)
+run_example(__name__, "test_verify_object_lock_configuration", config=config)
 ```
 
-    
-    docs/locking_test.py::test_verify_object_lock_configuration 
+    .
+
+                                                                            [100%]
 
     
-    -------------------------------- live log setup --------------------------------
-    INFO     botocore.credentials:credentials.py:1278 Found credentials in shared credentials file: ~/.aws/credentials
-
-
-    INFO     botocore.configprovider:configprovider.py:974 Found endpoint for s3 via: config_global.
-
-
-    INFO     root:s3_helpers.py:58 Bucket 'versioned-bucket-with-lock-8e44e3' confirmed as created.
-
-
-    INFO     root:s3_helpers.py:79 Object 'pre-lock-object.txt' in bucket 'versioned-bucket-with-lock-8e44e3' confirmed as uploaded.
-
-
-    INFO     root:locking_test.py:90 Bucket 'versioned-bucket-with-lock-8e44e3' locked with mode GOVERNANCE. Status: 200
-
-
-    INFO     root:s3_helpers.py:79 Object 'post-lock-object.txt' in bucket 'versioned-bucket-with-lock-8e44e3' confirmed as uploaded.
-
-
-    INFO     root:locking_test.py:96 Uploaded post-lock object: versioned-bucket-with-lock-8e44e3/post-lock-object.txt with version ID ludgNyKpQWA_yx7s9A8lRKKH9mv04gq0
-
-
-    -------------------------------- live log call ---------------------------------
-    INFO     root:locking_test.py:174 Retrieving Object Lock configuration from bucket...
-
-
-    INFO     root:locking_test.py:179 Verified that Object Lock configuration was applied as expected.
-
-
-    PASSED
-
-    
-    ------------------------------ live log teardown -------------------------------
-    INFO     root:s3_helpers.py:113 Deleting objects in 'versioned-bucket-with-lock-8e44e3' with BypassGovernanceRetention.
-
-
-    INFO     root:s3_helpers.py:133 Deleting bucket: versioned-bucket-with-lock-8e44e3
-
-
-    
-    
-    ============================== 1 passed in 4.22s ===============================
 
 
 ### Conferindo a politica de retenção de objetos específicos
@@ -365,67 +229,14 @@ def test_verify_object_retention(versioned_bucket_with_lock_config, s3_client, l
     assert head_response['ObjectLockMode'] == lock_mode, f"Expected lock mode to be {lock_mode}"
     logging.info(f"Retention verified as applied with mode {head_response['ObjectLockMode']} "
           f"and retain until {head_response['ObjectLockRetainUntilDate']}.")
-run_example(__name__, "locking", "test_verify_object_retention", config=config, docs_dir=docs_dir)
+run_example(__name__, "test_verify_object_retention", config=config,)
 ```
 
-    
-    docs/locking_test.py::test_verify_object_retention 
+    .
+
+                                                                            [100%]
 
     
-    -------------------------------- live log setup --------------------------------
-    INFO     botocore.credentials:credentials.py:1278 Found credentials in shared credentials file: ~/.aws/credentials
-
-
-    INFO     botocore.configprovider:configprovider.py:974 Found endpoint for s3 via: config_global.
-
-
-    INFO     root:s3_helpers.py:58 Bucket 'versioned-bucket-with-lock-68272c' confirmed as created.
-
-
-    INFO     root:s3_helpers.py:79 Object 'pre-lock-object.txt' in bucket 'versioned-bucket-with-lock-68272c' confirmed as uploaded.
-
-
-    INFO     root:locking_test.py:90 Bucket 'versioned-bucket-with-lock-68272c' locked with mode GOVERNANCE. Status: 200
-
-
-    INFO     root:s3_helpers.py:79 Object 'post-lock-object.txt' in bucket 'versioned-bucket-with-lock-68272c' confirmed as uploaded.
-
-
-    INFO     root:locking_test.py:96 Uploaded post-lock object: versioned-bucket-with-lock-68272c/post-lock-object.txt with version ID AZEkTX3OQG43LNOnXau8CTqY2tgk1_5X
-
-
-    -------------------------------- live log call ---------------------------------
-    INFO     root:locking_test.py:194 Fetching data of the pre-existing object with a head request...
-
-
-    INFO     root:locking_test.py:198 Retention data not present on the pre-existing object as expected.
-
-
-    INFO     root:locking_test.py:201 Retrieving object retention details...
-
-
-    INFO     root:locking_test.py:204 Retention verified as applied with mode GOVERNANCE and retain until 2024-11-07 18:11:59.679000+00:00.
-
-
-    INFO     root:locking_test.py:208 Fetching data of the new object with a head request...
-
-
-    INFO     root:locking_test.py:212 Retention verified as applied with mode GOVERNANCE and retain until 2024-11-07 18:11:59.679000+00:00.
-
-
-    PASSED
-
-    
-    ------------------------------ live log teardown -------------------------------
-    INFO     root:s3_helpers.py:113 Deleting objects in 'versioned-bucket-with-lock-68272c' with BypassGovernanceRetention.
-
-
-    INFO     root:s3_helpers.py:133 Deleting bucket: versioned-bucket-with-lock-68272c
-
-
-    
-    
-    ============================== 1 passed in 4.52s ===============================
 
 
 ### Configuração de Object Locking em Bucket Não-Versionado
@@ -460,40 +271,14 @@ def test_configure_bucket_lock_on_regular_bucket(s3_client, existing_bucket_name
     assert "InvalidBucketState" in str(exc_info.value), "Expected InvalidBucketState error not raised."
     logging.info("Correctly raised InvalidBucketState error for non-versioned bucket.")
 
-run_example(__name__, "locking", "test_configure_bucket_lock_on_regular_bucket", config=config, docs_dir=docs_dir)
+run_example(__name__, "test_configure_bucket_lock_on_regular_bucket", config=config)
 ```
 
-    
-    docs/locking_test.py::test_configure_bucket_lock_on_regular_bucket 
+    .
+
+                                                                            [100%]
 
     
-    -------------------------------- live log setup --------------------------------
-    INFO     botocore.credentials:credentials.py:1278 Found credentials in shared credentials file: ~/.aws/credentials
-
-
-    INFO     botocore.configprovider:configprovider.py:974 Found endpoint for s3 via: config_global.
-
-
-    INFO     root:s3_helpers.py:58 Bucket 'existing-bucket-c54418' confirmed as created.
-
-
-    -------------------------------- live log call ---------------------------------
-    INFO     root:locking_test.py:237 Attempting to apply Object Lock configuration on a non-versioned bucket...
-
-
-    INFO     root:locking_test.py:246 Correctly raised InvalidBucketState error for non-versioned bucket.
-
-
-    PASSED
-
-    
-    ------------------------------ live log teardown -------------------------------
-    INFO     root:s3_helpers.py:36 Bucket 'existing-bucket-c54418' confirmed as deleted.
-
-
-    
-    
-    ============================== 1 passed in 2.03s ===============================
 
 
 ## Referências
