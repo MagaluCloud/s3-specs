@@ -23,20 +23,19 @@ def pytest_addoption(parser):
 
 @pytest.fixture
 def test_params(request):
-    # Check for --config parameter from pytest
-    config_path = request.config.getoption("--config")
-    if not config_path:
-        # Fallback to CONFIG_PATH env var
-        config_path = os.environ.get("CONFIG_PATH", "../params.example.yaml")
-
+    """
+    Loads test parameters from a config file or environment variable.
+    """
+    config_path = request.config.getoption("--config") or os.environ.get("CONFIG_PATH", "../params.example.yaml")
     with open(config_path, "r") as f:
-        params = yaml.safe_load(f)
-    return params
+        return yaml.safe_load(f)
 
 @pytest.fixture
 def default_profile(test_params):
-    default_profile_index = test_params.get("default_profile_index", 0)
-    return test_params["profiles"][default_profile_index]
+    """
+    Returns the default profile from test parameters.
+    """
+    return test_params["profiles"][test_params.get("default_profile_index", 0)]
 
 @pytest.fixture
 def lock_mode(default_profile):
@@ -53,19 +52,12 @@ def profile_name(default_profile):
 @pytest.fixture
 def mgc_path(default_profile):
     """
-    Retrieves the path to the 'mgc' binary from the default profile and ensures
-    the path points to an existing file.
-
-    :param default_profile: Dictionary containing default profile settings.
-    :return: Path to the 'mgc' binary.
-    :raises pytest.fail: If the path does not point to an existing file.
+    Validates and returns the path to the 'mgc' binary.
     """
-    spec_dir = os.path.dirname(get_spec_path())  # Base directory for the spec
+    spec_dir = os.path.dirname(get_spec_path())
     path = os.path.join(spec_dir, default_profile.get("mgc_path", "mgc"))
-
     if not os.path.isfile(path):
         pytest.fail(f"The specified mgc_path '{path}' (absolute: {os.path.abspath(path)}) does not exist or is not a file.")
-
     return path
 
 @pytest.fixture
@@ -79,24 +71,18 @@ def active_mgc_workspace(profile_name, mgc_path):
 
 @pytest.fixture
 def s3_client(default_profile):
-
-    # config can have just a profile name and it will use an existing .aws/config and .aws/credentials
-    profile_name = default_profile.get("profile_name", None)
-    if profile_name:
-        session = boto3.Session(profile_name=profile_name)
-        return session.client("s3")
-
-    # or it can have endpoint, region and credentials on the config instead
-    region_name = default_profile.get("region_name")
-    aws_access_key_id = default_profile.get("aws_access_key_id")
-    aws_secret_access_key = default_profile.get("aws_secret_access_key")
-    session = boto3.Session(
-        region_name=region_name,
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key
-    )
-    endpoint_url = default_profile.get("endpoint_url")
-    return session.client("s3", endpoint_url=endpoint_url)
+    """
+    Creates a boto3 S3 client using profile credentials or explicit config.
+    """
+    if "profile_name" in default_profile:
+        session = boto3.Session(profile_name=default_profile["profile_name"])
+    else:
+        session = boto3.Session(
+            region_name=default_profile["region_name"],
+            aws_access_key_id=default_profile["aws_access_key_id"],
+            aws_secret_access_key=default_profile["aws_secret_access_key"],
+        )
+    return session.client("s3", endpoint_url=default_profile.get("endpoint_url"))
 
 @pytest.fixture
 def bucket_name(request, s3_client):
