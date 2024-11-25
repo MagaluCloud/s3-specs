@@ -20,6 +20,7 @@ jupytext = "^1.16.4"
 pytest = "^8.3.3"
 requests = "^2.32.3"
 ipynbname = "^2024.1.0.0"
+pytest-env = "^1.1.5"
 
 [build-system]
 requires = ["poetry-core"]
@@ -30,3 +31,5 @@ formats = "ipynb,py:light"
 
 [tool.pytest.ini_options]
 filterwarnings = "ignore::DeprecationWarning:botocore.auth"
+env = ["JUPYTER_PLATFORM_DIRS=1"]
+
