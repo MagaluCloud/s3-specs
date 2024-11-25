@@ -24,7 +24,7 @@ def get_spec_path():
 def run_example(dunder_name, test_name, config="../params.example.yaml"):
     if dunder_name == "__main__":
         # When executing a notebook pass config path as env var instead of pytest custom arg
-        os.environ["CONFIG_PATH"] = config
+        os.environ["CONFIG_PATH"] = os.environ.get("CONFIG_PATH", config)
 
         # Run pytest without the --config argument
         pytest.main([
