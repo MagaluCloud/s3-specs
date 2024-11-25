@@ -12,6 +12,7 @@ from s3_helpers import (
     delete_object_and_wait,
     put_object_and_wait,
     cleanup_old_buckets,
+    get_spec_path,
 )
 from datetime import datetime, timedelta
 from botocore.exceptions import ClientError
@@ -25,7 +26,7 @@ def test_params(request):
     # Check for --config parameter from pytest
     config_path = request.config.getoption("--config")
     if not config_path:
-        # Fallback to papermill parameter if --config isn't provided
+        # Fallback to CONFIG_PATH env var
         config_path = os.environ.get("CONFIG_PATH", "../params.example.yaml")
 
     with open(config_path, "r") as f:
@@ -51,7 +52,21 @@ def profile_name(default_profile):
 
 @pytest.fixture
 def mgc_path(default_profile):
-    return default_profile.get("mgc_path", "mgc")
+    """
+    Retrieves the path to the 'mgc' binary from the default profile and ensures
+    the path points to an existing file.
+
+    :param default_profile: Dictionary containing default profile settings.
+    :return: Path to the 'mgc' binary.
+    :raises pytest.fail: If the path does not point to an existing file.
+    """
+    spec_dir = os.path.dirname(get_spec_path())  # Base directory for the spec
+    path = os.path.join(spec_dir, default_profile.get("mgc_path", "mgc"))
+
+    if not os.path.isfile(path):
+        pytest.fail(f"The specified mgc_path '{path}' (absolute: {os.path.abspath(path)}) does not exist or is not a file.")
+
+    return path
 
 @pytest.fixture
 def active_mgc_workspace(profile_name, mgc_path):
