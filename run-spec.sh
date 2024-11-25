@@ -16,7 +16,7 @@ OUTPUT_FOLDER="docs/runs"
 # Add docs to the PYTHONPATH
 export PYTHONPATH=$PYTHONPATH:$(pwd)/docs
 export SPEC_PATH=${SPEC_PATH}
-export CONFIG=${YAML_PARAMS}
+export CONFIG_PATH=${YAML_PARAMS}
 
 # Convert .py to .ipynb and execute it
 EXECUTED_NOTEBOOK="/tmp/${SPEC_NAME}_${EXECUTION_NAME}.ipynb"
