@@ -26,6 +26,7 @@ dev = [
     "ipykernel>=6.29.5",
     "jupytext>=1.16.5",
     "nbconvert>=7.16.4",
+    "toml>=0.10.2",
 ]
 
 [tool.pdm.build]
@@ -54,4 +55,20 @@ markers = [
     "rapid: quick expected execution magnitude",
     "regular: regular time expected execution magnitude",
     "slow: slow expected execution magnitude",
+]
+
+[tool.s3-tester]
+markers = [
+  #"Benchmark",
+  "BigBuckets",
+  "BucketManagement",
+  "BucketPermission",
+  "BucketPolicy",
+  "BucketSharing",
+  "BucketTagging",
+  "ObjectLocking",
+  "ObjectManagement",
+  "ObjectVersioning",
+  "ColdStorage",
+  "ServiceAccounts",
 ]
