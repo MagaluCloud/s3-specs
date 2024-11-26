@@ -1,0 +1,16 @@
+# commands like just legacy requires a profile.yaml config file
+# below is an example of the structure of those config files
+# used by the shellspec based tool s3-tester
+profile1:
+  endpoint: ""
+  region: ""
+  access_key: ""
+  secret_key: ""
+  addressing_style: "virtual"
+  max_concurrent_requests: "5"
+profile2:
+  endpoint: ""
+  region: ""
+  access_key: ""
+  secret_key: ""
+  addressing_style: "path"
