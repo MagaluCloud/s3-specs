@@ -6,7 +6,13 @@ impedindo sua modificação ou exclusão durante um período especificado.
 Isto é usado para garantir **conformidade** (compliance) com requisitos legais ou simplesmente
 garantir uma proteção extra contra modificações ou exclusão.
 
-## Exemplos
+## Pontos importantes
+
+- Object Locking só pode ser utilizado em buckets com versionamento habilitado
+- A configuração do periodo de retenção, quando adicionada como regra do bucket, só será aplicada
+em novos objetos, incluidos após a configuração
+- Uma configuração de locking existir, não previne deletes simples (delete marker), pois estes
+não removem dados, a trava é apenas para deletes permanentes (delete com a version ID).
 
 
 ```python
@@ -27,7 +33,7 @@ from s3_helpers import (
     generate_unique_bucket_name,
     create_bucket_and_wait,
     put_object_and_wait,
-    teardown_versioned_bucket_with_lock_config,
+    cleanup_old_buckets,
 )
 config = os.getenv("CONFIG", config)
 ```
@@ -45,25 +51,8 @@ Isto facilitará a demonstração de que regras de retenção do buckect só se 
 
 ```python
 @pytest.fixture
-def versioned_bucket_with_lock_config(s3_client, lock_mode):
-    base_name = "versioned-bucket-with-lock"
-
-    # Clean up old buckets, from past days (we are using 1 day retention, so if the lock mode is not
-    # GOVERNANCE, we are not able to teardown immediately after the test)
-    cleanup_old_buckets(s3_client, base_name)
-
-    # Generate a unique name and create a versioned bucket
-    bucket_name = generate_unique_bucket_name(base_name=base_name)
-    create_bucket_and_wait(s3_client, bucket_name)
-    s3_client.put_bucket_versioning(
-        Bucket=bucket_name,
-        VersioningConfiguration={"Status": "Enabled"}
-    )
-
-    # Upload an initial object before lock configuration
-    first_object_key = "pre-lock-object.txt"
-    pre_lock_content = b"Content for object before lock configuration"
-    first_version_id = put_object_and_wait(s3_client, bucket_name, first_object_key, pre_lock_content)
+def versioned_bucket_with_lock_config(s3_client, versioned_bucket_with_one_object, lock_mode):
+    bucket_name, first_object_key, first_version_id = versioned_bucket_with_one_object
 
     # Configure Object Lock on the bucket
     lock_config = {
@@ -90,10 +79,10 @@ def versioned_bucket_with_lock_config(s3_client, lock_mode):
     logging.info(f"Uploaded post-lock object: {bucket_name}/{second_object_key} with version ID {second_version_id}")
 
     # Yield details for tests to use
-    yield bucket_name, first_object_key, second_object_key, first_version_id, second_version_id, pre_lock_content, post_lock_content
+    yield bucket_name, first_object_key, second_object_key, first_version_id, second_version_id
 
     # cleanup whatever is possible given the lock mode
-    teardown_versioned_bucket_with_lock_config(s3_client, bucket_name, lock_mode)
+    cleanup_old_buckets(s3_client, bucket_name, lock_mode)
 ```
 
 ### Remoção de objetos em um bucket com lock configuration
@@ -106,7 +95,7 @@ possui ou não uma configuração de locking.
 
 ```python
 def test_simple_delete_with_lock(versioned_bucket_with_lock_config, s3_client):
-    bucket_name, first_object_key, second_object_key, _, _, _, _ = versioned_bucket_with_lock_config
+    bucket_name, first_object_key, second_object_key, _, _ = versioned_bucket_with_lock_config
 
     # Simple delete (without specifying VersionId), adding a delete marker
     logging.info(f"Attempting simple delete (delete marker) on pre-lock object: {bucket_name}/{first_object_key}")
@@ -130,6 +119,20 @@ run_example(__name__, "test_simple_delete_with_lock", config=config)
                                                                             [100%]
 
     
+    =============================== warnings summary ===============================
+    docs/locking_test.py::test_simple_delete_with_lock
+    docs/locking_test.py::test_simple_delete_with_lock
+    docs/locking_test.py::test_simple_delete_with_lock
+      /home/fcz/.cache/pypoetry/virtualenvs/s3-specs-AMMitg26-py3.12/lib/python3.12/site-packages/botocore/endpoint.py:170: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+        response_received_timestamp = datetime.datetime.utcnow()
+    
+    docs/locking_test.py::test_simple_delete_with_lock
+    docs/locking_test.py::test_simple_delete_with_lock
+    docs/locking_test.py::test_simple_delete_with_lock
+      /home/fcz/.cache/pypoetry/virtualenvs/s3-specs-AMMitg26-py3.12/lib/python3.12/site-packages/botocore/endpoint.py:153: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+        local_timestamp = datetime.datetime.utcnow()
+    
+    -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 
 
 #### Permanent Delete
@@ -144,7 +147,7 @@ permanentemente.
 
 ```python
 def test_delete_object_after_locking(versioned_bucket_with_lock_config, s3_client):
-    bucket_name, first_object_key, second_object_key, first_version_id, second_version_id, _, _ = versioned_bucket_with_lock_config
+    bucket_name, first_object_key, second_object_key, first_version_id, second_version_id = versioned_bucket_with_lock_config
 
     # Perform a permanent delete on the pre-lock object version (should succeed due to no retention)
     delete_response = s3_client.delete_object(Bucket=bucket_name, Key=first_object_key, VersionId=first_version_id)
@@ -168,6 +171,20 @@ run_example(__name__, "test_delete_object_after_locking", config=config)
                                                                             [100%]
 
     
+    =============================== warnings summary ===============================
+    docs/locking_test.py::test_delete_object_after_locking
+    docs/locking_test.py::test_delete_object_after_locking
+    docs/locking_test.py::test_delete_object_after_locking
+      /home/fcz/.cache/pypoetry/virtualenvs/s3-specs-AMMitg26-py3.12/lib/python3.12/site-packages/botocore/endpoint.py:170: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+        response_received_timestamp = datetime.datetime.utcnow()
+    
+    docs/locking_test.py::test_delete_object_after_locking
+    docs/locking_test.py::test_delete_object_after_locking
+    docs/locking_test.py::test_delete_object_after_locking
+      /home/fcz/.cache/pypoetry/virtualenvs/s3-specs-AMMitg26-py3.12/lib/python3.12/site-packages/botocore/endpoint.py:153: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+        local_timestamp = datetime.datetime.utcnow()
+    
+    -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 
 
 ### Conferindo a existência de uma configuração de tranca no bucket
@@ -177,8 +194,8 @@ run_example(__name__, "test_delete_object_after_locking", config=config)
 
 
 ```python
-def test_verify_object_lock_configuration(versioned_bucket_with_lock_config, s3_client, lock_mode):
-    bucket_name, _, _, _, _, _, _ = versioned_bucket_with_lock_config
+def test_verify_object_lock_configuration(bucket_with_lock, s3_client, lock_mode):
+    bucket_name = bucket_with_lock
 
     # Retrieve and verify the applied bucket-level Object Lock configuration
     logging.info("Retrieving Object Lock configuration from bucket...")
@@ -195,6 +212,22 @@ run_example(__name__, "test_verify_object_lock_configuration", config=config)
                                                                             [100%]
 
     
+    =============================== warnings summary ===============================
+    docs/locking_test.py::test_verify_object_lock_configuration
+    docs/locking_test.py::test_verify_object_lock_configuration
+    docs/locking_test.py::test_verify_object_lock_configuration
+    docs/locking_test.py::test_verify_object_lock_configuration
+      /home/fcz/.cache/pypoetry/virtualenvs/s3-specs-AMMitg26-py3.12/lib/python3.12/site-packages/botocore/endpoint.py:170: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+        response_received_timestamp = datetime.datetime.utcnow()
+    
+    docs/locking_test.py::test_verify_object_lock_configuration
+    docs/locking_test.py::test_verify_object_lock_configuration
+    docs/locking_test.py::test_verify_object_lock_configuration
+    docs/locking_test.py::test_verify_object_lock_configuration
+      /home/fcz/.cache/pypoetry/virtualenvs/s3-specs-AMMitg26-py3.12/lib/python3.12/site-packages/botocore/endpoint.py:153: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+        local_timestamp = datetime.datetime.utcnow()
+    
+    -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 
 
 ### Conferindo a politica de retenção de objetos específicos
@@ -206,7 +239,7 @@ Objetos pre-existentes, de antes da configuração do bucket não exibem estas i
 
 ```python
 def test_verify_object_retention(versioned_bucket_with_lock_config, s3_client, lock_mode):
-    bucket_name, first_object_key, second_object_key, _, _, _, _ = versioned_bucket_with_lock_config
+    bucket_name, first_object_key, second_object_key, _, _ = versioned_bucket_with_lock_config
 
     # Objects from before the config don't have retention data
     logging.info(f"Fetching data of the pre-existing object with a head request...")
@@ -237,6 +270,20 @@ run_example(__name__, "test_verify_object_retention", config=config,)
                                                                             [100%]
 
     
+    =============================== warnings summary ===============================
+    docs/locking_test.py::test_verify_object_retention
+    docs/locking_test.py::test_verify_object_retention
+    docs/locking_test.py::test_verify_object_retention
+      /home/fcz/.cache/pypoetry/virtualenvs/s3-specs-AMMitg26-py3.12/lib/python3.12/site-packages/botocore/endpoint.py:170: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+        response_received_timestamp = datetime.datetime.utcnow()
+    
+    docs/locking_test.py::test_verify_object_retention
+    docs/locking_test.py::test_verify_object_retention
+    docs/locking_test.py::test_verify_object_retention
+      /home/fcz/.cache/pypoetry/virtualenvs/s3-specs-AMMitg26-py3.12/lib/python3.12/site-packages/botocore/endpoint.py:153: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+        local_timestamp = datetime.datetime.utcnow()
+    
+    -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 
 
 ### Configuração de Object Locking em Bucket Não-Versionado
