@@ -263,3 +263,22 @@ def bucket_with_lock_and_object(s3_client, bucket_with_lock):
 
     # Return bucket name, object key, and version ID
     return bucket_name, object_key, object_version
+
+@pytest.fixture
+def bucket_with_one_object_acl(s3_client, bucket_with_one_object, request):
+    """
+    Prepares an S3 bucket with object and defines its obejct acl.
+
+    :param s3_client: boto3 S3 client fixture.
+    :param bucket_with_one_object: Name of the bucket with versioning and object locking enabled.
+    :return: Tuple of (bucket_name, object_key, object_version).
+    """
+    
+    bucket_name = "object_acl"
+    #Create one bucket with an object
+    bucket_name, object_key, url = bucket_with_one_object
+    
+    s3_client.put_object_acl(Bucket=bucket_name, ACL = request.param, Key= object_key)
+    
+    # Yield the bucket name and object key to the test
+    yield bucket_name, object_key, url
