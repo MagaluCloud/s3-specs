@@ -5,6 +5,10 @@ profiles:
     profile_name: "br-ne1"
     lock_mode: "COMPLIANCE"
     mgc_path: "../magalu/mgc/cli/mgc"
+  -    
+    profile_name: "br-ne1-2"
+    lock_mode: "COMPLIANCE"
+    mgc_path: "../magalu/mgc/cli/mgc"
   -
     profile_name: "br-ne1-second"
     lock_mode: "COMPLIANCE"

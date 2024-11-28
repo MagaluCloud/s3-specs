@@ -255,4 +255,19 @@ def get_tenants(multiple_s3_clients):
         
     return bucket_list
     
+
+def outer_merge(main_dict, sub_dict):
+    """
+    Merge two dictionaries and return a new dictionary.
+
+    :param right: The right dictionary.
+    :param left: The left dictionary.
+    :return: The merged dictionary.
+    """
     
+    for key in list(main_dict.keys()):
+        if key in sub_dict:
+            main_dict[key] = sub_dict[key]
+    
+    
+    return main_dict

@@ -10,12 +10,15 @@ from s3_helpers import (
     delete_bucket_and_wait,
     create_bucket_and_wait,
     delete_object_and_wait,
+    delete_all_objects_and_wait,
     put_object_and_wait,
     cleanup_old_buckets,
     get_spec_path,
     change_policies_json,
     delete_policy_and_bucket_and_wait,
     get_tenants,
+    change_policies_json,
+    delete_policy_and_bucket_and_wait,
 )
 from datetime import datetime, timedelta
 from botocore.exceptions import ClientError
@@ -396,6 +399,7 @@ def multiple_s3_clients(request, test_params):
     :param request: dictionary that have number_clients int.
     :return: A list of boto3 S3 client instances.
     """
+    
     number_clients = request.param["number_clients"]
     clients = [p for p in test_params["profiles"][:number_clients]]
     sessions = []
