@@ -112,6 +112,25 @@ def existing_bucket_name(s3_client):
     delete_bucket_and_wait(s3_client, bucket_name)
 
 @pytest.fixture
+def empty_bucket_name(s3_client):
+    # Generate a unique name for the bucket to simulate an empty bucket
+    bucket_name = generate_unique_bucket_name(base_name="empty-bucket")
+
+    create_bucket_and_wait(s3_client, bucket_name)
+    
+    # Yield the empty bucket name to the test
+    yield bucket_name
+
+    objects = s3_client.list_objects(Bucket=bucket_name).get("Contents", [])
+
+    if objects:
+        for obj in objects:
+            s3_client.delete_object(Bucket=bucket_name, Key=obj["Key"])
+    
+    # Teardown: delete the bucket after the test
+    delete_bucket_and_wait(s3_client, bucket_name)
+
+@pytest.fixture
 def bucket_with_one_object(s3_client):
     # Generate a unique bucket name and ensure it exists
     bucket_name = generate_unique_bucket_name(base_name="fixture-bucket")
