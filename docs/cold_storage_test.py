@@ -186,6 +186,8 @@ def test_boto_multipart_upload_with_cold_storage_class(s3_client, empty_bucket_n
 
     object_key, part_files = create_big_file_with_two_parts
 
+    response = s3_client
+
     # Criação do arquivo de aproximadamente 50 MB
 
     response = s3_client.create_multipart_upload(
@@ -252,3 +254,45 @@ def test_boto_list_objects_with_cold_storage_class(s3_client, bucket_with_one_ob
     assert obj_storage_class == 'COLD_INSTANT' or obj_storage_class == 'GLACIER_IR', "Expected GACIER_IR or COLD_INSTANT as Storage Class"
 
 run_example(__name__, "test_boto_multipart_upload_with_cold_storage_class", config=config)
+
+def test_boto_put_object_with_acl_and_storage_class(s3_client, empty_bucket_name):
+    bucket_name = empty_bucket_name
+
+    object_key = "cold_file.txt"
+    content = "Arquivo de exemplo com a classe cold storage"
+
+    # Teste de upload
+    response = s3_client.put_object(
+        Bucket=bucket_name,
+        Key=object_key,
+        Body=content,
+        StorageClass="GLACIER_IR",
+        ACL="public-read"
+    )
+
+    logging.info("Response: %s", response)
+    
+    response_status = response["ResponseMetadata"]["HTTPStatusCode"]
+    logging.info("Status do upload: %s", response_status)
+    assert response_status == 200, "Expected HTTPStatusCode 200 for successful upload."
+    
+    storage_class =  s3_client.head_object(
+        Bucket=bucket_name,
+        Key=object_key,
+    ).get("StorageClass")
+
+    logging.info("Storage Class: %s", storage_class)
+    assert storage_class == "COLD_INSTANT" or storage_class == "GLACIER_IR", "Expected COLD_INSTANT or GLACIER_IR as Storage Class"
+
+    acl = s3_client.get_object_acl(
+        Bucket=bucket_name,
+        Key=object_key,
+    ).get('Grants')[0]
+    
+    logging.info("Public Read ACL: %s", acl)
+    assert 'URI' in list(acl.keys()), "Expected acl have URI attribute"
+
+    assert 'READ' == acl.get('Permission'), "Expected acl permission be READ"
+
+run_example(__name__, "test_boto_put_object_with_acl_and_storage_class", config=config)
+
