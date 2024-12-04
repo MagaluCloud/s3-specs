@@ -217,6 +217,20 @@ def test_boto_multipart_upload_with_cold_storage_class(s3_client, empty_bucket_n
                 f"Expected HTTPStatusCode 200 for part {i} upload."
             )
 
+            list_parts_response = s3_client.list_parts(
+                Bucket=bucket_name,
+                Key=object_key,
+                UploadId=upload_id,
+            ).get("Parts")
+
+            logging.info("List parts: %s", list_parts_response)
+            assert len(list_parts_response) == i, "Expected list part return has the same size of interaction index"
+
+            list_parts_etag = [part.get("ETag") for part in list_parts_response]
+            list_parts_num = [part.get("PartNumber") for part in list_parts_response]
+            assert response_part.get("ETag") in list_parts_etag, "Expected ETag being equal"
+            assert i in list_parts_num, "Expected part number be in the list_parts response"
+
     response = s3_client.complete_multipart_upload(
         Bucket=bucket_name,
         Key=object_key,
