@@ -84,7 +84,7 @@ def delete_object_and_wait(s3_client, bucket_name, object_key):
     waiter.wait(Bucket=bucket_name, Key=object_key)
     logging.info(f"Object '{object_key}' in bucket '{bucket_name}' confirmed as deleted.")
 
-def put_object_and_wait(s3_client, bucket_name, object_key, content):
+def put_object_and_wait(s3_client, bucket_name, object_key, content, storage_class="STANDARD"):
     """
     Upload an object to S3 and wait for it to be available.
 
@@ -92,10 +92,11 @@ def put_object_and_wait(s3_client, bucket_name, object_key, content):
     :param bucket_name: Name of the bucket
     :param object_key: Key (name) of the object
     :param content: Content of the object (bytes)
+    :param storage_class: Storage Class of the object, STANDARD by default 
     :return: Version ID of the object if versioning is enabled, otherwise None
     """
     # Upload the object
-    put_response = s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=content)
+    put_response = s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=content, StorageClass=storage_class)
     version_id = put_response.get("VersionId", None)
 
     # Wait for the object to exist
