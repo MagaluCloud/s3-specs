@@ -121,7 +121,7 @@ def put_object_and_wait(s3_client, bucket_name, object_key, content):
     :return: Version ID of the object if versioning is enabled, otherwise None
     """
     # Upload the object
-    put_response = s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=content, StorageClass=storage_class)
+    put_response = s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=content)
     version_id = put_response.get("VersionId", None)
 
     # Wait for the object to exist
