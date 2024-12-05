@@ -13,6 +13,9 @@ from s3_helpers import (
     put_object_and_wait,
     cleanup_old_buckets,
     get_spec_path,
+    change_policies_json,
+    delete_policy_and_bucket_and_wait,
+    get_tenants,
 )
 from datetime import datetime, timedelta
 from botocore.exceptions import ClientError
@@ -177,7 +180,6 @@ def bucket_with_one_object_and_lock_enabled(s3_client, lock_mode, versioned_buck
     # Yield details to tests
     yield bucket_name, object_key, object_version
 
-
 @pytest.fixture
 def lockeable_bucket_name(s3_client, lock_mode):
     """
@@ -263,3 +265,67 @@ def bucket_with_lock_and_object(s3_client, bucket_with_lock):
 
     # Return bucket name, object key, and version ID
     return bucket_name, object_key, object_version
+    
+@pytest.fixture
+def bucket_with_one_object_policy(multiple_s3_clients, request):
+    """
+    Prepares an S3 bucket with object and defines its object policies.
+
+    :param s3_client: boto3 S3 client fixture.
+    :param existing_bucket_name: Name of the bucket after its creating on the fixture of same name.
+    :param request: dictionary of policy expecting the helper function change_policies_json.
+    :return: bucket_name.
+    """
+        
+    client = multiple_s3_clients[0]
+        
+    # Generate a unique name and create a versioned bucket
+    base_name = "policy-bucket"
+    object_key = "PolicyObject.txt"
+    bucket_name = generate_unique_bucket_name(base_name=base_name)
+    
+    create_bucket_and_wait(client, bucket_name)
+    put_object_and_wait(client, bucket_name, object_key, "42")    
+    
+    tenants = get_tenants(multiple_s3_clients)
+    
+    policy = change_policies_json(bucket=bucket_name, policy_args=request.param, tenants=tenants)
+    client.put_bucket_policy(Bucket=bucket_name, Policy = policy)
+    
+    # Yield the bucket name and object key to the test
+    yield bucket_name, object_key
+    
+    # Teardown: delete the bucket after the test
+    delete_policy_and_bucket_and_wait(client, bucket_name, request)
+
+
+
+
+@pytest.fixture
+def multiple_s3_clients(request, test_params):
+    """
+    Creates multiple S3 clients based on the profiles provided in the test parameters.
+
+    :param test_params: dictionary containing the profiles names.
+    :param request: dictionary that have number_clients int.
+    :return: A list of boto3 S3 client instances.
+    """
+    number_clients = request.param["number_clients"]
+    clients = [p for p in test_params["profiles"][:number_clients]]
+    sessions = []
+    
+    
+    for client in clients:
+        if "profile_name" in client:
+            session = boto3.Session(profile_name=client["profile_name"])
+        else:
+            session = boto3.Session(
+                region_name=client["region_name"],
+                aws_access_key_id=client["aws_access_key_id"],
+                aws_secret_access_key=client["aws_secret_access_key"],
+            )
+        sessions.append(session.client("s3", endpoint_url=client.get("endpoint_url")))
+        
+    return sessions
+    
+    
