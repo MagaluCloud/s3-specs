@@ -87,16 +87,19 @@ def test_setup_policies(s3_client, existing_bucket_name, policies_args):
     bucket_name = existing_bucket_name
 
     #given a existent and valid bucket
-    policies = change_policies_json(existing_bucket_name, policies_args)
-    assert s3_client.put_bucket_policy(Bucket=bucket_name, Policy=policies)
-
-# # Tests related to actions on the bucket
+    policies = change_policies_json(existing_bucket_name, policies_args, "*")
+    response = s3_client.put_bucket_policy(Bucket=bucket_name, Policy=policies) 
+    assert response['ResponseMetadata']['HTTPStatusCode'] == 204
     
-@pytest.mark.parametrize('bucket_with_one_object_policy, boto3_action', [
-    ({"policy_dict": policy_dict, "actions": "s3:PutObject", "effect": "Deny"}, 'put_object'),
-    ({"policy_dict": policy_dict, "actions": "s3:GetObject", "effect": "Deny"}, 'get_object'),
-    ({"policy_dict": policy_dict, "actions": "s3:DeleteObject", "effect": "Deny"}, 'delete_object')
-], indirect = ['bucket_with_one_object_policy'])
+# # Tests related to actions on the bucket
+
+number_clients = 2
+
+@pytest.mark.parametrize('multiple_s3_clients, bucket_with_one_object_policy, boto3_action', [
+    ({"number_clients": number_clients}, {"policy_dict": policy_dict, "actions": "s3:PutObject", "effect": "Deny"}, 'put_object'),
+    ({"number_clients": number_clients}, {"policy_dict": policy_dict, "actions": "s3:GetObject", "effect": "Deny"}, 'get_object'),
+    ({"number_clients": number_clients}, {"policy_dict": policy_dict, "actions": "s3:DeleteObject", "effect": "Deny"}, 'delete_object')
+], indirect = ['multiple_s3_clients', 'bucket_with_one_object_policy'])
 
 # ## Asserting if the owner has permissions blocked from own bucket
 def test_denied_policy_operations_by_owner(s3_client, bucket_with_one_object_policy, boto3_action):
@@ -120,14 +123,14 @@ def test_denied_policy_operations_by_owner(s3_client, bucket_with_one_object_pol
         assert e.response['Error']['Code'] == 'AccessDeniedByBucketPolicy'
 
 
-@pytest.mark.parametrize('bucket_with_one_object_policy, boto3_action', [
-    ({"policy_dict": policy_dict, "actions": "s3:PutObject", "effect": "Allow", "Principal": "*"}, 'put_object'),
-    ({"policy_dict": policy_dict, "actions": "s3:GetObject", "effect": "Allow", "Principal": "*"}, 'get_object'),
-    ({"policy_dict": policy_dict, "actions": "s3:DeleteObject", "effect": "Allow", "Principal": "*"}, 'delete_object')
-], indirect = ['bucket_with_one_object_policy'])
+@pytest.mark.parametrize('multiple_s3_clients, bucket_with_one_object_policy, boto3_action, expected', [
+    ({"number_clients": number_clients}, {"policy_dict": policy_dict, "actions": "s3:PutObject", "effect": "Allow", "Principal": "*"}, 'put_object', 200),
+    ({"number_clients": number_clients}, {"policy_dict": policy_dict, "actions": "s3:GetObject", "effect": "Allow", "Principal": "*"}, 'get_object', 200),
+    ({"number_clients": number_clients}, {"policy_dict": policy_dict, "actions": "s3:DeleteObject", "effect": "Allow", "Principal": "*"}, 'delete_object', 204)
+], indirect = ['multiple_s3_clients', 'bucket_with_one_object_policy'])
 
 # ## Asserting if the owner has permissions blocked from own bucket
-def test_allow_policy_operations_by_owner(s3_client, bucket_with_one_object_policy, boto3_action):
+def test_allow_policy_operations_by_owner(multiple_s3_clients, bucket_with_one_object_policy, boto3_action,expected):
     bucket_name, object_key = bucket_with_one_object_policy
 
     kwargs = {
@@ -140,8 +143,9 @@ def test_allow_policy_operations_by_owner(s3_client, bucket_with_one_object_poli
         kwargs['Body'] = 'The answer for everthong is 42'
         
     #retrieve the method passed as argument
-    method = getattr(s3_client, boto3_action)
-    assert method(**kwargs)
+    method = getattr(multiple_s3_clients[0], boto3_action)
+    response = method(**kwargs)
+    assert response['ResponseMetadata']['HTTPStatusCode'] == expected
 
 
 

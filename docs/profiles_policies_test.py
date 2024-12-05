@@ -1,7 +1,6 @@
 import pytest
 from botocore.exceptions import ClientError
 
-
 policy_dict = {
     "Version": "2012-10-17",
     "Statement": [
@@ -14,21 +13,17 @@ policy_dict = {
     ]
 }
 
-# ### Sintaxe like {"MGC": ["12345678"]} (for mgc)
-tenant = {TENANT-ID}
-
-
 # Example of the list for actions, tenants, and methods
-actions = [["s3:GetObject", tenant], ["s3:PutObject", tenant], ["s3:DeleteObject", tenant]]
-number_profiles = 2
+actions = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+number_clients = 2
 methods = ["get_object", "put_object", "delete_object"]
 
 @pytest.mark.parametrize(
-    'bucket_with_one_object_policy, multiple_s3_clients, boto3_action',
+    'multiple_s3_clients, bucket_with_one_object_policy, boto3_action',
     [
         (
+            {"number_clients": number_clients},
             {"policy_dict": policy_dict, "actions": action, "effect": "Deny"},
-            {"number_profiles": number_profiles},
             method
         )
         for action, method in zip(actions, methods)
@@ -61,21 +56,24 @@ def test_denied_policy_operations(multiple_s3_clients, bucket_with_one_object_po
         assert e.response['Error']['Code'] == 'AccessDeniedByBucketPolicy'
 
 
+expected = [200, 200, 204]
+
 @pytest.mark.parametrize(
-    'bucket_with_one_object_policy, multiple_s3_clients, boto3_action',
+    'bucket_with_one_object_policy, multiple_s3_clients, boto3_action, expected',
     [
         (
             {"policy_dict": policy_dict, "actions": action, "effect": "Allow"},
-            {"number_profiles": number_profiles},
-            method
+            {"number_clients": number_clients},
+            method,
+            result,
         )
-        for action, method in zip(actions, methods)
+        for action, method, result in zip(actions, methods, expected)
     ],
     indirect=['bucket_with_one_object_policy', 'multiple_s3_clients'],
 )
 
 
-def test_allowed_policy_operations(multiple_s3_clients, bucket_with_one_object_policy, boto3_action):
+def test_allowed_policy_operations(multiple_s3_clients, bucket_with_one_object_policy, boto3_action, expected):
     s3_clients_list = multiple_s3_clients
     
     bucket_name, object_key = bucket_with_one_object_policy
@@ -92,4 +90,6 @@ def test_allowed_policy_operations(multiple_s3_clients, bucket_with_one_object_p
     #retrieve the method passed as argument
     
     method = getattr(s3_clients_list[1], boto3_action)
-    assert method(**kwargs)
+    response = method(**kwargs)
+    assert response['ResponseMetadata']['HTTPStatusCode'] == expected
+
