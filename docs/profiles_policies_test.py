@@ -1,14 +1,14 @@
 import pytest
 from botocore.exceptions import ClientError
 
-policy_dict = {
+policy_dict_template = {
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Effect": "Deny",
-            "Principal": "*",
-            "Action": "s3:GetObject",
-            "Resource": "meu-bucket/*"
+            "Effect": "",
+            "Principal": "",
+            "Action": "",
+            "Resource": ""
         }
     ]
 }
@@ -23,7 +23,7 @@ methods = ["get_object", "put_object", "delete_object"]
     [
         (
             {"number_clients": number_clients},
-            {"policy_dict": policy_dict, "actions": action, "effect": "Deny"},
+            {"policy_dict": policy_dict_template, "actions": action, "effect": "Deny"},
             method
         )
         for action, method in zip(actions, methods)
@@ -62,7 +62,7 @@ expected = [200, 200, 204]
     'bucket_with_one_object_policy, multiple_s3_clients, boto3_action, expected',
     [
         (
-            {"policy_dict": policy_dict, "actions": action, "effect": "Allow"},
+            {"policy_dict": policy_dict_template, "actions": action, "effect": "Allow"},
             {"number_clients": number_clients},
             method,
             result,
