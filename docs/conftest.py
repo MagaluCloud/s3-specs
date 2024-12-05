@@ -121,14 +121,16 @@ def existing_bucket_name(s3_client):
 def create_multipart_object_files():
     object_key = "multipart_file.txt"
 
-    body = b"A" * 10 * 1024 * 1024 * 2  # 50 MB
+    body = b"A" * 10 * 1024 * 1024  # 50 MB
+
+    numbers_of_parts = 2
 
     # Dividindo o dado em 2 partes
     total_size = len(body)  # Tamanho total em bytes
-    part_sizes = [total_size // 2] * 2  # Cada parte terá metade do tamanho
+    part_sizes = [total_size // numbers_of_parts] * numbers_of_parts  # Cada parte terá metade do tamanho
 
     # Se o tamanho total não for divisível por 2, ajusta a última parte
-    part_sizes[-1] += total_size % 2
+    part_sizes[-1] += total_size % numbers_of_parts
 
     # Criar as partes diretamente em memória
     part_bytes = []
