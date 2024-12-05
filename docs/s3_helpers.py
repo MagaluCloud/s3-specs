@@ -40,6 +40,7 @@ def generate_unique_bucket_name(base_name="my-unique-bucket"):
     unique_id = uuid.uuid4().hex[:6]  # Short unique suffix
     return f"{base_name}-{unique_id}"
 
+
 def delete_bucket_and_wait(s3_client, bucket_name):
     try:
         s3_client.delete_bucket(Bucket=bucket_name)
@@ -116,6 +117,7 @@ def put_object_and_wait(s3_client, bucket_name, object_key, content):
     :param bucket_name: Name of the bucket
     :param object_key: Key (name) of the object
     :param content: Content of the object (bytes)
+    :param storage_class: Storage Class of the object, STANDARD by default 
     :return: Version ID of the object if versioning is enabled, otherwise None
     """
     # Upload the object
