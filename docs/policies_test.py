@@ -67,7 +67,7 @@ cases = [
 
 @pytest.mark.parametrize('input, expected_error', cases)
 
-# ## Asserting the possible combinations that are allowed as policy arguments
+# ## Asserting the possible combinations that raise errors on put_bucket_policy
 def test_put_invalid_bucket_policy(s3_client, existing_bucket_name, input, expected_error):
     try:
         s3_client.put_bucket_policy(Bucket=existing_bucket_name, Policy=input)
@@ -129,7 +129,7 @@ def test_denied_policy_operations_by_owner(s3_client, bucket_with_one_object_pol
     ({"number_clients": number_clients}, {"policy_dict": policy_dict_template, "actions": "s3:DeleteObject", "effect": "Allow", "Principal": "*"}, 'delete_object', 204)
 ], indirect = ['multiple_s3_clients', 'bucket_with_one_object_policy'])
 
-# ## Asserting if the owner has permissions blocked from own bucket
+# ## Asserting if the owner has permissions allowed from own bucket
 def test_allow_policy_operations_by_owner(multiple_s3_clients, bucket_with_one_object_policy, boto3_action,expected):
     bucket_name, object_key = bucket_with_one_object_policy
 
@@ -146,9 +146,3 @@ def test_allow_policy_operations_by_owner(multiple_s3_clients, bucket_with_one_o
     method = getattr(multiple_s3_clients[0], boto3_action)
     response = method(**kwargs)
     assert response['ResponseMetadata']['HTTPStatusCode'] == expected
-
-
-
-    
-    
-    
