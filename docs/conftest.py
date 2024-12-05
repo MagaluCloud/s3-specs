@@ -107,20 +107,7 @@ def existing_bucket_name(s3_client):
 
     # Yield the existing bucket name to the test
     yield bucket_name
-
-    # Teardown: delete the bucket after the test
-    delete_bucket_and_wait(s3_client, bucket_name)
-
-@pytest.fixture
-def empty_bucket_name(s3_client):
-    # Generate a unique name for the bucket to simulate an empty bucket
-    bucket_name = generate_unique_bucket_name(base_name="empty-bucket")
-
-    create_bucket_and_wait(s3_client, bucket_name)
     
-    # Yield the empty bucket name to the test
-    yield bucket_name
-
     objects = s3_client.list_objects(Bucket=bucket_name).get("Contents", [])
 
     if objects:
@@ -129,53 +116,29 @@ def empty_bucket_name(s3_client):
     
     # Teardown: delete the bucket after the test
     delete_bucket_and_wait(s3_client, bucket_name)
-
+    
 @pytest.fixture
-def create_big_file_with_two_parts():
-    object_key = "large_file.txt"
-    with open(object_key, "w") as f:
-        f.write("A" * 10 * 1024 * 1024 * 5)
+def create_multipart_object_files():
+    object_key = "multipart_file.txt"
 
-    # Dividindo o arquivo em 2 partes
-    total_size = 10 * 1024 * 1024 * 5  # Tamanho total em bytes (50 MB)
+    body = b"A" * 10 * 1024 * 1024 * 2  # 50 MB
+
+    # Dividindo o dado em 2 partes
+    total_size = len(body)  # Tamanho total em bytes
     part_sizes = [total_size // 2] * 2  # Cada parte terá metade do tamanho
 
     # Se o tamanho total não for divisível por 2, ajusta a última parte
     part_sizes[-1] += total_size % 2
 
-    part_files = []
-    with open(object_key, "r") as f:
-        for i, size in enumerate(part_sizes):
-            part_path = f"{object_key.split('.')[0]}_part_{i+1}.txt"
-            with open(part_path, "w") as part_file:
-                part_file.write(f.read(size))
-            part_files.append(part_path)
+    # Criar as partes diretamente em memória
+    part_bytes = []
+    start = 0
+    for size in part_sizes:
+        part_bytes.append(body[start:start + size])
+        start += size
     
-    yield object_key, part_files
+    yield object_key, body, part_bytes
 
-    os.remove(object_key)
-
-    for i in range(2):
-        os.remove(f"{object_key.split('.')[0]}_part_{i+1}.txt")
-
-
-@pytest.fixture
-def bucket_with_one_object_and_cold_storage_class(s3_client):
-    # Generate a unique bucket name and ensure it exists
-    bucket_name = generate_unique_bucket_name(base_name="fixture-bucket")
-    create_bucket_and_wait(s3_client, bucket_name)
-
-    # Define the object key and content, then upload the object
-    object_key = "test-object.txt"
-    content = b"Sample content for testing presigned URLs."
-    put_object_and_wait(s3_client, bucket_name, object_key, content, storage_class="GLACIER_IR")
-
-    # Yield the bucket name and object details to the test
-    yield bucket_name, object_key, content
-
-    # Teardown: Delete the object and bucket after the test
-    delete_object_and_wait(s3_client, bucket_name, object_key)
-    delete_bucket_and_wait(s3_client, bucket_name)
 @pytest.fixture
 def bucket_with_one_object(s3_client):
     # Generate a unique bucket name and ensure it exists
@@ -193,6 +156,22 @@ def bucket_with_one_object(s3_client):
     # Teardown: Delete the object and bucket after the test
     delete_object_and_wait(s3_client, bucket_name, object_key)
     delete_bucket_and_wait(s3_client, bucket_name)
+
+@pytest.fixture
+def bucket_with_one_storage_class_cold_object(s3_client, bucket_with_one_object):
+    # Generate a unique bucket name and ensure it exists
+    bucket_name, object_key, content = bucket_with_one_object
+
+    s3_client.copy_object(
+        Bucket = bucket_name,
+        CopySource=f"{bucket_name}/{object_key}",
+        Key = object_key,
+        StorageClass="GLACIER_IR"
+    )
+
+    # Yield the bucket name and object details to the test
+    yield bucket_name, object_key, content
+
 
 @pytest.fixture
 def versioned_bucket_with_one_object(s3_client, lock_mode):
