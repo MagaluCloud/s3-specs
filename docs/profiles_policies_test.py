@@ -75,6 +75,7 @@ expected = [200, 200, 204]
 
 def test_allowed_policy_operations(multiple_s3_clients, bucket_with_one_object_policy, boto3_action, expected):
     s3_clients_list = multiple_s3_clients
+    allowed_client = s3_clients_list[1] # not the bucket owner
     
     bucket_name, object_key = bucket_with_one_object_policy
 
@@ -89,7 +90,7 @@ def test_allowed_policy_operations(multiple_s3_clients, bucket_with_one_object_p
         
     #retrieve the method passed as argument
     
-    method = getattr(s3_clients_list[1], boto3_action)
+    method = getattr(allowed_client, boto3_action)
     response = method(**kwargs)
     assert response['ResponseMetadata']['HTTPStatusCode'] == expected
 
