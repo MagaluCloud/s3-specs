@@ -9,6 +9,7 @@ import yaml
 from pathlib import Path
 import ipynbname
 import json
+import time
 
 def get_spec_path():
     spec_path = os.getenv("SPEC_PATH")
@@ -35,7 +36,6 @@ def run_example(dunder_name, test_name, config="../params.example.yaml"):
             f"{get_spec_path()}::{test_name}"
         ])
  
-
 def generate_unique_bucket_name(base_name="my-unique-bucket"):
     unique_id = uuid.uuid4().hex[:6]  # Short unique suffix
     return f"{base_name}-{unique_id}"
@@ -84,6 +84,30 @@ def delete_object_and_wait(s3_client, bucket_name, object_key):
     waiter = s3_client.get_waiter('object_not_exists')
     waiter.wait(Bucket=bucket_name, Key=object_key)
     logging.info(f"Object '{object_key}' in bucket '{bucket_name}' confirmed as deleted.")
+
+def delete_all_objects_and_wait(s3_client, bucket_name):
+    response = s3_client.list_objects_v2(Bucket=bucket_name)
+    if 'Contents' in response:
+        for obj in response['Contents']:
+            delete_object_and_wait(s3_client, bucket_name, obj['Key'])
+ 
+def delete_policy_and_bucket_and_wait(s3_client, bucket_name, request):
+    retries = 3
+    sleeptime = 1
+    for _ in range(retries):   
+        try:
+            change_policies_json(bucket_name, {"policy_dict": request.param['policy_dict'], "actions": ["s3:GetObjects", "*"], "effect": "Allow"}, tenants=["*"])
+            s3_client.delete_bucket_policy(Bucket=bucket_name)
+        except s3_client.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == 'NoSuchBucketPolicy':
+                logging.info(f"No policy found for bucket '{bucket_name}'.")
+                break
+            else:
+                time.sleep(sleeptime)
+                continue 
+           
+    delete_all_objects_and_wait(s3_client, bucket_name)
+    delete_bucket_and_wait(s3_client, bucket_name)
 
 def put_object_and_wait(s3_client, bucket_name, object_key, content):
     """
@@ -189,3 +213,46 @@ def delete_version(s3_client, bucket_name, version, lock_mode):
                 f"Failed to delete version {version_id} of object {version['Key']} in bucket {bucket_name}: {e}"
             )
 
+def change_policies_json(bucket, policy_args: dict, tenants: list) -> json:
+    
+    """
+    From a policy changes its contest with the requested params and transform it into a JSON.
+
+    :param s3_client: Boto3 S3 client.
+    :param bucket_name: Name of the bucket.
+    :param version: The version or delete marker to delete.
+    :param filtered_tenants: Receives a list of tenants.
+   
+    """
+    
+    #parse the request
+    policy = policy_args['policy_dict']
+    effect = policy_args['effect']
+    actions = policy_args['actions']
+    
+    #change arguments inside of the policy dict
+    policy["Statement"][0]["Effect"] = effect
+    policy["Statement"][0]["Principal"] = tenants
+    policy["Statement"][0]["Action"] = actions
+    policy["Statement"][0]["Resource"] = bucket + "/*"
+        
+    return json.dumps(policy)
+
+
+def get_tenants(multiple_s3_clients):
+    """
+    Get the tenant from the test_params and return a list of all client's tenants.
+
+    :param test_params: The test parameters.
+    :param client_number: The client number.
+    :return: The tenant for the client number.
+    """
+    bucket_list = []
+
+    for i, client in enumerate(multiple_s3_clients):        
+        id = client.list_buckets()
+        bucket_list.append(id['Owner']['ID'])
+        
+    return bucket_list
+    
+    

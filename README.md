@@ -10,10 +10,10 @@ Since we aim at having specs to be pytest compliant, running a single spec might
 
 ```
 cd docs
-pytest <spec path>
+pytest -n auto <spec path>
 
 # Or if you need specific config to the test you are running:
-# pytest <spec path> --config ../<params file.yaml>
+# pytest -n auto <spec path> --config ../<params file.yaml>
 ```
 
 But the specs are also readable pages, so if you want to use the generation of a page to run a test
