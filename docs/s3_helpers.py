@@ -40,6 +40,7 @@ def generate_unique_bucket_name(base_name="my-unique-bucket"):
     unique_id = uuid.uuid4().hex[:6]  # Short unique suffix
     return f"{base_name}-{unique_id}"
 
+
 def delete_bucket_and_wait(s3_client, bucket_name):
     try:
         s3_client.delete_bucket(Bucket=bucket_name)
@@ -84,7 +85,7 @@ def delete_object_and_wait(s3_client, bucket_name, object_key):
     waiter.wait(Bucket=bucket_name, Key=object_key)
     logging.info(f"Object '{object_key}' in bucket '{bucket_name}' confirmed as deleted.")
 
-def put_object_and_wait(s3_client, bucket_name, object_key, content, storage_class="STANDARD"):
+def put_object_and_wait(s3_client, bucket_name, object_key, content):
     """
     Upload an object to S3 and wait for it to be available.
 
@@ -96,7 +97,7 @@ def put_object_and_wait(s3_client, bucket_name, object_key, content, storage_cla
     :return: Version ID of the object if versioning is enabled, otherwise None
     """
     # Upload the object
-    put_response = s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=content, StorageClass=storage_class)
+    put_response = s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=content)
     version_id = put_response.get("VersionId", None)
 
     # Wait for the object to exist
