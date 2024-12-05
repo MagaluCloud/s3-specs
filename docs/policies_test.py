@@ -47,14 +47,14 @@ wrong_version_policy = """{
 }
 """
 
-policy_dict = {
+policy_dict_template = {
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Effect": "Deny",
-            "Principal": "*",
-            "Action": "s3:GetObject",
-            "Resource": "meu-bucket/*"
+            "Effect": "",
+            "Principal": "",
+            "Action": "",
+            "Resource": ""
         }
     ]
 }
@@ -78,9 +78,9 @@ def test_put_invalid_bucket_policy(s3_client, existing_bucket_name, input, expec
 
 
 @pytest.mark.parametrize('policies_args', [
-    {"policy_dict": policy_dict, "actions": "s3:PutObject", "effect": "Deny"},
-    {"policy_dict": policy_dict, "actions": "s3:GetObject", "effect": "Deny"},
-    {"policy_dict": policy_dict, "actions": "s3:DeleteObject", "effect": "Deny"}
+    {"policy_dict": policy_dict_template, "actions": "s3:PutObject", "effect": "Deny"},
+    {"policy_dict": policy_dict_template, "actions": "s3:GetObject", "effect": "Deny"},
+    {"policy_dict": policy_dict_template, "actions": "s3:DeleteObject", "effect": "Deny"}
 ])
 # ## Base case of putting a policy into a bcuket
 def test_setup_policies(s3_client, existing_bucket_name, policies_args):
@@ -96,9 +96,9 @@ def test_setup_policies(s3_client, existing_bucket_name, policies_args):
 number_clients = 2
 
 @pytest.mark.parametrize('multiple_s3_clients, bucket_with_one_object_policy, boto3_action', [
-    ({"number_clients": number_clients}, {"policy_dict": policy_dict, "actions": "s3:PutObject", "effect": "Deny"}, 'put_object'),
-    ({"number_clients": number_clients}, {"policy_dict": policy_dict, "actions": "s3:GetObject", "effect": "Deny"}, 'get_object'),
-    ({"number_clients": number_clients}, {"policy_dict": policy_dict, "actions": "s3:DeleteObject", "effect": "Deny"}, 'delete_object')
+    ({"number_clients": number_clients}, {"policy_dict": policy_dict_template, "actions": "s3:PutObject", "effect": "Deny"}, 'put_object'),
+    ({"number_clients": number_clients}, {"policy_dict": policy_dict_template, "actions": "s3:GetObject", "effect": "Deny"}, 'get_object'),
+    ({"number_clients": number_clients}, {"policy_dict": policy_dict_template, "actions": "s3:DeleteObject", "effect": "Deny"}, 'delete_object')
 ], indirect = ['multiple_s3_clients', 'bucket_with_one_object_policy'])
 
 # ## Asserting if the owner has permissions blocked from own bucket
@@ -124,9 +124,9 @@ def test_denied_policy_operations_by_owner(s3_client, bucket_with_one_object_pol
 
 
 @pytest.mark.parametrize('multiple_s3_clients, bucket_with_one_object_policy, boto3_action, expected', [
-    ({"number_clients": number_clients}, {"policy_dict": policy_dict, "actions": "s3:PutObject", "effect": "Allow", "Principal": "*"}, 'put_object', 200),
-    ({"number_clients": number_clients}, {"policy_dict": policy_dict, "actions": "s3:GetObject", "effect": "Allow", "Principal": "*"}, 'get_object', 200),
-    ({"number_clients": number_clients}, {"policy_dict": policy_dict, "actions": "s3:DeleteObject", "effect": "Allow", "Principal": "*"}, 'delete_object', 204)
+    ({"number_clients": number_clients}, {"policy_dict": policy_dict_template, "actions": "s3:PutObject", "effect": "Allow", "Principal": "*"}, 'put_object', 200),
+    ({"number_clients": number_clients}, {"policy_dict": policy_dict_template, "actions": "s3:GetObject", "effect": "Allow", "Principal": "*"}, 'get_object', 200),
+    ({"number_clients": number_clients}, {"policy_dict": policy_dict_template, "actions": "s3:DeleteObject", "effect": "Allow", "Principal": "*"}, 'delete_object', 204)
 ], indirect = ['multiple_s3_clients', 'bucket_with_one_object_policy'])
 
 # ## Asserting if the owner has permissions blocked from own bucket
