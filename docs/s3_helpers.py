@@ -256,18 +256,17 @@ def get_tenants(multiple_s3_clients):
     return bucket_list
     
 
-def outer_merge(main_dict, sub_dict):
+def update_existing_keys(main_dict, sub_dict):
     """
-    Merge two dictionaries and return a new dictionary.
+    Update the values in `main_dict` with the values from `sub_dict` 
+    only for keys that already exist in `main_dict`.
 
-    :param right: The right dictionary.
-    :param left: The left dictionary.
-    :return: The merged dictionary.
+    :param main_dict: The dictionary to be updated.
+    :param sub_dict: The dictionary providing new values for existing keys in `main_dict`.
+    :return: The updated `main_dict`.
     """
-    
-    for key in list(main_dict.keys()):
+    for key in main_dict.keys():
         if key in sub_dict:
             main_dict[key] = sub_dict[key]
-    
-    
+
     return main_dict
