@@ -3,7 +3,54 @@ import yaml
 import subprocess
 import sys
 
-def configure_aws_profiles_from_env(profiles):
+def set_aws_profiles(profile_name, data):
+    subprocess.run(
+        ["aws", "configure", "set", f"profile.{profile_name}.region", data.get("region")],
+        check=True,
+    )
+    subprocess.run(
+        ["aws", "configure", "set", f"profile.{profile_name}.aws_access_key_id", data.get("access_key")],
+        check=True,
+    )
+    subprocess.run(
+        ["aws", "configure", "set", f"profile.{profile_name}.aws_secret_access_key", data.get("secret_key")],
+        check=True,
+    )
+    subprocess.run(
+        ["aws", "configure", "set", f"profile.{profile_name}.endpoint_url", data.get("endpoint")],
+        check=True,
+    )
+
+def set_rclone_profiles(profile_name, data):
+    """
+    Configura o rclone com base nos dados fornecidos.
+    
+    :param profile_name: Nome do perfil a ser configurado.
+    :param data: Dicionário contendo as informações de configuração.
+    """
+    subprocess.run(
+        ["rclone", "config", "create", profile_name, data.get("type", "s3")],
+        check=True,
+    )
+    subprocess.run(
+        ["rclone", "config", "update", profile_name, "region", data.get("region")],
+        check=True,
+    )
+    subprocess.run(
+        ["rclone", "config", "update", profile_name, "access_key_id", data.get("access_key")],
+        check=True,
+    )
+    subprocess.run(
+        ["rclone", "config", "update", profile_name, "secret_access_key", data.get("secret_key")],
+        check=True,
+    )
+    if "endpoint" in data:
+        subprocess.run(
+            ["rclone", "config", "update", profile_name, "endpoint", data.get("endpoint")],
+            check=True,
+        )
+
+def configure_profiles(profiles):
     try:
         for profile_name, profile_data in profiles.items():
             endpoint = profile_data.get("endpoint")
@@ -15,22 +62,9 @@ def configure_aws_profiles_from_env(profiles):
                 print(f"Perfil {profile_name} está incompleto. Ignorando...")
                 continue
 
-            subprocess.run(
-                ["aws", "configure", "set", f"profile.{profile_name}.region", region],
-                check=True,
-            )
-            subprocess.run(
-                ["aws", "configure", "set", f"profile.{profile_name}.aws_access_key_id", access_key],
-                check=True,
-            )
-            subprocess.run(
-                ["aws", "configure", "set", f"profile.{profile_name}.aws_secret_access_key", secret_key],
-                check=True,
-            )
-            subprocess.run(
-                ["aws", "configure", "set", f"profile.{profile_name}.endpoint_url", endpoint],
-                check=True,
-            )
+            set_aws_profiles(profile_name=profile_name, data=profile_data)
+            set_rclone_profiles(profile_name=profile_name, data=profile_data)
+            print(f"Perfil {profile_name} configurado com sucesso.")
 
     except yaml.YAMLError as e:
         print(f"Erro ao processar os dados YAML: {e}")
@@ -48,4 +82,4 @@ if __name__ == "__main__":
 
         profiles = yaml.safe_load(profiles_data)
 
-    configure_aws_profiles_from_env(profiles)
+    configure_profiles(profiles)
