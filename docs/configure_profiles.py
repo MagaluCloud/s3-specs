@@ -6,7 +6,6 @@ import sys
 def configure_aws_profiles_from_env(profiles):
     try:
         for profile_name, profile_data in profiles.items():
-            # Obter informações do perfil
             endpoint = profile_data.get("endpoint")
             access_key = profile_data.get("access_key")
             secret_key = profile_data.get("secret_key")
@@ -16,7 +15,6 @@ def configure_aws_profiles_from_env(profiles):
                 print(f"Perfil {profile_name} está incompleto. Ignorando...")
                 continue
 
-            # Configurar o perfil usando AWS CLI
             subprocess.run(
                 ["aws", "configure", "set", f"profile.{profile_name}.region", region],
                 check=True,
@@ -39,9 +37,7 @@ def configure_aws_profiles_from_env(profiles):
     except subprocess.CalledProcessError as e:
         print(f"Erro ao executar comando AWS CLI: {e}")
 
-# Exemplo de uso
 if __name__ == "__main__":
-    # Ler o conteúdo da variável de ambiente
     if len(sys.argv) > 1:
         with open(sys.argv[1], 'r') as file:
             profiles = yaml.safe_load(file)
@@ -50,7 +46,6 @@ if __name__ == "__main__":
         if not profiles_data:
             print(f"Variável de ambiente '{"PROFILES"}' não encontrada ou vazia.")
 
-            # Carregar o conteúdo como YAML
         profiles = yaml.safe_load(profiles_data)
 
     configure_aws_profiles_from_env(profiles)

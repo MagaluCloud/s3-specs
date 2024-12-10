@@ -3,10 +3,10 @@ name: Run Tests
 on:
     workflow_dispatch:
       inputs:
-        teste:
+        tests:
           description: 'Digite o nome do arquivo de teste a ser executado'
           required: true
-        perfil:
+        profile:
           description: 'Digite o caminho da configuração a ser utilizado'
           required: true
           default: ../params/br-se1.yaml
@@ -25,9 +25,9 @@ jobs:
               env:
                 PROFILES: ${{ secrets.PROFILES }}
               run: |
-                poetry install
+                poetry install --quiet
 
                 cd docs
                 poetry run python configure_profiles.py
-                poetry run pytest --config ${{ inputs.perfil }} ${{ inputs.teste }}
+                poetry run pytest --config ${{ inputs.profile }} ${{ inputs.tests }}
                 
