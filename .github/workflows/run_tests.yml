@@ -6,10 +6,10 @@ on:
         tests:
           description: 'Digite o nome do arquivo de teste a ser executado'
           required: true
-        profile:
+        config:
           description: 'Digite o caminho da configuração a ser utilizado'
           required: true
-          default: ../params/br-se1.yaml
+          default: ../params.example.yaml
       
 
 jobs:
@@ -26,8 +26,8 @@ jobs:
                 PROFILES: ${{ secrets.PROFILES }}
               run: |
                 poetry install --quiet
+                poetry run python ./bin/configure_profiles.py
 
                 cd docs
-                poetry run python configure_profiles.py
-                poetry run pytest --config ${{ inputs.profile }} ${{ inputs.tests }}
+                poetry run pytest --config ${{ inputs.config }} ${{ inputs.tests }}
                 
