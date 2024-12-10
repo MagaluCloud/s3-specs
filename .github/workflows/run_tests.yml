@@ -1,0 +1,33 @@
+name: Run Tests
+
+on:
+    workflow_dispatch:
+      inputs:
+        tests:
+          description: 'Digite o nome do arquivo de teste a ser executado'
+          required: true
+        config:
+          description: 'Digite o caminho da configuração a ser utilizado'
+          required: true
+          default: ../params.example.yaml
+      
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        container:
+          image: ghcr.io/marmotitude/s3-tester:tests
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Run tests
+              env:
+                PROFILES: ${{ secrets.PROFILES }}
+              run: |
+                poetry install --quiet
+                poetry run python ./bin/configure_profiles.py
+
+                cd docs
+                poetry run pytest --config ${{ inputs.config }} ${{ inputs.tests }}
+                
