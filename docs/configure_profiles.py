@@ -30,25 +30,48 @@ def set_rclone_profiles(profile_name, data):
     """
     subprocess.run(
         ["rclone", "config", "create", profile_name, data.get("type", "s3")],
-        check=True,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True,
     )
     subprocess.run(
         ["rclone", "config", "update", profile_name, "region", data.get("region")],
-        check=True,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True,
     )
     subprocess.run(
         ["rclone", "config", "update", profile_name, "access_key_id", data.get("access_key")],
-        check=True,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True,
     )
     subprocess.run(
         ["rclone", "config", "update", profile_name, "secret_access_key", data.get("secret_key")],
-        check=True,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True,
     )
     if "endpoint" in data:
         subprocess.run(
             ["rclone", "config", "update", profile_name, "endpoint", data.get("endpoint")],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True,
+        )
+
+def set_mgc_profiles(profile_name, data):
+    try:
+        subprocess.run(
+            ["mgc", "workspace", "create", profile_name, data.get("type", "s3")],
             check=True,
         )
+    except Exception as e:
+        print(f"Erro ao criar workspace: {e}")
+
+    # Criar auth.yaml
+    auth_command = (
+        f"echo 'access_key_id: {data.get('access_key')}\n"
+        f"secret_access_key: {data.get('secret_key')}' > ~/.config/mgc/{profile_name}/auth.yaml"
+    )
+    subprocess.run(auth_command, shell=True, check=True)
+
+    # Criar cli.yaml
+    cli_command = (
+        f"echo 'region: {data.get('region')}' > ~/.config/mgc/{profile_name}/cli.yaml"
+    )
+    subprocess.run(cli_command, shell=True, check=True)
+    
 
 def configure_profiles(profiles):
     try:
@@ -64,6 +87,7 @@ def configure_profiles(profiles):
 
             set_aws_profiles(profile_name=profile_name, data=profile_data)
             set_rclone_profiles(profile_name=profile_name, data=profile_data)
+            set_mgc_profiles(profile_name=profile_name, data=profile_data)
             print(f"Perfil {profile_name} configurado com sucesso.")
 
     except yaml.YAMLError as e:
