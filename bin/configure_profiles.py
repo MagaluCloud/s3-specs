@@ -55,7 +55,6 @@ def set_mgc_profiles(profile_name, data):
         subprocess.run(
             ["mgc", "workspace", "create", profile_name, data.get("type", "s3")],
             check=True,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
     except Exception as e:
         print(f"Erro ao criar workspace: {e}")
@@ -90,7 +89,7 @@ def configure_profiles(profiles):
 
             set_aws_profiles(profile_name=profile_name, data=profile_data)
             #set_rclone_profiles(profile_name=profile_name, data=profile_data)
-            #set_mgc_profiles(profile_name=profile_name, data=profile_data)
+            set_mgc_profiles(profile_name=profile_name, data=profile_data)
             print(f"Configuration of {profile_name} done!")
     except yaml.YAMLError as e:
         print(f"Erro ao processar os dados YAML: {e}")
