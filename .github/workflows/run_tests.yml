@@ -28,7 +28,6 @@ jobs:
             - name: Configure Profiles
               run: |
                 echo "${{ secrets.PROFILES }}" > profiles.yaml
-                stat profiles.yaml
 
                 sha256sum profiles.yaml
                 sha256sum ./bin/configure_profiles.py
