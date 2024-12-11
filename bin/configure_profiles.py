@@ -51,14 +51,6 @@ def set_rclone_profiles(profile_name, data):
         )
 
 def set_mgc_profiles(profile_name, data):
-    try:
-        subprocess.run(
-            ["mgc", "workspace", "create", profile_name, data.get("type", "s3")],
-            check=True,
-        )
-    except Exception as e:
-        print(f"Erro ao criar workspace: {e}")
-
     profile_dir = os.path.expanduser(f"~/.config/mgc/{profile_name}")
     os.makedirs(profile_dir, exist_ok=True)
     
