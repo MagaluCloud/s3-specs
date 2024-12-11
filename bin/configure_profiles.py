@@ -59,19 +59,21 @@ def set_mgc_profiles(profile_name, data):
     except Exception as e:
         print(f"Erro ao criar workspace: {e}")
 
-    # Criar auth.yaml
-    auth_command = (
-        f"echo 'access_key_id: {data.get('access_key')}\n"
-        f"secret_access_key: {data.get('secret_key')}' > ~/.config/mgc/{profile_name}/auth.yaml"
-    )
-    subprocess.run(auth_command, shell=True, check=True)
-
-    # Criar cli.yaml
-    cli_command = (
-        f"echo 'region: {data.get('region')}' > ~/.config/mgc/{profile_name}/cli.yaml"
-    )
-    subprocess.run(cli_command, shell=True, check=True)
+    profile_dir = os.path.expanduser(f"~/.config/mgc/{profile_name}")
+    os.makedirs(profile_dir, exist_ok=True)
     
+    # Create auth.yaml
+    auth_file_path = os.path.join(profile_dir, "auth.yaml")
+    with open(auth_file_path, "w") as auth_file:
+        auth_file.write(
+            f"access_key_id: {data.get('access_key')}\n"
+            f"secret_access_key: {data.get('secret_key')}\n"
+        )
+    
+    # Create cli.yaml
+    cli_file_path = os.path.join(profile_dir, "cli.yaml")
+    with open(cli_file_path, "w") as cli_file:
+        cli_file.write(f"region: {data.get('region')}\n")
 
 def configure_profiles(profiles):
     try:
