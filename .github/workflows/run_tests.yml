@@ -26,8 +26,6 @@ jobs:
                   poetry install --quiet
                   
             - name: Configure Profiles
-              env:
-                PROFILES: ${{ secrets.PROFILES }}
               run: |
                 echo "${{ secrets.PROFILES }}" > profiles.yaml
                 echo "Configuring Profiles..."
@@ -36,4 +34,4 @@ jobs:
             - name: Run tests
               run: |
                 cd docs
-                poetry run pytest --config ${{ inputs.config }} ${{ inputs.tests }}
+                poetry run pytest --log-cli-level=INFO --config ${{ inputs.config }} ${{ inputs.tests }}
