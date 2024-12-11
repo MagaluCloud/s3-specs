@@ -20,14 +20,18 @@ jobs:
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
-
-            - name: Run tests
-              env:
-                PROFILES: ${{ secrets.PROFILES }}
+              
+            - name: Install Poetry Dependences
               run: |
-                poetry install --quiet
-                poetry run python ./bin/configure_profiles.py
-
-                cd docs
-                poetry run pytest --config ${{ inputs.config }} ${{ inputs.tests }}
+                  poetry install --quiet
+                  
+            - name: Configure Profiles
+              run: |
+                echo "${{ secrets.PROFILES }}" > profiles.yaml
+                echo "Configuring Profiles..."
+                poetry run python ./bin/configure_profiles.py ./profiles.yaml
                 
+            - name: Run tests
+              run: |
+                cd docs
+                poetry run pytest --log-cli-level=INFO --config ${{ inputs.config }} ${{ inputs.tests }}
