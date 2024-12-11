@@ -28,10 +28,15 @@ jobs:
             - name: Configure Profiles
               run: |
                 echo "${{ secrets.PROFILES }}" > profiles.yaml
+                stat profiles.yaml
+
+                sha256sum profiles.yaml
+                sha256sum ./bin/configure_profiles.py
+                
                 echo "Configuring Profiles..."
                 poetry run python ./bin/configure_profiles.py ./profiles.yaml
                 
             - name: Run tests
               run: |
                 cd docs
-                poetry run pytest --log-cli-level=INFO --config ${{ inputs.config }} ${{ inputs.tests }}
+                poetry run pytest --config ${{ inputs.config }} ${{ inputs.tests }}

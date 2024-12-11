@@ -76,7 +76,9 @@ def set_mgc_profiles(profile_name, data):
 
 def configure_profiles(profiles):
     try:
+        print("Starting Configuration")
         for profile_name, profile_data in profiles.items():
+            print(f"Configuring {profile_name}")
             endpoint = profile_data.get("endpoint")
             access_key = profile_data.get("access_key")
             secret_key = profile_data.get("secret_key")
@@ -87,9 +89,9 @@ def configure_profiles(profiles):
                 continue
 
             set_aws_profiles(profile_name=profile_name, data=profile_data)
-            set_rclone_profiles(profile_name=profile_name, data=profile_data)
-            set_mgc_profiles(profile_name=profile_name, data=profile_data)
-
+            #set_rclone_profiles(profile_name=profile_name, data=profile_data)
+            #set_mgc_profiles(profile_name=profile_name, data=profile_data)
+            print(f"Configuration of {profile_name} done!")
     except yaml.YAMLError as e:
         print(f"Erro ao processar os dados YAML: {e}")
     except subprocess.CalledProcessError as e:
@@ -106,5 +108,6 @@ if __name__ == "__main__":
 
         profiles = yaml.safe_load(profiles_data)
 
+    print(f"Number of profiles - {len(profiles)}")
     configure_profiles(profiles)
     print(f"Profile Configurations Done!")
