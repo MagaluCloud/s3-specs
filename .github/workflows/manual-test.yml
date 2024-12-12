@@ -1,0 +1,25 @@
+name: Manual Test
+
+on:
+    workflow_dispatch:
+      inputs:
+        tests:
+          description: 'Digite o nome do arquivo de teste a ser executado'
+          required: true
+        config:
+          description: 'Digite o caminho da configuração a ser utilizado'
+          required: true
+          default: ../params.example.yaml
+        flags:
+          description: 'Flags Adicionais'
+          required: false
+
+jobs:
+  run-tests:
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      tests: ${{ inputs.tests }}
+      config: ${{ inputs.config }}
+      flags: ${{ inputs.flags }}
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}
