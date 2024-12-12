@@ -2,7 +2,7 @@ docs_dir: "."
 default_profile_index: 0
 profiles:
   -
-    profile_name: "br-ne1"
+    profile_name: "br-se1"
     lock_mode: "COMPLIANCE"
     mgc_path: "../magalu/mgc/cli/mgc"
   -    
@@ -10,7 +10,7 @@ profiles:
     lock_mode: "COMPLIANCE"
     mgc_path: "../magalu/mgc/cli/mgc"
   -
-    profile_name: "br-ne1-second"
+    profile_name: "br-se1-second"
     lock_mode: "COMPLIANCE"
   -
     profile_name: "aws-east-1"
@@ -19,7 +19,7 @@ profiles:
     profile_name: "aws-west-1"
     lock_mode: "GOVERNANCE"
   -
-    region_name: "br-se1"
+    region_name: "br-ne1"
     endpoint_url: "https://br-se1.magaluobjects.com/"
     aws_access_key_id: "YOUR-KEY-ID-HERE"
     aws_secret_access_key: "YOUR-SECRET-KEY-HERE"
