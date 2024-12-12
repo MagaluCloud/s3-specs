@@ -44,6 +44,7 @@ from s3_helpers import (
 )
 config = os.getenv("CONFIG", config)
 # -
+pytestmark = pytest.mark.locking
 
 # ### Configuração de Object Locking em Bucket Versionado
 # 
