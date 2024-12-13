@@ -42,7 +42,7 @@ def default_profile(test_params):
 
 @pytest.fixture
 def lock_mode(default_profile):
-    return default_profile["lock_mode"]
+    return default_profile.get("lock_mode", "COMPLIANCE")
 
 @pytest.fixture
 def profile_name(default_profile):
