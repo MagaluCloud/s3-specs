@@ -24,7 +24,7 @@ jobs:
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
   tests-success:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [run-tests]
     steps:
       - name: ok
