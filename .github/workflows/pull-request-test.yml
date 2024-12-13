@@ -1,0 +1,15 @@
+name: Run Test - Pull Request
+
+on:
+    pull_request:
+      types: [opened, synchronize, reopened]
+      
+jobs:
+  run-tests:
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      tests: "*_test.py"
+      config: "../params.example.yaml"
+      flags: "-m 'not locking and not policy' --tb=line"
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}

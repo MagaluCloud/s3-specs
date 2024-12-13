@@ -1,17 +1,13 @@
-name: Run Tests
+name: Run Tests Manually
 
 on:
-    workflow_dispatch:
+    workflow_call:
       inputs:
-        tests:
-          description: 'Digite o nome do arquivo de teste a ser executado'
-          required: true
-        config:
-          description: 'Digite o caminho da configuração a ser utilizado'
-          required: true
-          default: ../params.example.yaml
-      
-
+        tests: { required: true, type: string }
+        config: { required: true, type: string }
+        flags: { required: true, type: string }
+      secrets:
+        PROFILES: { required: true }
 jobs:
     build:
         runs-on: ubuntu-latest
@@ -35,7 +31,7 @@ jobs:
                 echo "Configuring Profiles..."
                 poetry run python ./bin/configure_profiles.py ./profiles.yaml
                 
-            - name: Run tests
+            - name: Run tests ${{ inputs.tests }}
               run: |
                 cd docs
-                poetry run pytest --config ${{ inputs.config }} ${{ inputs.tests }}
+                poetry run pytest --config ${{ inputs.config }} ${{ inputs.tests }} ${{ inputs.flags }}

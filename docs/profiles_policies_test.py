@@ -17,6 +17,7 @@ policy_dict_template = {
 actions = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
 number_clients = 2
 methods = ["get_object", "put_object", "delete_object"]
+pytestmark = pytest.mark.policy
 
 @pytest.mark.parametrize(
     'multiple_s3_clients, bucket_with_one_object_policy, boto3_action',
