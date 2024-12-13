@@ -13,11 +13,11 @@ profiles:
     profile_name: "br-se1-second"
     lock_mode: "COMPLIANCE"
   -
-    profile_name: "aws-east-1"
-    lock_mode: "GOVERNANCE"
+    region_name: "br-ne1"
+    lock_mode: "COMPLIANCE"
   -
-    profile_name: "aws-west-1"
-    lock_mode: "GOVERNANCE"
+    region_name: "br-ne1-second"
+    lock_mode: "COMPLIANCE"
   -
     region_name: "br-ne1"
     endpoint_url: "https://br-se1.magaluobjects.com/"
