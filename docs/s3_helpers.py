@@ -38,7 +38,7 @@ def run_example(dunder_name, test_name, config="../params.example.yaml"):
  
 def generate_unique_bucket_name(base_name="my-unique-bucket"):
     unique_id = uuid.uuid4().hex[:6]  # Short unique suffix
-    return f"{base_name}-{unique_id}"
+    return f"test-{base_name}-{unique_id}"
 
 
 def delete_bucket_and_wait(s3_client, bucket_name):
@@ -150,7 +150,7 @@ def cleanup_old_buckets(s3_client, base_name, lock_mode=None, retention_days=1):
     response = s3_client.list_buckets()
     for bucket in response['Buckets']:
         bucket_name = bucket['Name']
-        if bucket_name.startswith(base_name):
+        if bucket_name.startswith(f"test-{base_name}"):
             creation_date = bucket['CreationDate']
             age_threshold = datetime.now(creation_date.tzinfo) - timedelta(days=retention_days)
 
