@@ -6,6 +6,7 @@ from s3_helpers import(
 )
 
 # # Policy Tests
+pytestmark = pytest.mark.policy
 
 # ### Test Variables
 malformed_policy_json ='''{

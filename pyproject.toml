@@ -37,4 +37,5 @@ filterwarnings = "ignore::DeprecationWarning:botocore.auth"
 env = ["JUPYTER_PLATFORM_DIRS=1"]
 markers = [
     "locking: marks tests as locking (deselect with '-m \"not locking\"')",
+    "policy: marks tests as policy(deselect with '-m \"not policy\"')"
 ]
