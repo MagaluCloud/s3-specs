@@ -31,7 +31,7 @@ jobs:
                 echo "Configuring Profiles..."
                 poetry run python ./bin/configure_profiles.py ./profiles.yaml
                 
-            - name: Run tests {{ inputs.tests }}
+            - name: Run tests ${{ inputs.tests }}
               run: |
                 cd docs
                 poetry run pytest --config ${{ inputs.config }} ${{ inputs.tests }} ${{ inputs.flags }}
