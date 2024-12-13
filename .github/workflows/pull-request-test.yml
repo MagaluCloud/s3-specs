@@ -10,6 +10,6 @@ jobs:
     with:
       tests: "*_test.py"
       config: "../params.example.yaml"
-      flags: "-m 'not locking' --tb=line"
+      flags: "-m 'not (locking and policy)' --tb=line"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
