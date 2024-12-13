@@ -4,6 +4,8 @@ from botocore.exceptions import ClientError
 from s3_helpers import update_existing_keys
 import logging
 
+pytestmark = pytest.mark.acl
+
 # # OBJECT ACL
 
 ## Try to set object acl with invalid permissions

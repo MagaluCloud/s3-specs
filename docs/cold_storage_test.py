@@ -24,7 +24,10 @@ config = "../params/br-se1.yaml"
 
 # + {"jupyter": {"source_hidden": true}}
 import logging
+import pytest
 from s3_helpers import run_example
+
+pytestmark = pytest.mark.cold_storage
 # -
 
 # ## Exemplos

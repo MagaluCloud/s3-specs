@@ -6,10 +6,27 @@ on:
       
 jobs:
   run-tests:
+    strategy:
+      fail-fast: true
+      matrix:
+        category:
+          - acl
+          - cold_storage
+          - basic
+          - presign
+          # - locking
+          # - policy
     uses: ./.github/workflows/run-tests.yml
     with:
       tests: "*_test.py"
       config: "../params.example.yaml"
-      flags: "-v -n auto --color yes -m 'not locking and not policy' --tb=line"
+      flags: "-v -n auto --color yes -m '${{ matrix.category }}' --tb=line"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
+  tests-success:
+    runs-on: ubuntu-latest
+    needs: [run-tests]
+    steps:
+      - name: ok
+        run:
+          exit 0
