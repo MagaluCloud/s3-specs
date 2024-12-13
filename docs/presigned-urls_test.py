@@ -23,9 +23,12 @@ config = "../params/br-ne1.yaml"
 # -
 
 # + {"jupyter": {"source_hidden": true}}
+import pytest
 from s3_helpers import run_example, delete_object_and_wait
 import requests
 import os
+
+pytestmark = pytest.mark.presign
 config = os.getenv("CONFIG", config)
 # -
 

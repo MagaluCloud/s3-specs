@@ -36,6 +36,10 @@ formats = "ipynb,py:light"
 filterwarnings = "ignore::DeprecationWarning:botocore.auth"
 env = ["JUPYTER_PLATFORM_DIRS=1"]
 markers = [
-    "locking: marks tests as locking (deselect with '-m \"not locking\"')",
-    "policy: marks tests as policy(deselect with '-m \"not policy\"')"
+    "acl: Canned ACL (access control list)",
+    "locking: Bucket Lock configuration and Object lock retention",
+    "policy: Bucket Policy",
+    "cold_storage: Storage Classes",
+    "basic: Basic S3 functionality",
+    "presign: Presigned URLs",
 ]
