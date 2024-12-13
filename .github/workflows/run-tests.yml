@@ -3,7 +3,7 @@ name: Run Tests
 on:
     workflow_call:
       inputs:
-        tests: { required: true, type: string }
+        tests: { required: false, type: string }
         config: { required: true, type: string }
         flags: { required: true, type: string }
       secrets:
