@@ -1,3 +1,11 @@
+# ---
+# jupyter:
+#   kernelspec:
+#     name: s3-specs
+#     display_name: S3 Specs
+#   language_info:
+#     name: python
+# ---
 import pytest
 from itertools import product
 from botocore.exceptions import ClientError

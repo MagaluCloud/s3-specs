@@ -1,7 +1,8 @@
+# ---
 # jupyter:
 #   kernelspec:
-#     name: my-poetry-env
-#     display_name: Python 3
+#     name: s3-specs
+#     display_name: S3 Specs
 #   language_info:
 #     name: python
 # ---
