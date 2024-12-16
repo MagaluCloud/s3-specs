@@ -10,10 +10,7 @@ Since we aim at having specs to be pytest compliant, running a single spec might
 
 ```
 cd docs
-pytest -n auto <spec path>
-
-# Or if you need specific config to the test you are running:
-# pytest -n auto <spec path> --config ../<params file.yaml>
+uv run pytest {spec_path} --config ../{config_yaml_file}
 ```
 
 But the specs are also readable pages, so if you want to use the generation of a page to run a test
@@ -34,9 +31,7 @@ on a Jupyter Lab environment, to install the dependencies and launch it you will
 an environment with Python and Poetry:
 
 ```
-poetry install
-poetry shell
-jupyter lab docs
+uv run --with jupyter --with jupytext jupyter lab docs
 ```
 
 Then right-click on a .py file ending with _test.py and choose "Open With Notebook".
@@ -69,7 +64,6 @@ along with end-to-end test scenarios.
 
 Follow these steps to submit a contribution:
 
-- install the dependencies
 - write a new "_test.py" document, or duplicate an existing one
 - write the examples as pytest test_ functions
   - write new fixtures if needed

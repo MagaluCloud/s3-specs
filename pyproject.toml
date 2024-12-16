@@ -1,33 +1,38 @@
-[tool.poetry]
+[project]
+authors = [
+    {name = "Marmotitude and AUTHORS", email = "you@example.com"},
+]
+requires-python = "<4.0,>=3.12"
+dependencies = [
+    "boto3<2.0.0,>=1.35.48",
+    "uuid<2.0,>=1.30",
+    "pytest<9.0.0,>=8.3.3",
+    "requests<3.0.0,>=2.32.3",
+    "ipynbname<2025.0.0.0,>=2024.1.0.0",
+    "pytest-env<2.0.0,>=1.1.5",
+    "pytest-rerunfailures<16.0,>=15.0",
+    "pytest-xdist<4.0.0,>=3.6.1",
+    "pytest-repeat<1.0.0,>=0.9.3",
+]
 name = "s3-specs"
 version = "0.1.0"
 description = ""
-authors = ["Marmotitude and AUTHORS <you@example.com>"]
 readme = "README.md"
 package-mode = false
 
-[tool.poetry.scripts]
-post_install = "python -m ipykernel install --user --name=my-poetry-env --display-name 'Python (Poetry)'"
+[dependency-groups]
+dev = [
+    "ipykernel>=6.29.5",
+    "jupytext>=1.16.5",
+    "nbconvert>=7.16.4",
+]
 
-[tool.poetry.dependencies]
-python = "^3.12"
-notebook = "^7.2.2"
-ipykernel = "^6.29.5"
-nbconvert = "^7.16.4"
-boto3 = "^1.35.48"
-uuid = "^1.30"
-jupytext = "^1.16.4"
-pytest = "^8.3.3"
-requests = "^2.32.3"
-ipynbname = "^2024.1.0.0"
-pytest-env = "^1.1.5"
-pytest-rerunfailures = "^15.0"
-pytest-xdist = "^3.6.1"
-pytest-repeat = "^0.9.3"
+[tool.pdm.build]
+includes = []
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
 
 [tool.jupytext]
 formats = "ipynb,py:light"
