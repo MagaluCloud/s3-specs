@@ -48,5 +48,5 @@ markers = [
     "basic: Basic S3 functionality",
     "presign: Presigned URLs",
     "bucket_versioning: Bucket Versioning",
-    "bucket_versioning_cli: Bucket Versioning using CLI",
+    "cli: Tests using CLI",
 ]
