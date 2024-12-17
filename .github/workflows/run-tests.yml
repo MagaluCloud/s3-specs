@@ -19,22 +19,29 @@ jobs:
               with:
                   ref: ${{ github.head_ref }}
                   fetch-depth: 0
-              
-            - name: Install Poetry Dependences
-              run: |
-                  poetry install --quiet
-                  
+
+            - name: Install uv
+              uses: astral-sh/setup-uv@v4
+              with:
+                version: "0.5.9"
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                python-version-file: "pyproject.toml"
+
+            - name: Install the project
+              run: uv sync --no-dev
+
             - name: Configure Profiles
               run: |
                 echo "${{ secrets.PROFILES }}" > profiles.yaml
-
                 sha256sum profiles.yaml
                 sha256sum ./bin/configure_profiles.py
-                
                 echo "Configuring Profiles..."
-                poetry run python ./bin/configure_profiles.py ./profiles.yaml
-                
+                uv run python ./bin/configure_profiles.py ./profiles.yaml
+
             - name: Run tests ${{ inputs.tests }}
               run: |
                 cd docs
-                poetry run pytest --config ${{ inputs.config }} ${{ inputs.tests }} ${{ inputs.flags }}
+                uv run pytest --config ${{ inputs.config }} ${{ inputs.tests }} ${{ inputs.flags }}
