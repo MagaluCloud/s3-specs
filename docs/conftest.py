@@ -57,6 +57,9 @@ def mgc_path(default_profile):
     """
     Validates and returns the path to the 'mgc' binary.
     """
+    if not default_profile.get("mgc_path"):
+        return "mgc"
+    
     spec_dir = os.path.dirname(get_spec_path())
     path = os.path.join(spec_dir, default_profile.get("mgc_path", "mgc"))
     if not os.path.isfile(path):
