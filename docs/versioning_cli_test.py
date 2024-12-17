@@ -64,10 +64,7 @@ def test_delete_bucket_with_objects_with_versions(cmd_template, s3_client, versi
 
     assert result.returncode != 0, f"Command failed with error: {result.stderr}"
     logging.info(f"Output from {cmd_template}: {result.stdout}")
-    if cmd[0] == "mgc":
-        pass
-        # assert "the bucket may not be empty" in result.stderr
-    else:
+    if cmd[0] != "mgc":
         assert "BucketNotEmpty" in result.stderr
 
 run_example(__name__, "test_delete_bucket_with_objects_with_versions", config=config)
