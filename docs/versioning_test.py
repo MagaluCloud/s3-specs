@@ -1,12 +1,35 @@
+# ---
+# jupyter:
+#   kernelspec:
+#     name: s3-specs
+#     display_name: S3 Specs
+#   language_info:
+#     name: python
+# ---
+
+# # Versionamento
+
+# O que é o Versionamento?
+
+# O versionamento é uma funcionalidade oferecida por sistemas de armazenamento de objetos, como o Magalu Cloud, 
+# que permite manter múltiplas versões de um mesmo objeto dentro de um bucket. Isso significa que, ao habilitar o versionamento,
+# você pode recuperar, restaurar ou excluir versões anteriores de arquivos, garantindo uma trilha de auditoria completa 
+# e prevenindo perdas acidentais de dados.
+
+# No Magalu Cloud, o versionamento é inspirado no funcionamento do Amazon S3, 
+# oferecendo um mecanismo robusto de controle sobre a evolução de objetos dentro de um bucket.
+
+import logging
+import pytest
+from s3_helpers import run_example
+from botocore.exceptions import ClientError
+
 # + tags=["parameters"]
 config = "../params/br-se1.yaml"
 # -
 
 # + {"jupyter": {"source_hidden": true}}
-import logging
-import pytest
-from s3_helpers import run_example
-from botocore.exceptions import ClientError
+
 
 pytestmark = pytest.mark.bucket_versioning
 
@@ -52,10 +75,6 @@ def test_delete_bucket_with_objects_with_versions(s3_client, versioned_bucket_wi
         Key = object_key,
         Body = b"v2"
     )
-
-    # s3_client.delete_bucket(
-    #         Bucket=bucket_name,
-    #     )
 
     with pytest.raises(ClientError, match="BucketNotEmpty") as exc_info:
         s3_client.delete_bucket(
