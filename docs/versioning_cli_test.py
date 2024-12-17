@@ -8,18 +8,17 @@ import subprocess
 config = "../params/br-se1.yaml"
 
 
-pytestmark = [pytest.mark.bucket_versioning, pytest.mark.bucket_versioning_cli]
+pytestmark = [pytest.mark.bucket_versioning, pytest.mark.cli]
 
 
 commands = [
-    "mgc object-storage objects delete {bucket_name}/{object_key} --no-confirm",
-    "aws --profile {profile_name} s3 rm s3://{bucket_name}/{object_key}",
-    "rclone delete {profile_name}:{bucket_name}/{object_key}"
+    ("mgc object-storage objects delete {bucket_name}/{object_key} --no-confirm", ""),
+    ("aws --profile {profile_name} s3 rm s3://{bucket_name}/{object_key}", "delete: s3://{bucket_name}/{object_key}\n"),
+    ("rclone delete {profile_name}:{bucket_name}/{object_key}", "")
 ]
 
-# + {"jupyter": {"source_hidden": true}}
-@pytest.mark.parametrize("cmd_template", commands)
-def test_delete_object_with_versions(cmd_template, s3_client, versioned_bucket_with_one_object, profile_name, active_mgc_workspace):
+@pytest.mark.parametrize("cmd_template, expected", commands)
+def test_delete_object_with_versions(cmd_template, expected, s3_client, versioned_bucket_with_one_object, profile_name, active_mgc_workspace):
     bucket_name, object_key, _ = versioned_bucket_with_one_object
 
     s3_client.put_object(
@@ -35,22 +34,19 @@ def test_delete_object_with_versions(cmd_template, s3_client, versioned_bucket_w
     assert result.returncode == 0, f"Command failed with error: {result.stderr}"
     logging.info(f"Output from {cmd_template}: {result.stdout}")
     
-    if cmd[0] == "aws":
-        assert result.stdout == f"delete: s3://{bucket_name}/{object_key}\n"
-    else:
-        assert result.stdout == ""
+
+    assert result.stdout == expected.format(bucket_name=bucket_name, object_key=object_key)
 
 run_example(__name__, "test_delete_bucket_with_objects_with_versions", config=config)
 
 commands = [
-    "mgc object-storage buckets delete {bucket_name} --no-confirm --recursive --raw",
-    "aws --profile {profile_name} s3 rb s3://{bucket_name}",
-    "rclone rmdir {profile_name}:{bucket_name}"
+    ("mgc object-storage buckets delete {bucket_name} --no-confirm --recursive --raw", "the bucket may not be empty"),
+    ("aws --profile {profile_name} s3 rb s3://{bucket_name}", "BucketNotEmpty"),
+    ("rclone rmdir {profile_name}:{bucket_name}", "BucketNotEmpty")
 ]
 
-# + {"jupyter": {"source_hidden": true}}
-@pytest.mark.parametrize("cmd_template", commands)
-def test_delete_bucket_with_objects_with_versions(cmd_template, s3_client, versioned_bucket_with_one_object, profile_name, active_mgc_workspace):
+@pytest.mark.parametrize("cmd_template, expected", commands)
+def test_delete_bucket_with_objects_with_versions(cmd_template, expected, s3_client, versioned_bucket_with_one_object, profile_name, active_mgc_workspace):
     bucket_name, object_key, _ = versioned_bucket_with_one_object
 
     s3_client.put_object(
@@ -64,7 +60,6 @@ def test_delete_bucket_with_objects_with_versions(cmd_template, s3_client, versi
 
     assert result.returncode != 0, f"Command failed with error: {result.stderr}"
     logging.info(f"Output from {cmd_template}: {result.stdout}")
-    if cmd[0] != "mgc":
-        assert "BucketNotEmpty" in result.stderr
-
+    assert expected in result.stderr
+    
 run_example(__name__, "test_delete_bucket_with_objects_with_versions", config=config)
