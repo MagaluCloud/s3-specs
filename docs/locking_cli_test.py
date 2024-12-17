@@ -28,7 +28,7 @@ from shlex import split, quote
 from s3_helpers import run_example, get_spec_path
 from datetime import datetime, timedelta, timezone
 # -
-pytestmark = pytest.mark.locking
+pytestmark = [pytest.mark.locking, pytest.mark.cli]
 
 # ## Exemplos
 
