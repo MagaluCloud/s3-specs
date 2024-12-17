@@ -1,3 +1,4 @@
+# + {"jupyter": {"source_hidden": true}}
 import logging
 import pytest
 from s3_helpers import run_example
@@ -8,6 +9,7 @@ import subprocess
 config = "../params/br-se1.yaml"
 
 
+# + {"jupyter": {"source_hidden": true}}
 pytestmark = [pytest.mark.bucket_versioning, pytest.mark.cli]
 
 
@@ -21,10 +23,11 @@ commands = [
 def test_delete_object_with_versions(cmd_template, expected, s3_client, versioned_bucket_with_one_object, profile_name, active_mgc_workspace):
     bucket_name, object_key, _ = versioned_bucket_with_one_object
 
+    #Adicionando uma segunda versão deste objeto
     s3_client.put_object(
         Bucket = bucket_name,
         Key = object_key,
-        Body = b"v2"
+        Body = b"second version of this object"
     )
 
     
