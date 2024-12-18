@@ -1,10 +1,27 @@
 # ---
 # jupyter:
+#   jupytext:
+#     cell_metadata_json: true
+#     notebook_metadata_filter: language_info
+#     text_representation:
+#       extension: .py
+#       format_name: light
+#       format_version: '1.5'
+#       jupytext_version: 1.16.5
 #   kernelspec:
-#     name: s3-specs
-#     display_name: S3 Specs
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
 #   language_info:
+#     codemirror_mode:
+#       name: ipython
+#       version: 3
+#     file_extension: .py
+#     mimetype: text/x-python
 #     name: python
+#     nbconvert_exporter: python
+#     pygments_lexer: ipython3
+#     version: 3.12.7
 # ---
 
 # # Cold Storage
@@ -19,9 +36,8 @@
 # que oferece um custo de armazenamento reduzido e um custo de acesso mais elevado. Consulte a página de Preços
 # para comparar as diferentes classes de armazenamento.
 
-# + tags=["parameters"]
+# + {"tags": ["parameters"]}
 config = "../params/br-se1.yaml"
-# -
 
 # + {"jupyter": {"source_hidden": true}}
 import logging
@@ -33,17 +49,19 @@ pytestmark = pytest.mark.cold_storage
 
 # ## Exemplos
 
-# + tags=["parameters"]
+# + {"tags": ["parameters"]}
 config = "../params/aws-east-1.yaml"
 # -
 
 # ### Subindo um objeto utilizando boto3
-# 
+#
 # O Magalu Cloud possibilita a utilização da biblioteca Python boto3 para manipular buckets e seus objetos.  
 # No exemplo abaixo, é demonstrado como realizar o upload de um objeto novo em um bucket já configurado com a classe fria.  
 # O boto3 aceita apenas algumas classes específicas como parâmetro, como "STANDARD", "GLACIER_IR", etc.  
-# 
+#
 # No Magalu Cloud, a classe fria é chamada **COLD_INSTANT**, mas, por motivos de compatibilidade com o boto3, utiliza-se a classe **GLACIER_IR** para especificar um objeto com a classe fria.
+
+# +
 def test_boto_upload_object_with_cold_storage_class(s3_client, existing_bucket_name):
     bucket_name = existing_bucket_name
     object_key = "cold_file.txt"
@@ -66,12 +84,15 @@ def test_boto_upload_object_with_cold_storage_class(s3_client, existing_bucket_n
     assert storage_class == "GLACIER_IR" or storage_class == "COLD_INSTANT", "Expected StorageClass GLACIER_IR or COLD_INSTANT"
     
 run_example(__name__, "test_boto_upload_object_with_cold_storage_class", config=config)
+# -
 
 # ### Trocar a classe de um objeto existente    
 #
 # Além de poder subir um novo objeto com a classe, também é possível trocar a classe de armazenamento 
 # de um objeto existente, usando a função copy_object do boto3. Isso é feito copiando um objeto para o mesmo lugar 
 # (mesma object key), mas passando um valor diferente para o argumento StorageClass, como é possível visualizar no exemplo abaixo.
+
+# +
 def test_boto_change_object_class_to_cold_storage(s3_client, bucket_with_one_object):
     bucket_name, object_key, _ = bucket_with_one_object
 
@@ -90,12 +111,15 @@ def test_boto_change_object_class_to_cold_storage(s3_client, bucket_with_one_obj
     assert storage_class == "GLACIER_IR" or storage_class == "COLD_INSTANT", "Expected StorageClass GLACIER_IR or COLD_INSTANT"
 
 run_example(__name__, "test_boto_change_object_class_to_cold_storage", config=config)
+# -
 
 # ### Upload de um objeto com metadados customizados e ACLs
-# 
+#
 # O upload de um objeto com storage class não é diferente de um upload normal 
 # e aceita todos os outros atributos possíveis. O exemplo abaixo demonstra o upload de um objeto
 # com metadados customizados, ACLs e a classe fria.
+
+# +
 def test_boto_object_with_custom_metadata_acls_and_storage_class(s3_client, existing_bucket_name):
     bucket_name = existing_bucket_name
     object_key = "cold_file.txt"
@@ -136,13 +160,16 @@ def test_boto_object_with_custom_metadata_acls_and_storage_class(s3_client, exis
     assert 'READ' == acl.get('Permission'), "Expected acl permission be READ"
 
 run_example(__name__, "test_boto_object_with_custom_metadata_acls_and_storage_class", config=config)
+# -
 
 # ### Listagem de objetos
-# 
+#
 # No boto3, utilizando a função list_objects_v2, é possível listar os objetos de um bucket e, junto do objeto, 
 # obter algumas informações sobre ele, sendo uma delas a StorageClass. Apesar de não ser compatível 
 # utilizar a classe COLD_INSTANT durante o put_object ou copy_object com o Magalu Cloud, quando se realiza a busca 
 # de um objeto ou das informações do objeto no Magalu Cloud, a classe retornada é COLD_INSTANT.
+
+# +
 def test_boto_list_objects_with_cold_storage_class(s3_client, bucket_with_one_storage_class_cold_object):
     bucket_name, _, _ = bucket_with_one_storage_class_cold_object
 
@@ -159,10 +186,13 @@ def test_boto_list_objects_with_cold_storage_class(s3_client, bucket_with_one_st
     assert obj_storage_class == 'COLD_INSTANT' or obj_storage_class == 'GLACIER_IR', "Expected GACIER_IR or COLD_INSTANT as Storage Class"
 
 run_example(__name__, "test_boto_multipart_upload_with_cold_storage_class", config=config)
+# -
 
 # ### Multipart Upload com a Classe Fria
-# 
+#
 # Outra possibilidade é realizar o multipart upload utilizando a classe fria. 
+
+# +
 def test_boto_multipart_upload_with_cold_storage_class(s3_client, existing_bucket_name, create_multipart_object_files):
     bucket_name = existing_bucket_name
 

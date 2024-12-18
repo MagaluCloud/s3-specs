@@ -59,11 +59,12 @@ def mgc_path(default_profile):
     """
     Validates and returns the path to the 'mgc' binary.
     """
-    if not default_profile.get("mgc_path"):
+    mgc_path_field_name = "mgc_path"
+    if not default_profile.get(mgc_path_field_name):
         path = shutil.which("mgc")
     else:
         spec_dir = os.path.dirname(get_spec_path())
-        path = os.path.join(spec_dir, default_profile.get("mgc_path", "mgc"))
+        path = os.path.join(spec_dir, default_profile.get(mgc_path_field_name))
     if not os.path.isfile(path):
         pytest.fail(f"The specified mgc_path '{path}' (absolute: {os.path.abspath(path)}) does not exist or is not a file.")
     return path

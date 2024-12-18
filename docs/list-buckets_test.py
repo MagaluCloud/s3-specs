@@ -1,10 +1,27 @@
 # ---
 # jupyter:
+#   jupytext:
+#     cell_metadata_json: true
+#     notebook_metadata_filter: language_info
+#     text_representation:
+#       extension: .py
+#       format_name: light
+#       format_version: '1.5'
+#       jupytext_version: 1.16.5
 #   kernelspec:
-#     name: s3-specs
-#     display_name: S3 Specs
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
 #   language_info:
+#     codemirror_mode:
+#       name: ipython
+#       version: 3
+#     file_extension: .py
+#     mimetype: text/x-python
 #     name: python
+#     nbconvert_exporter: python
+#     pygments_lexer: ipython3
+#     version: 3.12.7
 # ---
 
 # # List buckets
@@ -12,9 +29,8 @@
 # Lista os buckets de um perfil[<sup>1</sup>](../glossary#profile)
 
 
-# + tags=["parameters"]
+# + {"tags": ["parameters"]}
 config = "../params/br-ne1.yaml"
-# -
 
 # + {"jupyter": {"source_hidden": true}}
 import pytest
