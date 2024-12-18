@@ -32,7 +32,11 @@ jobs:
 
             - name: Install the project
               run: uv sync --no-dev
-
+            - name: Install MGC
+              run: |
+                curl -Lo mgc.tar.gz "https://github.com/MagaluCloud/mgccli/releases/download/v${0.31.0}/mgccli_${0.31.0}_linux_amd64.tar.gz" && \
+                tar xzvf mgc.tar.gz && rm mgc.tar.gz && \
+                ln -s "/tools/mgc" /usr/local/bin/mgc
             - name: Configure Profiles
               run: |
                 echo "${{ secrets.PROFILES }}" > profiles.yaml
