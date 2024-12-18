@@ -36,7 +36,7 @@ jobs:
               run: |
                 curl -Lo mgc.tar.gz "https://github.com/MagaluCloud/mgccli/releases/download/v0.31.0/mgccli_0.31.0_linux_amd64.tar.gz" && \
                 tar xzvf mgc.tar.gz && rm mgc.tar.gz && \
-                ln -s "/tools/mgc" /usr/local/bin/mgc
+                ln -s "./tools/mgc" /usr/local/bin/mgc
             - name: Configure Profiles
               run: |
                 echo "${{ secrets.PROFILES }}" > profiles.yaml
