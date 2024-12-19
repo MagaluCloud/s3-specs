@@ -24,6 +24,7 @@ config = "../params/br-ne1.yaml"
 
 # + {"jupyter": {"source_hidden": true}}
 import pytest
+import logging
 from s3_helpers import run_example, delete_object_and_wait
 import requests
 import os
@@ -100,6 +101,67 @@ def test_presigned_put_url(s3_client, existing_bucket_name):
     head_response = s3_client.head_object(Bucket=bucket_name, Key=object_key)
     assert head_response["ContentLength"] == len(content), "Uploaded content size mismatch."
     print(f"Object '{object_key}' uploaded successfully and content verified.")
+
+    # Cleanup: delete the uploaded object
+    delete_object_and_wait(s3_client, bucket_name, object_key)
+
+run_example(__name__, "test_presigned_put_url", config=config)
+# -
+
+# ## Outros exemplos
+#
+# ### Gerar uma URL pré-assinada para PutObject que já suba o objeto com uma canned-acl de "public-read":
+
+# +
+def test_presigned_put_url_with_acl(s3_client, existing_bucket_name):
+    bucket_name = existing_bucket_name
+
+    # Define the object key and content
+    object_key = "test-upload-object.txt"
+    content = b"Sample content for presigned PUT, with ACL, test."
+    acl = "public-read"
+
+    # Generate a presigned PUT URL
+    presigned_url = s3_client.generate_presigned_url(
+        ClientMethod="put_object",
+        Params={
+            "Bucket": bucket_name,
+            "Key": object_key,
+            "ACL": acl,
+        },
+        ExpiresIn=3600,
+    )
+
+    # Assert that the presigned URL is generated
+    assert presigned_url, "Failed to generate presigned PUT URL."
+    logging.info(f"Presigned PUT URL created: {presigned_url}")
+
+    # Use the presigned URL to upload the content
+    logging.info(f"Starting PUT request to {presigned_url}")
+    response = requests.put(presigned_url, data=content, headers={"host": "br-ne1.magaluobjects.com", "x-amz-acl": "public-read"})
+
+    # Assert the upload succeeded
+    logging.info(f"response: {response}")
+    assert response.status_code == 200, f"PUT request failed with status code {response.status_code}"
+
+    # Verify the object exists and its content matches
+    head_response = s3_client.head_object(Bucket=bucket_name, Key=object_key)
+    assert head_response["ContentLength"] == len(content), "Uploaded content size mismatch."
+    logging.info(f"Object '{object_key}' uploaded successfully and content length verified.")
+
+    # public URL of the uploaded object
+    endpoint_url = "https://br-ne1.magaluobjects.com" # TODO: use url from profile
+    public_url = f"{endpoint_url}/{bucket_name}/{object_key}"
+
+    # Verify that a public-read object uploaded with this presigned URL is downloable
+    # Use the presigned URL to retrieve the object
+    logging.info(f"Starting GET request to {public_url}")
+    response = requests.get(public_url)
+
+    # Assertions to confirm retrieval success and content match
+    assert response.status_code == 200, f"GET request failed with status code {response.status_code}"
+    assert response.content == content, "Downloaded content does not match the original content."
+    logging.info(f"Object downloaded: {content}")
 
     # Cleanup: delete the uploaded object
     delete_object_and_wait(s3_client, bucket_name, object_key)
