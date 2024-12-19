@@ -3,7 +3,7 @@ name: Run Test - Pull Request
 on:
     pull_request:
       types: [opened, synchronize, reopened]
-      
+
 jobs:
   run-tests:
     strategy:
@@ -15,7 +15,6 @@ jobs:
           - basic
           - presign
           - bucket_versioning
-          # - locking
           # - policy
     uses: ./.github/workflows/run-tests.yml
     with:
@@ -31,3 +30,24 @@ jobs:
       - name: ok
         run:
           exit 0
+
+
+  # since locking is a feature currently under preview, we run it separatedely
+  # and dont block merges if they fail
+  run-locking-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        category:
+          - not cli and locking
+        config:
+          - "../params/br-ne1.yaml"
+          - "../params/br-se1.yaml"
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      tests: "*_test.py"
+      config: "${{ matrix.config }}"
+      # no multiple workers here just to make it easier to audit the logs (more verbosity with INFO level)
+      flags: "-v --log-cli-level INFO --color yes -m '${{ matrix.category }}'"
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}

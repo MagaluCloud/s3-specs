@@ -122,6 +122,7 @@ def put_object_and_wait(s3_client, bucket_name, object_key, content):
     """
     # Upload the object
     put_response = s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=content)
+    logging.info(f"put_object response: {put_response}")
     version_id = put_response.get("VersionId", None)
 
     # Wait for the object to exist
@@ -130,8 +131,7 @@ def put_object_and_wait(s3_client, bucket_name, object_key, content):
 
     # Log confirmation
     logging.info(
-        f"Object '{object_key}' in bucket '{bucket_name}' confirmed as uploaded. "
-        f"Version ID: {version_id}"
+        f"Object '{object_key}' in bucket '{bucket_name}' confirmed as uploaded. Version ID: {version_id}"
     )
 
     return version_id
@@ -183,6 +183,7 @@ def cleanup_old_buckets(s3_client, base_name, lock_mode=None, retention_days=1):
 def delete_version(s3_client, bucket_name, version, lock_mode):
     """
     Attempt to delete an object version or delete marker.
+for _ in range(5):
 
     :param s3_client: Boto3 S3 client.
     :param bucket_name: Name of the bucket.
@@ -270,3 +271,160 @@ def update_existing_keys(main_dict, sub_dict):
             main_dict[key] = sub_dict[key]
 
     return main_dict
+
+# TODO: not cool, #eventualconsistency
+# Sometimes a test of feature needs to put an object on a versioned bucket, and is expected that
+# a put object on a versioned bucket returns a version id in the response of the PUT request.
+#
+# However, due to eventual consistency, even after bucket creation and a positive response on the 
+# versioning status of such bucket returns the Enabled status. Not all replicas know that the bucket
+# is a versioned enabled one, and so, a put object request will return without version ID.
+#
+# This helper function is a workaround that will attempt multiple times to put an object in a bucket
+# and if the response does not include a version ID, will try to put another object, with another
+# key on the same bucket, waiting some seconds between re-attempts. Until the put object response
+# returns a version ID or until the number of maximum retries is reached.
+def replace_failed_put_without_version(s3_client, bucket_name, object_key, object_content):
+
+    retries = 0
+    interval_multiplier = 3 # seconds
+    start_time = datetime.now()
+    object_version = None
+    while not object_version and retries < 10:
+        retries += 1
+
+        # create a new object key
+        new_object_key = f"test_object_{retries}.txt"
+
+        logging.info(f"attempt ({retries}): key:{new_object_key}")
+        wait_time = retries * retries * interval_multiplier
+        logging.info(f"wait {wait_time} seconds")
+        time.sleep(wait_time)
+
+        # delete object (marker?) on the strange object without version id
+        s3_client.delete_object(Bucket=bucket_name, Key=object_key)
+
+        # put the object again in the hopes that this time it will have a version id
+        response = s3_client.put_object(Bucket=bucket_name, Key=new_object_key, Body=object_content)
+        logging.info(f"put_object response: {response}")
+
+        # check if it has version id
+        object_version = response.get("VersionId")
+        if not object_version:
+            # try to get the object version not returned by the put_object with a head_object
+            logging.info(f"put response dont have version, wait {wait_time} seconds before head_object")
+            time.sleep(wait_time)
+            logging.info(f"head_object Key={new_object_key}...")
+            head_object_response = s3_client.head_object(Bucket=bucket_name, Key=new_object_key)
+            logging.info(f"Head object {new_object_key}: {head_object_response}")
+            object_version = head_object_response.get("VersionId")
+
+        logging.info(f"Object {new_object_key} in bucket {bucket_name} confirmed as uploaded. Version ID: {object_version}")
+    end_time = datetime.now()
+    logging.warning(f"[replace_failed_put_without_version] Total consistency wait time={end_time - start_time}")
+
+    return object_version, new_object_key
+
+# TODO: review when #eventualconsistency stops being so bad
+def put_object_lock_configuration_with_determination(s3_client, bucket_name, configuration):
+    retries = 0
+    interval_multiplier = 3 # seconds
+    response = None
+    start_time = datetime.now()
+    while retries < 10:
+        retries += 1
+        try:
+            response = s3_client.put_object_lock_configuration(
+                Bucket=bucket_name,
+                ObjectLockConfiguration=configuration
+            )
+            break
+        except Exception as e:
+            logging.error(f"Error ({retries}): {e}")
+            wait_time = retries * retries * interval_multiplier
+            logging.info(f"wait {wait_time} seconds")
+            time.sleep(wait_time)
+    end_time = datetime.now()
+    logging.warning(f"[put_object_lock_configuration_with_determination] Total consistency wait time={end_time - start_time}")
+    return response
+
+# TODO: review when #eventualconsistency stops being so bad
+def get_object_retention_with_determination(s3_client, bucket_name, object_key):
+    retries = 0
+    interval_multiplier = 3 # seconds
+    response = None
+    start_time = datetime.now()
+    while retries < 20:
+        retries += 1
+        try:
+            # make 5 GETs in an attempt to get responses from all replicas
+            response = s3_client.get_object_retention( Bucket=bucket_name, Key=object_key,)
+            response2 = s3_client.get_object_retention( Bucket=bucket_name, Key=object_key,)
+            response3 = s3_client.get_object_retention( Bucket=bucket_name, Key=object_key,)
+            response4 = s3_client.get_object_retention( Bucket=bucket_name, Key=object_key,)
+            response5 = s3_client.get_object_retention( Bucket=bucket_name, Key=object_key,)
+            break
+        except Exception as e:
+            logging.error(f"[get_object_retention_with_determination] Error ({retries}): {e}")
+            wait_time = retries * retries * interval_multiplier
+            logging.info(f"wait {wait_time} seconds")
+            time.sleep(wait_time)
+    end_time = datetime.now()
+    logging.warning(f"[get_object_retention_with_determination] Total consistency wait time={end_time - start_time}")
+    assert response and response.get("Retention"), "Setup error, object dont have retention"
+    return response
+
+
+# TODO: review when #eventualconsistency stops being so bad
+def get_object_lock_configuration_with_determination(s3_client, bucket_name):
+    retries = 0
+    interval_multiplier = 3 # seconds
+    response = None
+    start_time = datetime.now()
+    while retries < 20:
+        retries += 1
+        try:
+            # make 5 GETs in an attempt to get responses from all replicas
+            response = s3_client.get_object_lock_configuration(Bucket=bucket_name)
+            response2 = s3_client.get_object_lock_configuration(Bucket=bucket_name)
+            response3 = s3_client.get_object_lock_configuration(Bucket=bucket_name)
+            response4 = s3_client.get_object_lock_configuration(Bucket=bucket_name)
+            response5 = s3_client.get_object_lock_configuration(Bucket=bucket_name)
+            break
+        except Exception as e:
+            logging.error(f"[get_object_lock_configuration_with_determination] Error ({retries}): {e}")
+            wait_time = retries * retries * interval_multiplier
+            logging.info(f"wait {wait_time} seconds")
+            time.sleep(wait_time)
+    end_time = datetime.now()
+    logging.warning(f"[get_object_lock_configuration_with_determination] Total consistency wait time={end_time - start_time}")
+    return response
+
+def probe_versioning_status(s3_client, bucket_name):
+    start_time = datetime.now()
+    retries = 0
+    interval_multiplier = 1 # seconds
+    multiple_enabled_statuses = False # stopping condition, multiple requests must return the same value (Enabled)
+    while not multiple_enabled_statuses and retries < 20:
+        retries += 1
+        wait_time = retries * retries * interval_multiplier
+        logging.info(f"Attempt {retries}, wait {wait_time} seconds")
+        time.sleep(wait_time)
+        multiple_enabled_statuses = True
+        for request_count in range(10):
+            logging.info(f"get_bucket_versioning request: {request_count}")
+            response = s3_client.get_bucket_versioning(Bucket=bucket_name)
+            response_status = response["ResponseMetadata"]["HTTPStatusCode"]
+            logging.info(f"get_bucket_versioning response status: {response_status}")
+            assert response_status == 200, "Expected HTTPStatusCode 200 for successful put_bucket_versioning."
+            logging.info(f"get_bucket_versioning response: {response}")
+            response_versioning_status = response.get("Status", None)
+            logging.info(f"get_bucket_versioning versioning status for bucket {bucket_name} is {response_versioning_status}")
+            if not response_versioning_status:
+                logging.info(f"consistency not yet reached")
+                multiple_enabled_statuses = False
+                break
+
+    end_time = datetime.now()
+    logging.warning(f"[wait_for_versioning_status] Total wait time={end_time - start_time}")
+    return response_versioning_status
