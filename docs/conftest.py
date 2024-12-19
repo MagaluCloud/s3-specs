@@ -18,6 +18,9 @@ from s3_helpers import (
     change_policies_json,
     delete_policy_and_bucket_and_wait,
     get_tenants,
+    replace_failed_put_without_version,
+    put_object_lock_configuration_with_determination,
+    probe_versioning_status,
 )
 from datetime import datetime, timedelta
 from botocore.exceptions import ClientError
@@ -233,20 +236,38 @@ def versioned_bucket_with_one_object(s3_client, lock_mode):
     :param lock_mode: Lock mode for the bucket or objects (e.g., 'GOVERNANCE', 'COMPLIANCE')
     :return: Tuple containing bucket name, object key, and object version ID
     """
+    start_time = datetime.now()
     base_name = "versioned-bucket-with-one-object"
     bucket_name = generate_unique_bucket_name(base_name=base_name)
 
     # Create bucket and enable versioning
     create_bucket_and_wait(s3_client, bucket_name)
-    s3_client.put_bucket_versioning(
+
+    # Set bucket versioning to Enabled one time
+    response = s3_client.put_bucket_versioning(
         Bucket=bucket_name,
         VersioningConfiguration={"Status": "Enabled"}
     )
+    response_status = response["ResponseMetadata"]["HTTPStatusCode"]
+    logging.info(f"put_bucket_versioning response status: {response_status}")
+    assert response_status == 200, "Expected HTTPStatusCode 200 for successful put_bucket_versioning."
+
+    # TODO: HACK: #notcool #eventual-consistency
+    # make multiple ge_bucket_versioning requests to assure that the status is known to be Enabled
+    versioning_status = probe_versioning_status(s3_client, bucket_name)
+    assert versioning_status == "Enabled", f"Expected VersionConfiguration for bucket {bucket_name} to be Enabled, got {versioning_status}"
 
     # Upload a single object and get it's version
     object_key = "test-object.txt"
     content = b"Sample content for testing versioned object."
     object_version = put_object_and_wait(s3_client, bucket_name, object_key, content)
+    if not object_version:
+        logging.info(f"Bucket ${bucket_name} was not versioned before the object put, insisting with more objects...")
+        object_version, object_key = replace_failed_put_without_version(s3_client, bucket_name, object_key, content)
+
+    end_time = datetime.now()
+    logging.warning(f"[versioned_bucket_with_one_object] Total setup time={end_time - start_time}")
+    assert object_version, "Setup failed, could not get VersionId from put_object in versioned bucket"
 
     # Yield details to tests
     yield bucket_name, object_key, object_version
@@ -260,13 +281,8 @@ def versioned_bucket_with_one_object(s3_client, lock_mode):
 @pytest.fixture
 def bucket_with_one_object_and_lock_enabled(s3_client, lock_mode, versioned_bucket_with_one_object):
     bucket_name, object_key, object_version = versioned_bucket_with_one_object
-    # Enable bucket lock configuration if not already set
-    s3_client.put_object_lock_configuration(
-        Bucket=bucket_name,
-        ObjectLockConfiguration={
-            'ObjectLockEnabled': 'Enabled',
-        }
-    )
+    configuration = { 'ObjectLockEnabled': 'Enabled', }
+    put_object_lock_configuration_with_determination(s3_client, bucket_name, configuration)
     logging.info(f"Object lock configuration enabled for bucket: {bucket_name}")
 
     # Yield details to tests
@@ -316,22 +332,21 @@ def bucket_with_lock(lockeable_bucket_name, s3_client, lock_mode):
 
     # Enable Object Lock configuration with a default retention rule
     retention_days = 1
-    s3_client.put_object_lock_configuration(
-        Bucket=bucket_name,
-        ObjectLockConfiguration={
-            "ObjectLockEnabled": "Enabled",
-            "Rule": {
-                "DefaultRetention": {
-                    "Mode": lock_mode,
-                    "Days": retention_days
-                }
+    configuration = {
+        "ObjectLockEnabled": "Enabled",
+        "Rule": {
+            "DefaultRetention": {
+                "Mode": lock_mode,
+                "Days": retention_days
             }
         }
-    )
+    }
+    put_object_lock_configuration_with_determination(s3_client, bucket_name, configuration)
 
     logging.info(f"Bucket '{bucket_name}' configured with Object Lock and default retention.")
 
     return bucket_name
+
 
 @pytest.fixture
 def bucket_with_lock_and_object(s3_client, bucket_with_lock):
@@ -350,6 +365,10 @@ def bucket_with_lock_and_object(s3_client, bucket_with_lock):
     # Upload the generated object to the bucket
     response = s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=object_content)
     object_version = response.get("VersionId")
+    if not object_version:
+        object_version, object_key = replace_failed_put_without_version(s3_client, bucket_name, object_key, object_content)
+
+    assert object_version, "Setup failed, could not get VersionId from put_object in versioned bucket"
 
     # Verify that the object is uploaded and has a version ID
     if not object_version:
