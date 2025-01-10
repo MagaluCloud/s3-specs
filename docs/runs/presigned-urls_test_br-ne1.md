@@ -147,8 +147,11 @@ def test_presigned_put_url_with_acl(s3_client, existing_bucket_name):
     logging.info(f"Presigned PUT URL created: {presigned_url}")
 
     # Use the presigned URL to upload the content
-    logging.info(f"Starting PUT request to {presigned_url}")
-    response = requests.put(presigned_url, data=content, headers={"host": "br-ne1.magaluobjects.com", "x-amz-acl": "public-read"})
+    headers = { "host": presigned_url.split("/")[2], "x-amz-acl": acl }
+    logging.info(f"Starting PUT request to {presigned_url} with headers {headers}")
+
+    bucket_location = s3_client.get_bucket_location(Bucket=bucket_name)
+    response = requests.put(presigned_url, data=content, headers=headers)
 
     # Assert the upload succeeded
     logging.info(f"response: {response}")
@@ -160,8 +163,7 @@ def test_presigned_put_url_with_acl(s3_client, existing_bucket_name):
     logging.info(f"Object '{object_key}' uploaded successfully and content length verified.")
 
     # public URL of the uploaded object
-    endpoint_url = "https://br-ne1.magaluobjects.com" # TODO: use url from profile
-    public_url = f"{endpoint_url}/{bucket_name}/{object_key}"
+    public_url = presigned_url.split("?")[0]
 
     # Verify that a public-read object uploaded with this presigned URL is downloable
     # Use the presigned URL to retrieve the object
