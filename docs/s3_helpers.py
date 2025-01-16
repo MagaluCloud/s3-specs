@@ -38,7 +38,18 @@ def run_example(dunder_name, test_name, config="../params.example.yaml"):
  
 def generate_unique_bucket_name(base_name="my-unique-bucket"):
     unique_id = uuid.uuid4().hex[:6]  # Short unique suffix
-    return f"test-{base_name}-{unique_id}"
+
+    invalid_chars = {
+        ord("."): None,
+        ord("/"): None,
+        ord("_"): None,
+        ord("["): None,
+        ord("]"): None,
+    }
+    base_name = base_name.translate(invalid_chars) + "-" + unique_id
+
+    return base_name.lower()
+
 
 
 def delete_bucket_and_wait(s3_client, bucket_name):
