@@ -16,21 +16,28 @@ def upload_object(s3_client, bucket_name, object_key, body_file):
     assert response['ResponseMetadata']['HTTPStatusCode'] == 200
 
 
+threads_number = [16]
+objects_number = [999]
+file_path = "../AUTHORS"
+
+
+test_data = [(num, threads, file_path) for num in objects_number for threads in threads_number]
+
+
+test_ids = [
+    f"num={num},threads={threads}" for num, threads, _ in test_data
+]
+
 @pytest.mark.parametrize(
-    'object_quantity, body_file',
-    [
-       (10, '../AUTHORS'),
-       # (1000, '../AUTHORS'),
-       # (10000, '../AUTHORS'),
-       # (100000, '../AUTHORS'),
-    ]
+    'object_quantity, max_threads, body_file',
+    test_data,
+    ids=test_ids,
 )
 
 
-def test_upload_multiple_objects(s3_client, bucket_with_name, object_quantity, body_file):
+def test_upload_multiple_objects(s3_client, bucket_with_name, object_quantity, body_file, max_threads):
     bucket_name = bucket_with_name
     object_prefix = "test-multiple-small-"
-    max_threads = 16
 
 
     with ThreadPoolExecutor(max_workers=max_threads) as executor:

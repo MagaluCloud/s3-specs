@@ -45,6 +45,10 @@ def generate_unique_bucket_name(base_name="my-unique-bucket"):
         ord("_"): None,
         ord("["): None,
         ord("]"): None,
+        ord("="): None,
+        ord(","): None,
+        ord(":"): None,
+        ord(";"): None,
     }
     base_name = base_name.translate(invalid_chars) + "-" + unique_id
 
