@@ -26,7 +26,7 @@ test_ids = [
 )
 
 
-@pytest.mark.turtle # Mark indicating the test expected speed (slow)
+@pytest.mark.slow # Mark indicating the test expected speed (slow)
 @pytest.mark.muiltiple_objects
 def test_upload_multiple_objects(s3_client, bucket_with_name, object_quantity, body_file, max_threads):
     """
