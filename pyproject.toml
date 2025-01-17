@@ -49,4 +49,8 @@ markers = [
     "presign: Presigned URLs",
     "bucket_versioning: Bucket Versioning",
     "cli: Tests using CLI",
+    "multiple_objects: Tests involving operations with multiple objects on the same bucket",
+    "jaguar: quick expected execution magnitude",
+    "human: regular time expected execution magnitude",
+    "turtle: slow expected execution magnitude",
 ]

@@ -5,3 +5,6 @@ params.yaml
 
 # Ignore all __pycache__ folders anywhere in the project
 **/__pycache__/
+
+# Ignore pytest debug log file
+/home/henrique.luis/repos/s3-specs/pytestdebug.log
