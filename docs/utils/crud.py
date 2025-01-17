@@ -2,6 +2,7 @@ import logging
 import pytest
 from concurrent.futures import ThreadPoolExecutor
 from utils.utils import generate_valid_bucket_name
+import itertools
 
 ### Functions
 
@@ -46,11 +47,40 @@ def upload_object(s3_client, bucket_name, object_key, body_file):
             Key=object_key,
             Body=body_file,
         )
-        logging.info(f"Object {object_key} uploaded")
+        logging.info(f"Object {object_key} uploaded to bucket {bucket_name}")
     except Exception as e:
         logging.error(f"Error uploading object {object_key}: {e}")
  
     return response['ResponseMetadata']['HTTPStatusCode']
+
+
+
+def upload_multiple_objects(s3_client, bucket_name, object_prefix, object_quantity, body_file, number_threads):
+    """
+    Utilizing multithreading uploads multiple objects while changing their names
+    :param s3_client: fixture of boto3 s3 client
+    :param bucket_name: str: name of the bucket
+    :param object_prefix: str: prefix to be added to the object name
+    :param object_quantity: int: number of objects to be uploaded
+    :param body_file: list: list of paths of the objects to be uploaded
+    :param number_threads: int: number of threads to be used in the upload
+    :return: int: number of successful uploads
+    """
+    
+    successful_uploads = 0
+     
+    iter_body_file = itertools.cycle(body_file)
+
+    for i in range(0, object_quantity, number_threads):
+        objects = [
+            {"Key": f"{object_prefix}{i + j}", "Body": next(iter_body_file)} for j in range(number_threads)
+        ]
+        logging.info(f"Uploading objects {i} to {i + number_threads} to bucket {bucket_name}")
+        successful_uploads = upload_objects_multithreaded(s3_client, bucket_name, objects, number_threads)
+
+    return successful_uploads
+
+
 
 
 def download_object(s3_client, bucket_name, object_key):    
@@ -64,7 +94,7 @@ def download_object(s3_client, bucket_name, object_key):
 
     try:
         response = s3_client.get_object(Bucket=bucket_name, Key=object_key)
-        logging.info(f"Object {object_key} downloaded")
+        logging.info(f"Object {object_key} downloaded from bucket {bucket_name}")
     except Exception as e:
         logging.error(f"Error downloading object {object_key}: {e}")
     
@@ -79,9 +109,16 @@ def list_all_objects(s3_client, bucket_name):
     :param bucket_name: str: name of the bucket
     :return: list str: names of objects in the bucket
     """
+    objects_names = []
 
-    all_objects = s3_client.resources.Bucket(bucket_name).objects.all()
-    return [{"Key": obj.key} for obj in all_objects]
+    paginator = s3_client.get_paginator("list_objects_v2")
+    pages = paginator.paginate(Bucket=bucket_name)
+    for page in pages:
+        if 'Contents' in page:
+            for obj in page['Contents']:
+                objects_names.append(obj)
+
+    return objects_names
 
 
 def delete_object(s3_client, bucket_name, object_key):
@@ -115,9 +152,9 @@ def delete_bucket(s3_client, bucket_name):
         response = s3_client.delete_bucket(Bucket=bucket_name)
         logging.info(f"Bucket '{bucket_name}' confirmed as deleted.")
     except s3_client.exceptions.NoSuchBucket:
-        logging.info("No such Bucket")
-    except s3_client.exceptions.BucketNotEmpty:
-        logging.error(f"Bucket '{bucket_name}' is not empty.")
+        logging.error("No such Bucket")
+    except Exception as e:
+        logging.error(f"Error deleting bucket {bucket_name}: {e}")
 
     return response
 
