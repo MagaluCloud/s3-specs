@@ -36,7 +36,7 @@ def create_big_file(file_path, size = 1, unit='MB'):
     :param file_path: str: path to the file to be created
     :param size: int: size of the file to be created
     :param unit: str: unit of the size, default is MB
-    :return: None
+    :return: int: size of the file created
     """
 
     size = 1024 
@@ -57,6 +57,6 @@ def create_big_file(file_path, size = 1, unit='MB'):
 
     # yielding to the calling function
     try:
-        yield file_path
+        yield size
     finally:
         os.remove(file_path)
