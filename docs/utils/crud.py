@@ -154,6 +154,35 @@ def upload_objects_multithreaded(s3_client, bucket_name, objects_paths, number_t
     return successful_uploads
 
 
+def download_objects_multithreaded(s3_client, bucket_name, number_threads=10):
+    """
+    Download multiple objects from a bucket in parallel
+    The number of simultaneous downloads are limited by the number of objects in the list
+    :param s3_client: fixture of boto3 s3 client
+    :param bucket_name: str: name of the bucket
+    :param objects_keys: list: list of keys of the objects to be downloaded
+    :return: int: number of successful downloads
+    """
+
+    successful_downloads = 0
+    objects_keys = list_all_objects(s3_client, bucket_name)
+
+    if objects_keys:
+        with ThreadPoolExecutor(max_workers=number_threads) as executor:
+            for obj in objects_keys:
+                try:
+                    executor.submit(download_object, s3_client, bucket_name, obj["Key"])
+                    successful_downloads = successful_downloads + 1
+                except Exception as e: # There is no asserting or raising exceptions, because it is meant to be used in a test
+                    logging.error(f"Error downloading object {obj['Key']}: {e}")
+        logging.info("All download tasks have been submitted.")
+    else:
+        logging.info("No objects found to download.")
+
+    return successful_downloads
+
+
+
 def delete_objects_multithreaded(s3_client, bucket_name, number_threads=10):
     """
     Delete all objects in a bucket in parallel
