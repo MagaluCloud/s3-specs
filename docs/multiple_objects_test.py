@@ -11,9 +11,8 @@ from utils.crud import (bucket_with_name,
 # A função abaixo faz o upload de N objects para um bucket S3 e então os deleta.
 
 # Multiple objects test data
-threads_number = [8, 10, 12]
-#objects_number = [100, 1_000, 10_000, 100_000]
-objects_number = [10]
+threads_number = [8,10, 12]
+objects_number = [100, 1_000, 10_000, 100_000]
 file_path = ["../AUTHORS"]
 test_data = [(num, threads, file_path) for num in objects_number for threads in threads_number]
 test_ids = [
@@ -53,8 +52,6 @@ def test_upload_multiple_objects(s3_client, bucket_with_name, object_quantity: i
 
 
 
-
-
 @pytest.mark.parametrize(
     'object_quantity, number_threads, body_file',
     test_data,
@@ -75,7 +72,6 @@ def test_download_multiple_objects(s3_client, bucket_with_name, object_quantity,
 
     bucket_name = bucket_with_name
     object_prefix = "test-download-small-"
-    successful_downloads = 0
 
     successful_uploads = upload_multiple_objects(s3_client, bucket_name, object_prefix, object_quantity, body_file, number_threads)
 
@@ -83,6 +79,6 @@ def test_download_multiple_objects(s3_client, bucket_with_name, object_quantity,
     successful_downloads = download_objects_multithreaded(s3_client, bucket_name, number_threads)
 
     # Checking if all the objects were downloaded
-    #assert successful_downloads == successful_uploads, "Number of downloads doesnt match the number of objects in the bucket"
+    assert successful_downloads == successful_uploads, "Number of downloads doesnt match the number of objects in the bucket"
 
 

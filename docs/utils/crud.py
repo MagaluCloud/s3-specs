@@ -33,9 +33,9 @@ def create_bucket(s3_client, bucket_name):
 
 def upload_object(s3_client, bucket_name, object_key, body_file):
     """
-    Create a new bucket on S3 ensuring that the location is set correctly.
+    Create a new object on S3 
     :param s3_client: fixture of boto3 s3 client
-    :param bucket_name: str: name of the to be created bucket
+    :param bucket_name: str: name of bucket to upload the object
     :param object_key: str: key of the object
     :param body_file: file: file to be uploaded
     :return: HTTPStatusCode from boto3 put_object
@@ -70,7 +70,8 @@ def upload_multiple_objects(s3_client, bucket_name, object_prefix, object_quanti
     successful_uploads = 0
      
     iter_body_file = itertools.cycle(body_file)
-
+    
+    # upload objects in chunks of number_threads (step), until the object_quantity (stop) is reached 
     for i in range(0, object_quantity, number_threads):
         objects = [
             {"Key": f"{object_prefix}{i + j}", "Body": next(iter_body_file)} for j in range(number_threads)
@@ -170,7 +171,7 @@ def upload_objects_multithreaded(s3_client, bucket_name, objects_paths, number_t
     The number of simultaneous uploads are limited by the number of objects in the list
     :param s3_client: fixture of boto3 s3 client
     :param bucket_name: str: name of the bucket
-    :param objects: list: list of paths of the objects to be uploaded
+    :param objects_paths: list: list of paths of the objects to be uploaded
     :return: int: number of successful uploads
     """
 

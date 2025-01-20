@@ -7,4 +7,4 @@ params.yaml
 **/__pycache__/
 
 # Ignore pytest debug log file
-/home/henrique.luis/repos/s3-specs/pytestdebug.log
+s3-specs/pytestdebug.log
