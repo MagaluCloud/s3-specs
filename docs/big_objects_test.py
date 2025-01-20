@@ -5,14 +5,27 @@ from utils.crud import bucket_with_name
 from boto3.s3.transfer import TransferConfig
 import uuid
 
+size_list = [{'size': 10, 'unit': 'mb'},
+            {'size': 100, 'unit': 'mb'},
+            {'size': 1, 'unit': 'gb'},
+            {'size': 5, 'unit': 'gb'},
+            {'size': 10, 'unit': 'gb'},
+]
+
+@pytest.mark.parametrize(
+    'size',
+    (s for s in size_list),
+    ids=[f"{s['size']}{s['unit']}" for s in size_list]
+)
 
 @pytest.mark.turtle
 @pytest.mark.big_objects
-def test_multipart_upload(s3_client, bucket_with_name):
+def test_multipart_upload(s3_client, bucket_with_name, size):
     """
     Test to upload a big object to an S3 bucket using multipart upload
     :param s3_client: fixture of boto3 s3 client
     :param bucket_with_name: fixture to create a bucket with a unique name
+    :param size: dict: value containing an int size and a string unit
     :return: None
     """
     file_path = ".../bin/big_file"
@@ -39,23 +52,32 @@ def test_multipart_upload(s3_client, bucket_with_name):
 
     assert response['ResponseMetadata']['HTTPStatusCode'] == 200, "Expected a 200 response code"
 
+@pytest.mark.parametrize(
+    'size',
+    (s for s in size_list),
+    ids=[f"{s['size']}{s['unit']}" for s in size_list]
+)
 
-def test_multipart_download(s3_client, bucket_with_name):
+
+@pytest.mark.turtle
+@pytest.mark.big_objects
+def test_multipart_download(s3_client, bucket_with_name, size):
     """
     Test to download a big object to an S3 bucket using multipart download
     :param s3_client: fixture of boto3 s3 client
     :param bucket_with_name: fixture to create a bucket with a unique name
+    :param size: dict: value containing an int size and a string unit
     :return: None
     """
     file_path = ".../bin/big_file"
     bucket_name = bucket_with_name
 
-    size = create_big_file(file_path, size=100, unit='MB')
+    size = create_big_file(file_path, size)
     object_key = "big_object" + size + uuid.uuid4().hex[:6]
 
 
     bucket_name = bucket_with_name
-    create_big_file(file_path, size=100, unit='MB')
+    create_big_file(file_path, size)
 
     # Config for multhreading of boto3 building multipart upload/download
     config = TransferConfig(

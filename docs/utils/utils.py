@@ -30,12 +30,11 @@ def generate_valid_bucket_name(base_name="my-unique-bucket"):
 
 # Function which will be using to create mock files with different sizes
 
-def create_big_file(file_path, size = 1, unit='MB'):
+def create_big_file(file_path, size = {'size': 100, 'unit': 'mb'}):
     """
     Create a big file with the specified size in the specified path
     :param file_path: str: path to the file to be created
-    :param size: int: size of the file to be created
-    :param unit: str: unit of the size, default is MB
+    :param size: dict: value containing the an int sie and a stirng unit
     :return: int: size of the file created
     """
 
@@ -47,11 +46,11 @@ def create_big_file(file_path, size = 1, unit='MB'):
         'mb': 1024 * 1024 * 1024,
     }
 
-    if unit.lower() not in units:
-        raise Exception(f"Invalid unit: {unit}")
+    if size['size'].lower() not in units:
+        raise Exception(f"Invalid unit: {size['unit']}")
     
     # Creating a file of size * unit
-    size = size * units[unit.lower()]
+    size = size * units[size['unit'].lower()]
     with open(file_path, 'wb') as file:
         file.write(b'a' * size)
 

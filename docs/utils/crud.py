@@ -222,6 +222,7 @@ def fixture_bucket_with_name(s3_client, request):
     # This fixtures automatically creates a bucket based on the name of the test that called it and then returns its name
     # Lastly, teardown the bucket by deleting it and its objects
 
+    # request.node get the name of the test currently running
     bucket_name = generate_valid_bucket_name(request.node.name.replace("_", "-"))
     create_bucket(s3_client, bucket_name)
 
