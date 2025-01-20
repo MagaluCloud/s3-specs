@@ -38,7 +38,7 @@ def run_example(dunder_name, test_name, config="../params.example.yaml"):
         ])
  
 def generate_unique_bucket_name(base_name="my-unique-bucket"):
-    generate_valid_bucket_name(base_name)
+    base_name = generate_valid_bucket_name(base_name)
 
     return base_name.lower()
 
