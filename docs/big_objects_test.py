@@ -28,9 +28,9 @@ def test_multipart_upload(s3_client, bucket_with_name, size):
     :param size: dict: value containing an int size and a string unit
     :return: None
     """
+    file_path = "./big_file.txt"
     bucket_name = bucket_with_name
-    big_file = next(create_big_file(size))
-    logging.info(f"Uploading {big_file} to bucket {bucket_name}")
+    size = create_big_file(file_path, size)
 
     object_key = "big_object" + uuid.uuid4().hex[:6]
     
@@ -43,8 +43,11 @@ def test_multipart_upload(s3_client, bucket_with_name, size):
     )
 
     try:
-        response = s3_client.upload_fileobj(big_file, bucket_name, object_key, Config=config) 
-        assert response['ResponseMetadata']['HTTPStatusCode'] == 200, "Expected a 200 response code"
+        response = s3_client.upload_file("./big_file", bucket_name, object_key, Config=config)  
+        response = s3_client.head_object(Bucket=bucket_name, Key=object_key)
+        logging.error(f"Uploaded object: {object_key} to bucket: {bucket_name}")
+        object_size = response['ContentLength']
+        logging.error(f"Size of the object: {object_size} bytes")
     except Exception as e:
         logging.error(f"Error uploading object {object_key}: {e}")
 

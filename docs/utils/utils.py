@@ -1,6 +1,5 @@
 import uuid
 import os
-import tempfile
 
 # Function is responsible to check and format bucket names into valid ones
 
@@ -53,11 +52,8 @@ def create_big_file(file_path, size = {'size': 100, 'unit': 'mb'}):
     # Creating a file of size * unit
     size_bytes = size * units[size['unit'].lower()]
         
-import os
-import tempfile
-import logging
 
-def create_big_file(size={'size': 100, 'unit': 'mb'}):
+def create_big_file(file_path, size={'size': 100, 'unit': 'mb'}):
     """
     Create a big file with the specified size using a temporary file.
     
@@ -70,18 +66,17 @@ def create_big_file(size={'size': 100, 'unit': 'mb'}):
         'gb': 1024 * 1024 * 1024,
     }
 
-    # Validate unit
     if size['unit'].lower() not in units:
         raise ValueError(f"Invalid unit: {size['unit']}")
 
-    # Calculate size in bytes
-    size_bytes = size['size'] * units[size['unit'].lower()]
-    logging.error(f"Creating a file of size {size_bytes} bytes")
+    if not os.path.exists(file_path):
+        # Create a file
+        with open(file_path, 'wb') as f:
+            f.write(os.urandom(size['size'] * units[size['unit'].lower()]))
+        
+        f.close()
 
-    # Create a temporary file
-    temp_file = tempfile.NamedTemporaryFile(delete=True)
-    temp_file.write(b'a' * size_bytes) 
-    yield temp_file 
+    return size['size'] * units[size['unit'].lower()]
+    
 
-    temp_file.close()  
-
+    
