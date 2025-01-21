@@ -10,3 +10,6 @@ params.yaml
 
 # Ignore pytest debug log file
 pytestdebug.log
+
+# Generate Files
+/tmp_files/*

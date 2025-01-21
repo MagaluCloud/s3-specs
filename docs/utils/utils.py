@@ -53,7 +53,7 @@ def create_big_file(file_path, size = {'size': 100, 'unit': 'mb'}):
     size_bytes = size * units[size['unit'].lower()]
         
 
-def create_big_file(file_path, size={'size': 100, 'unit': 'mb'}):
+def create_big_file(file_path, size={'size': 100, 'unit': 'mb'}) -> int:
     """
     Create a big file with the specified size using a temporary file.
     
@@ -69,6 +69,10 @@ def create_big_file(file_path, size={'size': 100, 'unit': 'mb'}):
     if size['unit'].lower() not in units:
         raise ValueError(f"Invalid unit: {size['unit']}")
 
+    if not os.path.exists('./tmp_files'):
+        os.mkdir('./tmp_files')
+
+
     if not os.path.exists(file_path):
         # Create a file
         with open(file_path, 'wb') as f:
@@ -77,6 +81,4 @@ def create_big_file(file_path, size={'size': 100, 'unit': 'mb'}):
         f.close()
 
     return size['size'] * units[size['unit'].lower()]
-    
-
     
