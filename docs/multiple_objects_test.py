@@ -41,9 +41,8 @@ def test_upload_multiple_objects(s3_client, bucket_with_name, object_quantity: i
 
     bucket_name = bucket_with_name
     object_prefix = "test-multiple-small-"
-    successful_uploads = 0
-
-    upload_multiple_objects(s3_client, bucket_name, object_prefix, object_quantity, body_file, number_threads)
+   
+    successful_uploads = upload_multiple_objects(s3_client, bucket_name, object_prefix, object_quantity, body_file, number_threads)
 
     # Checking if all the objects were uploaded
     assert successful_uploads == object_quantity, "Expected all objects to have been successfully uploaded"
