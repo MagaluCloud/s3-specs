@@ -1,5 +1,6 @@
 import uuid
 import os
+import tempfile
 
 # Function is responsible to check and format bucket names into valid ones
 
@@ -47,15 +48,40 @@ def create_big_file(file_path, size = {'size': 100, 'unit': 'mb'}):
     }
 
     if size['size'].lower() not in units:
-        raise Exception(f"Invalid unit: {size['unit']}")
+        raise ValueError(f"Invalid unit: {size['unit']}")
     
     # Creating a file of size * unit
-    size = size * units[size['unit'].lower()]
-    with open(file_path, 'wb') as file:
-        file.write(b'a' * size)
+    size_bytes = size * units[size['unit'].lower()]
+        
+import os
+import tempfile
+import logging
 
-    # yielding to the calling function
-    try:
-        yield size
-    finally:
-        os.remove(file_path)
+def create_big_file(size={'size': 100, 'unit': 'mb'}):
+    """
+    Create a big file with the specified size using a temporary file.
+    
+    :param size: dict: A dictionary containing an int 'size' and a str 'unit'.
+    :yield: str: Path to the temporary file created.
+    """
+    units = {
+        'kb': 1024,
+        'mb': 1024 * 1024,
+        'gb': 1024 * 1024 * 1024,
+    }
+
+    # Validate unit
+    if size['unit'].lower() not in units:
+        raise ValueError(f"Invalid unit: {size['unit']}")
+
+    # Calculate size in bytes
+    size_bytes = size['size'] * units[size['unit'].lower()]
+    logging.error(f"Creating a file of size {size_bytes} bytes")
+
+    # Create a temporary file
+    temp_file = tempfile.NamedTemporaryFile(delete=True)
+    temp_file.write(b'a' * size_bytes) 
+    yield temp_file 
+
+    temp_file.close()  
+
