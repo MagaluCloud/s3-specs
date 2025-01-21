@@ -9,10 +9,10 @@ import os
 
 size_list = [
             {'size': 10, 'unit': 'mb'},
-            #{'size': 100, 'unit': 'mb'},
-            #{'size': 1, 'unit': 'gb'},
-            #{'size': 5, 'unit': 'gb'},
-            #{'size': 10, 'unit': 'gb'},
+            {'size': 100, 'unit': 'mb'},
+            {'size': 1, 'unit': 'gb'},
+            {'size': 5, 'unit': 'gb'},
+            {'size': 10, 'unit': 'gb'},
 ]   
 
 @pytest.mark.parametrize(
@@ -36,7 +36,7 @@ def test_multipart_upload(s3_client, bucket_with_name, size):
     bucket_name = bucket_with_name
     size_file = create_big_file(file_path, size)
 
-    object_key = "big_object" + uuid.uuid4().hex[:6]
+    object_key = "big_object_" + uuid.uuid4().hex[:6]
     
     # Config for multhreading of boto3 building multipart upload/download
     config = TransferConfig(
@@ -47,21 +47,21 @@ def test_multipart_upload(s3_client, bucket_with_name, size):
     )
 
     try:
-        # Function to show a progress bar of the upload
+        # Upload Progress Bar with time stamp
         with tqdm(total=size_file, 
                   desc=bucket_name, 
-                  bar_format="{percentage:.1f}%|{bar:25} | {rate_fmt} | {desc}",  
+                  bar_format="{percentage:.1f}%|{bar:25} | {rate_fmt} | Time: {elapsed} | {desc}",  
                   unit='B', 
                   unit_scale=True, unit_divisor=1024) as pbar:
-
+            
             response = s3_client.upload_file(file_path, bucket_name, object_key, Config=config,  Callback=pbar.update)  
+            elapsed = pbar.format_dict['elapsed']
 
             response = s3_client.head_object(Bucket=bucket_name, Key=object_key)
             object_size = response.get('ContentLength', 0)
             assert object_size == size_file, "Uploaded object size doesn't match"
         
-        logging.error(f"Uploaded object: {object_key} to bucket: {bucket_name}")
-        logging.error(f"Size of the object: {size_file}/{object_size} bytes")
+        logging.error(f"Object: {object_key}, size: {object_size}, bucket: {bucket_name}")
     except Exception as e:
         logging.error(f"Error uploading object {object_key}: {e}")
 
@@ -96,7 +96,7 @@ def test_multipart_download(s3_client, bucket_with_name, size):
         use_threads=True
     )
 
-    # upload object to s3
+    # upload object to s3 
     try:
         with tqdm(total=size_file, 
                   desc=bucket_name, 
