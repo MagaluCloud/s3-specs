@@ -40,20 +40,14 @@ def upload_object(s3_client, bucket_name, object_key, body_file):
     :param body_file: file: file to be uploaded
     :return: HTTPStatusCode from boto3 put_object
     """
-    # Initializing to avoid erros when returning
-    response = None
 
-    try:
-        response = s3_client.put_object(
-            Bucket=bucket_name,
-            Key=object_key,
-            Body=body_file,
-        )
-        logging.info(f"Object {object_key} uploaded to bucket {bucket_name}")
-    except Exception as e:
-        logging.error(f"Error uploading object {object_key}: {e}")
- 
-    return response['ResponseMetadata']['HTTPStatusCode'] if not response is None else None
+    response = s3_client.put_object(
+        Bucket=bucket_name,
+        Key=object_key,
+        Body=body_file,
+    )
+    logging.info(f"Object {object_key} uploaded to bucket {bucket_name}")
+    return response['ResponseMetadata']['HTTPStatusCode'] 
 
 
 def upload_multiple_objects(s3_client, bucket_name, file_path:list, object_prefix:str, object_quantity:int) -> int:
@@ -82,17 +76,14 @@ def download_object(s3_client, bucket_name, object_key):
     :param object_key: str: key of the object
     :return: HTTPStatusCode from boto3 get_object
     """
-    # Initializing to avoid erros when returning
-    response = None
 
     try:
         response = s3_client.get_object(Bucket=bucket_name, Key=object_key)
         logging.info(f"Object {object_key} downloaded from bucket {bucket_name}")
+        return response['ResponseMetadata']['HTTPStatusCode'] 
     except Exception as e:
         logging.error(f"Error downloading object {object_key}: {e}")
     
-    return response['ResponseMetadata']['HTTPStatusCode'] if not response is None else None
-
 # List all objects all at once as opossed to the regular list_objects_v2 which is limited to 1000 objects per request
 def list_all_objects(s3_client, bucket_name):
     """
@@ -108,7 +99,7 @@ def list_all_objects(s3_client, bucket_name):
     for page in pages:
         if 'Contents' in page:
             for obj in page['Contents']:
-                objects_names.append(obj)
+                objects_names.append(obj['Key'])
 
     return objects_names
 
@@ -121,17 +112,13 @@ def delete_object(s3_client, bucket_name, object_key):
     :param object_key: str: key of the object
     :return: HTTPStatusCode from boto3 delete_object
     """
-    # Initializing to avoid erros when returning
-    response = None
 
     try:
         response = s3_client.delete_object(Bucket=bucket_name, Key=object_key)
         logging.info(f"Deleted object: {object_key} from bucket: {bucket_name}")
+        return response['ResponseMetadata']['HTTPStatusCode']
     except Exception as e:
         logging.error(f"Error deleting object {object_key}: {e}")
-
-
-    return response['ResponseMetadata']['HTTPStatusCode'] if not response is None else None
 
 
 def delete_bucket(s3_client, bucket_name):
@@ -169,23 +156,18 @@ def upload_objects_multithreaded(s3_client, bucket_name, objects_paths):
     """
     successful_uploads = 0
 
-    if objects_paths:
+    with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+        # atributes processes to the available workers
+        futures = [executor.submit(upload_object, s3_client, bucket_name, path['key'], path['path']) for path in objects_paths]
+        
+        # List all results of the futures
+        results_iter = map(lambda r: r.result(), as_completed(futures))
+        # Iter over mapped results and save the successful uploads (200)
+        successful_uploads = [r for r in results_iter if r == 200]
+        logging.info(f"Successful uploads: {successful_uploads}")
 
-        with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
-            # atributes processes to the available workers
-            futures = {
-                executor.submit(upload_object, s3_client, bucket_name, path['key'], path['path']): path for path in objects_paths
-            }
 
-        # Run paralelly
-        for future in as_completed(futures):
-            logging.info(future)
-            if not future.exception():
-                successful_uploads += 1
-    else:
-        logging.error("No objects found to upload.")
-
-    return successful_uploads
+    return len(successful_uploads)
 
 
 def download_objects_multithreaded(s3_client, bucket_name):
@@ -200,22 +182,18 @@ def download_objects_multithreaded(s3_client, bucket_name):
     successful_downloads = 0
     objects_keys = list_all_objects(s3_client, bucket_name)
 
-    if objects_keys:
-        with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
-            # atributes processes to the available workers
-            futures = {
-                executor.submit(download_object, s3_client, bucket_name, key): key for key in objects_keys
-            }
+    with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+        # atributes processes to the available workers
+        futures = [executor.submit(download_object, s3_client, bucket_name, key) for key in objects_keys]
+        
+        # List all results of the futures
+        results_iter = map(lambda r: r.result(), as_completed(futures))
+        # Iter over mapped results and save the successfuldownloads (200)
+        successful_downloads = [r for r in results_iter if r == 200]
+        logging.info(f"Successful downloads: {successful_downloads}")
 
-        # Executes the allocated processes
-        for future in as_completed(futures):
-            if not future.exception():
-                logging.info(future)
-                successful_downloads += 1
-    else:
-        logging.info("No objects found to download.")
 
-    return successful_downloads
+    return len(successful_downloads)
 
 
 def delete_objects_multithreaded(s3_client, bucket_name):
@@ -229,22 +207,18 @@ def delete_objects_multithreaded(s3_client, bucket_name):
     successful_deletions = 0
     objects_keys = list_all_objects(s3_client, bucket_name)
 
-    if objects_keys:
-        with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
-            # atributes processes to the available workers
-            futures = {
-                executor.submit(delete_object, s3_client, bucket_name, key): key for key in objects_keys
-            }
+    with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+        # atributes processes to the available workers
+        futures = [executor.submit(delete_object, s3_client, bucket_name, key) for key in objects_keys]
 
-        # Executes the allocated processes
-        for future in as_completed(futures):
-            if not future.exception():
-                logging.info(future)
-                successful_deletions += 1
-    else:
-        logging.info("No objects found in the bucket.")
+        # List all results of the futures
+        results_iter = map(lambda r: r.result(), as_completed(futures))
 
-    return successful_deletions
+        # Iter over mapped results and save the successful deletions (204)
+        successful_deletions = [r for r in results_iter if r == 204]
+        logging.info(f"Successful deletions: {successful_deletions}")
+
+    return len(successful_deletions)
 
 
 
@@ -260,6 +234,6 @@ def bucket_with_name(s3_client, request):
 
     yield bucket_name
 
-    delete_objects_multithreaded
+    delete_objects_multithreaded(s3_client, bucket_name)
     delete_bucket(s3_client, bucket_name)
 

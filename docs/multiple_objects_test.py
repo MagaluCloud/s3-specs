@@ -11,9 +11,8 @@ from utils.crud import (bucket_with_name,
 # A função abaixo faz o upload de N objects para um bucket S3 e então os deleta.
 
 # Multiple objects test data
-objects_number = [100, 1_000, 10_000, 100_000]
-objects_number = [100]
-file_path = ["../AUTHORS"]
+objects_number = [100, 1_000, 10_000]
+file_path = "../AUTHORS"
 
 test_ids = [
     f"num={num}" for num in objects_number
@@ -28,30 +27,29 @@ test_ids = [
 
 @pytest.mark.slow # Mark indicating the test expected speed (slow)
 @pytest.mark.multiple_objects
-def test_upload_multiple_objects(s3_client, bucket_with_name, file_path: list, object_quantity: int):
+def test_upload_multiple_objects(s3_client, bucket_with_name, file_path: str, object_quantity: int):
     """
     Test to upload multiple objects to an S3 bucket in parallel based on the wanted quantity
     :param s3_client: fixture of boto3 s3 client
     :param bucket_with_name: fixture to create a bucket with a unique name
-    :param object_quantity: int list: number of objects to be uploaded
     :param file_path: str: path to the file to be uploaded
-    :param number_threads: int: number of threads to be used in the upload
+    :param object_quantity: int: number of objects to be uploaded
     :return: None
     """
 
     bucket_name = bucket_with_name
-    object_prefix = "test-multiple-small-"
+    object_prefix = "test-multiple-small"
    
     successful_uploads = upload_multiple_objects(s3_client, bucket_name, file_path, object_prefix, object_quantity)
-    objects_in_bucket = len(list_all_objects(s3_client, bucket_name))
     # Checking if all the objects were uploaded
+    objects_in_bucket = len(list_all_objects(s3_client, bucket_name))
 
     logging.info(f"Uploaded expected: {object_quantity}, made:{successful_uploads}, bucket: {objects_in_bucket}")
-    assert successful_uploads == objects_in_bucket , "Expected all objects to have been successfully uploaded"
+    assert successful_uploads == objects_in_bucket , f"Expects uploads {successful_uploads} to be equal to objects in the bucket {objects_in_bucket} "
 
 
 
-
+# # test_download_multiple_objects: Test download multiple objects, it uploads a big volume and then tries to download them, if it fails the test do as well
 
 @pytest.mark.parametrize(
     'object_quantity, file_path',
@@ -62,12 +60,14 @@ def test_upload_multiple_objects(s3_client, bucket_with_name, file_path: list, o
 
 @pytest.mark.slow # Mark indicating the test expected speed (slow)
 @pytest.mark.multiple_objects
-def test_download_multiple_objects(s3_client, bucket_with_name, object_quantity, file_path):
+def test_download_multiple_objects(s3_client, bucket_with_name, file_path: str, object_quantity: int):
     """
     Test to download multiple objects from an S3 bucket in parallel
     :param s3_client: fixture of boto3 s3 client
     :param bucket_with_name: fixture to create a bucket with a unique name
-    :param number_threads: int: number of threads to be used in the download
+    :param file_path: str: path to the file to be uploaded
+    :param object_quantity: int: number of objects to be uploaded
+    :param object_quantity: int: number of objects to be uploaded
     :return: None
     """
 
@@ -80,6 +80,6 @@ def test_download_multiple_objects(s3_client, bucket_with_name, object_quantity,
     successful_downloads = download_objects_multithreaded(s3_client, bucket_name)
 
     # Checking if all the objects were downloaded
-    assert successful_downloads == successful_uploads, "Number of downloads doesnt match the number of objects in the bucket"
+    assert successful_downloads == successful_uploads, f"Expects downloads {successful_downloads} to be equal to uploads {successful_uploads} "
 
 
