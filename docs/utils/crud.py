@@ -1,8 +1,10 @@
 import logging
 import pytest
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from utils.utils import generate_valid_bucket_name
+from utils.utils import generate_valid_bucket_name, convert_unit
+from boto3.s3.transfer import TransferConfig
 import os
+from tqdm import tqdm
 
 ### Functions
 
@@ -250,3 +252,39 @@ def fixture_upload_multiple_objects(s3_client, fixture_bucket_with_name, request
     objects_names = [{"key": f"multiple-object'-{i}", "path": path} for i in range(qnt)]
     return upload_objects_multithreaded(s3_client, fixture_bucket_with_name, objects_names)
 
+@pytest.fixture
+def fixture_upload_multipart_file(s3_client, fixture_bucket_with_name, request) -> int:
+    """
+    Uploads a big file into multiple chunks to s3 bucket
+    :param s3_client: boto3 s3 client
+    :param fixture_bucket_with_name: pytest.fixture which setup and tears down bucket
+    :param request: dict: contains file_path, file_size and object_key
+    :return int: size of the file in the bucket
+    """
+    bucket_name = fixture_bucket_with_name
+    file_path = request.param.get('file_path')
+    file_size = convert_unit(request.param.get('file_size'))
+    object_key = request.param.get('object_key')
+
+    # Config for multhreading of boto3 building multipart upload/download
+    config = TransferConfig(
+        multipart_threshold=8 * 1024 * 1024, # Minimum size to start multipart upload
+        max_concurrency=10,
+        multipart_chunksize=8 * 1024 * 1024,
+        use_threads=True
+    )
+
+    # Upload Progress Bar with time stamp
+    with tqdm(total=file_size, 
+                desc=bucket_name, 
+                bar_format="Upload| {percentage:.1f}%|{bar:25}| {rate_fmt} | Time: {elapsed} | {desc}",  
+                unit='B', 
+                unit_scale=True, unit_divisor=1024) as pbar:
+        
+        response = s3_client.upload_file(file_path, bucket_name, object_key, Config=config,  Callback=pbar.update)  
+        elapsed = pbar.format_dict['elapsed']
+
+        # Checking if the object was uploaded
+        object_size = s3_client.get_object(Bucket=bucket_name, Key=object_key).get('ContentLength', 0)
+
+    return object_size #return size
