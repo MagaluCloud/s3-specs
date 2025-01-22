@@ -201,7 +201,7 @@ def delete_objects_multithreaded(s3_client, bucket_name):
         futures = [executor.submit(delete_object, s3_client, bucket_name, key) for key in objects_keys]
 
         # List all results of the futures
-        successful_deletions = list(filter(lambda f: f.result()==200, as_completed(futures)))
+        successful_deletions = list(filter(lambda f: f.result()==204, as_completed(futures)))
         logging.info(f"Successful deletions: {successful_deletions}")
 
     return len(successful_deletions)
