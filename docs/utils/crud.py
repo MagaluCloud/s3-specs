@@ -2,7 +2,6 @@ import logging
 import pytest
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from utils.utils import generate_valid_bucket_name
-import itertools
 import os
 
 ### Functions
@@ -10,7 +9,7 @@ import os
 def create_bucket(s3_client, bucket_name):
     """
     Create a new bucket on S3 ensuring that the location is set correctly.
-    :param s3_client: fixture of boto3 s3 client
+    :param s3_client: boto3 s3 client
     :param bucket_name: str: name of the to be created bucket
     :return: dict: response from boto3 create_bucket
     """
@@ -34,7 +33,7 @@ def create_bucket(s3_client, bucket_name):
 def upload_object(s3_client, bucket_name, object_key, body_file):
     """
     Create a new object on S3 
-    :param s3_client: fixture of boto3 s3 client
+    :param s3_client: boto3 s3 client
     :param bucket_name: str: name of bucket to upload the object
     :param object_key: str: key of the object
     :param body_file: file: file to be uploaded
@@ -50,19 +49,18 @@ def upload_object(s3_client, bucket_name, object_key, body_file):
     return response['ResponseMetadata']['HTTPStatusCode'] 
 
 
-def upload_multiple_objects(s3_client, bucket_name, file_path:list, object_prefix:str, object_quantity:int) -> int:
+def upload_multiple_objects(s3_client, bucket_name, file_path:str, object_prefix:str, object_quantity:int) -> int:
     """
     Utilizing multithreading uploads multiple objects while changing their names
-    :param s3_client: fixture of boto3 s3 client
+    :param s3_client: boto3 s3 client
     :param bucket_name: str: name of the bucket
-    :param file_path: list: list of paths of the objects to be uploaded
+    :param file_path: str: list of paths of the objects to be uploaded
     :param object_prefix: str: prefix to be added to the object name
     :param object_quantity: int: number of objects to be uploaded
     :return: int: number of successful uploads
     """
     
-    iter_body_file = itertools.cycle(file_path)
-    objects_names = [{"key": f"{object_prefix}-{i}", "path": next(iter_body_file)} for i in range(object_quantity)]
+    objects_names = [{"key": f"{object_prefix}-{i}", "path": file_path} for i in range(object_quantity)]
     successful_uploads = upload_objects_multithreaded(s3_client, bucket_name, objects_names)
 
     return successful_uploads
@@ -71,7 +69,7 @@ def upload_multiple_objects(s3_client, bucket_name, file_path:list, object_prefi
 def download_object(s3_client, bucket_name, object_key):    
     """
     Download an object from a s3 Bucket
-    :param s3_client: fixture of boto3 s3 client
+    :param s3_client: boto3 s3 client
     :param bucket_name: str: name of the bucket
     :param object_key: str: key of the object
     :return: HTTPStatusCode from boto3 get_object
@@ -88,7 +86,7 @@ def download_object(s3_client, bucket_name, object_key):
 def list_all_objects(s3_client, bucket_name):
     """
     List all objects in a bucket without size limits
-    :param s3_client: fixture of boto3 s3 client
+    :param s3_client: boto3 s3 client
     :param bucket_name: str: name of the bucket
     :return: list str: names of objects in the bucket
     """
@@ -107,7 +105,7 @@ def list_all_objects(s3_client, bucket_name):
 def delete_object(s3_client, bucket_name, object_key):
     """
     Delete an object from a s3 Bucket
-    :param s3_client: fixture of boto3 s3 client
+    :param s3_client: boto3 s3 client
     :param bucket_name: str: name of the bucket
     :param object_key: str: key of the object
     :return: HTTPStatusCode from boto3 delete_object
@@ -124,7 +122,7 @@ def delete_object(s3_client, bucket_name, object_key):
 def delete_bucket(s3_client, bucket_name):
     """
     Delete a s3 bucket 
-    :param s3_client: fixture of boto3 s3 client
+    :param s3_client: boto3 s3 client
     :param bucket_name: str: name of the bucket
     :return: dict: response from boto3 create_bucket
     """
@@ -147,39 +145,34 @@ def delete_bucket(s3_client, bucket_name):
 
 def upload_objects_multithreaded(s3_client, bucket_name, objects_paths):
     """
-    Upload multiple objects to one bucket in parallel
+    Upload all objects to one bucket in parallel
     The number of simultaneous uploads are limited by the number of objects in the list
-    :param s3_client: fixture of boto3 s3 client
+    :param s3_client: boto3 s3 client
     :param bucket_name: str: name of the bucket
     :param objects_paths: list: list of paths of the objects to be uploaded
     :return: int: number of successful uploads
     """
-    successful_uploads = 0
 
     with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
         # atributes processes to the available workers
         futures = [executor.submit(upload_object, s3_client, bucket_name, path['key'], path['path']) for path in objects_paths]
         
         # List all results of the futures
-        results_iter = map(lambda r: r.result(), as_completed(futures))
-        # Iter over mapped results and save the successful uploads (200)
-        successful_uploads = [r for r in results_iter if r == 200]
+        successful_uploads = list(filter(lambda f: f.result()==200, as_completed(futures)))
         logging.info(f"Successful uploads: {successful_uploads}")
-
-
-    return len(successful_uploads)
+    
+        return len(successful_uploads)
 
 
 def download_objects_multithreaded(s3_client, bucket_name):
     """
-    Download multiple objects from a bucket in parallel
+    Download all objects from a bucket in parallel
     The number of simultaneous downloads are limited by the number of objects in the list
-    :param s3_client: fixture of boto3 s3 client
+    :param s3_client: boto3 s3 client
     :param bucket_name: str: name of the bucket
     :return: int: number of successful downloads
     """
 
-    successful_downloads = 0
     objects_keys = list_all_objects(s3_client, bucket_name)
 
     with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
@@ -187,9 +180,7 @@ def download_objects_multithreaded(s3_client, bucket_name):
         futures = [executor.submit(download_object, s3_client, bucket_name, key) for key in objects_keys]
         
         # List all results of the futures
-        results_iter = map(lambda r: r.result(), as_completed(futures))
-        # Iter over mapped results and save the successfuldownloads (200)
-        successful_downloads = [r for r in results_iter if r == 200]
+        successful_downloads = list(filter(lambda f: f.result()==200, as_completed(futures)))
         logging.info(f"Successful downloads: {successful_downloads}")
 
 
@@ -199,12 +190,10 @@ def download_objects_multithreaded(s3_client, bucket_name):
 def delete_objects_multithreaded(s3_client, bucket_name):
     """
     Delete all objects in a bucket in parallel
-    :param s3_client: fixture of boto3 s3 client
+    :param s3_client: boto3 s3 client
     :param bucket_name: str: name of the bucket
     :return: int: number of successful deletions
     """
-
-    successful_deletions = 0
     objects_keys = list_all_objects(s3_client, bucket_name)
 
     with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
@@ -212,10 +201,7 @@ def delete_objects_multithreaded(s3_client, bucket_name):
         futures = [executor.submit(delete_object, s3_client, bucket_name, key) for key in objects_keys]
 
         # List all results of the futures
-        results_iter = map(lambda r: r.result(), as_completed(futures))
-
-        # Iter over mapped results and save the successful deletions (204)
-        successful_deletions = [r for r in results_iter if r == 204]
+        successful_deletions = list(filter(lambda f: f.result()==200, as_completed(futures)))
         logging.info(f"Successful deletions: {successful_deletions}")
 
     return len(successful_deletions)
@@ -225,7 +211,14 @@ def delete_objects_multithreaded(s3_client, bucket_name):
 # ## Fixtures
 
 @pytest.fixture
-def bucket_with_name(s3_client, request):
+def fixture_bucket_with_name(s3_client, request):
+    """
+    Creates a bucekt with a random name and then tear it down
+    :param s3_client: boto s3 cliet
+    :param request: dict: contains the name of the current test
+    :yield: str: generated bucket name
+    """
+
     # This fixtures automatically creates a bucket based on the name of the test that called it and then returns its name
     # Lastly, teardown the bucket by deleting it and its objects
 
@@ -236,4 +229,23 @@ def bucket_with_name(s3_client, request):
 
     delete_objects_multithreaded(s3_client, bucket_name)
     delete_bucket(s3_client, bucket_name)
+
+
+@pytest.fixture
+def fixture_upload_multiple_objects(s3_client, fixture_bucket_with_name, request) -> int:
+    """
+    Utilizing multithreading Fixture uploads multiple objects while changing their names
+    :param s3_client: boto3 s3 client
+    :param fixture_bucket_with_name: str: name of the bucket
+    :param request: dict: "quantity" and "path"
+     :return: int: number of successful uploads
+    """
+    
+    qnt = request.param.get("quantity")
+    path = request.param.get('path')
+
+    logging.info(f"{qnt}, {path}")
+
+    objects_names = [{"key": f"multiple-object'-{i}", "path": path} for i in range(qnt)]
+    return upload_objects_multithreaded(s3_client, fixture_bucket_with_name, objects_names)
 
