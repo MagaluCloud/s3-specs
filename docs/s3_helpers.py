@@ -10,6 +10,7 @@ from pathlib import Path
 import ipynbname
 import json
 import time
+from utils.utils import generate_valid_bucket_name
 
 def get_spec_path():
     spec_path = os.getenv("SPEC_PATH")
@@ -37,8 +38,10 @@ def run_example(dunder_name, test_name, config="../params.example.yaml"):
         ])
  
 def generate_unique_bucket_name(base_name="my-unique-bucket"):
-    unique_id = uuid.uuid4().hex[:6]  # Short unique suffix
-    return f"test-{base_name}-{unique_id}"
+    base_name = generate_valid_bucket_name(base_name)
+
+    return base_name.lower()
+
 
 
 def delete_bucket_and_wait(s3_client, bucket_name):
