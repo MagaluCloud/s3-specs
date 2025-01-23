@@ -18,6 +18,10 @@ on:
           description: 'Machine to run the tests'
           default: 'ubuntu-24.04'
           required: false
+        mgc_version:
+          description: 'Version of the MGC CLI'
+          default: '0.34.0'
+          required: false
 
 jobs:
   run-tests:
@@ -27,5 +31,6 @@ jobs:
       config: ${{ inputs.config }}
       flags: ${{ inputs.flags }}
       runner: ${{ inputs.runner }}
+      mgc_version: ${{ inputs.mgc_version }}
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
