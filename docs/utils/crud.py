@@ -259,7 +259,7 @@ def fixture_upload_multipart_file(s3_client, fixture_bucket_with_name, request) 
     :param s3_client: boto3 s3 client
     :param fixture_bucket_with_name: pytest.fixture which setup and tears down bucket
     :param request: dict: contains file_path, file_size and object_key
-    :return int: size of the file in the bucket
+    :return int: size in bytes of the obejct
     """
     bucket_name = fixture_bucket_with_name
     file_path = request.param.get('file_path')
@@ -287,4 +287,4 @@ def fixture_upload_multipart_file(s3_client, fixture_bucket_with_name, request) 
         # Checking if the object was uploaded
         object_size = s3_client.get_object(Bucket=bucket_name, Key=object_key).get('ContentLength', 0)
 
-    return object_size #return size
+    return object_size #return int of size in bytes

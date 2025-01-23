@@ -43,7 +43,7 @@ def test_multipart_download(s3_client, fixture_bucket_with_name, fixture_upload_
     Test to download a big object to an S3 bucket using multipart download
     :param s3_client: fixture of boto3 s3 client
     :param fixture_bucket_with_name: fixture to create a bucket with a unique name
-    :param size: dict: value containing an int size and a string unit
+    :param params: dict: 'file_path': str, 'file_size': dict, 'object_key': str
     :return: None
     """
 
@@ -58,7 +58,7 @@ def test_multipart_download(s3_client, fixture_bucket_with_name, fixture_upload_
 
     # Config for multhreading of boto3 building multipart upload/download
     config = TransferConfig(
-        multipart_threshold=8 * 1024 * 1024,
+        multipart_threshold=40 * 1024 * 1024,
         max_concurrency=10,
         multipart_chunksize=8 * 1024 * 1024,
         use_threads=True
@@ -70,9 +70,10 @@ def test_multipart_download(s3_client, fixture_bucket_with_name, fixture_upload_
 
     # Test download file from s3 bucket
     try:
+        # Graphing the download progress
         with tqdm(total=total_size, 
                   desc=bucket_name, 
-                  bar_format="Download| {percentage:.1f}%|{bar:25} | {rate_fmt} | {desc}",  
+                  bar_format="Download| {percentage:.1f}%|{bar:25} | {rate_fmt} | Time: {elapsed} | {desc}",  
                   unit='B', 
                   unit_scale=True, unit_divisor=1024) as pbar:
 
@@ -85,8 +86,3 @@ def test_multipart_download(s3_client, fixture_bucket_with_name, fixture_upload_
             assert downloaded_file_size == uploaded_file_size, f"Downloaded size doesn't match: {downloaded_file_size} with Upload size: {uploaded_file_size}"
     except Exception as e:
         logging.error(f"Error uploading object {object_key}: {e}")
-
-
- ## Regular download x multipart download time
-
-
