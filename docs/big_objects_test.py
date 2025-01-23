@@ -11,9 +11,9 @@ import os
 size_list = [
     {'size': 10, 'unit': 'mb'},
     {'size': 100, 'unit': 'mb'},
-    # {'size': 1, 'unit': 'gb'},
-    # {'size': 5, 'unit': 'gb'},
-    # {'size': 10, 'unit': 'gb'},
+    {'size': 1, 'unit': 'gb'},
+    {'size': 5, 'unit': 'gb'},
+    {'size': 10, 'unit': 'gb'},
 ]
 
 ids_list = [f"{s['size']}{s['unit']}" for s in size_list]
