@@ -23,7 +23,7 @@ across Object Storage providers.
 ### Browse Documentation Online
 
 Navigate the latest documentation generated from executed specs at:  
-https://marmotitude.github.io/s3-specs/
+https://magalucloud.github.io/s3-specs/
 
 ### Run and Browse Locally
 
@@ -50,7 +50,7 @@ This is an open project, and we welcome contributions in the form of new or impr
 
 ### Suggesting Specifications
 
-Open an issue on the [issues page](https://github.com/marmotitude/s3-specs/issues), explaining the
+Open an issue on the [issues page](https://github.com/magalucloud/s3-specs/issues), explaining the
 feature, scenarios, and steps you'd like to see described as an executable specification.
 
 ### Writing Specifications
