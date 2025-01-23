@@ -6,11 +6,12 @@ on:
         tests: { required: false, type: string }
         config: { required: true, type: string }
         flags: { required: true, type: string }
+        runner: { required: false, type: string }
       secrets:
         PROFILES: { required: true }
 jobs:
     build:
-        runs-on: ubuntu-24.04
+        runs-on: ${{ inputs.runner }}
         container:
           image: ghcr.io/marmotitude/s3-tester:tests
         steps:
