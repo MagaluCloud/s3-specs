@@ -24,7 +24,7 @@
 # não removem dados, a trava é apenas para deletes permanentes (delete com a version ID).
  
 # + tags=["parameters"]
-config = "../params/aws-east-1.yaml"
+config = "../params/br-ne1.yaml"
 # -
 
 # + {"jupyter": {"source_hidden": true}}
@@ -46,8 +46,8 @@ from s3_helpers import (
     get_object_retention_with_determination,
 )
 config = os.getenv("CONFIG", config)
-# -
 pytestmark = pytest.mark.locking
+# -
 
 # ### Configuração de Object Locking em Bucket Versionado
 # 
@@ -196,7 +196,7 @@ run_example(__name__, "test_verify_object_lock_configuration", config=config)
 # ### Conferindo a politica de retenção de objetos específicos
 #
 # É possível consultar as regras de retenção para objetos novos, criados após a configuração de
-# uma regra padrão por meio dos comando **get_object_retention** e **head_object**.
+# uma regra padrão por meio do comando **get_object_retention**
 # Objetos pre-existentes, de antes da configuração do bucket não exibem estas informações.
 
 # +
@@ -204,29 +204,20 @@ def test_verify_object_retention(versioned_bucket_with_lock_config, s3_client, l
     bucket_name, first_object_key, second_object_key, _, _ = versioned_bucket_with_lock_config
 
     # Objects from before the config don't have retention data
-    logging.info(f"Fetching data of the pre-existing object with a head request...")
-    head_response = s3_client.head_object(Bucket=bucket_name, Key=first_object_key)
-    assert not head_response.get('ObjectLockRetainUntilDate'), 'Expected lock ending date to be unset.'
-    assert not head_response.get('ObjectLockMode'), 'Expected lock mode to be unset'
+    logging.info(f"Fetching data of the pre-existing object with a get_object_retention request...")
+    with pytest.raises(s3_client.exceptions.ClientError) as exc_info:
+        s3_client.get_object_retention(Bucket=bucket_name, Key=first_object_key)
+    # Verify that the correct error was raised
+    assert "NoSuchObjectLockConfiguration" in str(exc_info.value), "Expected NoSuchObjectLockConfiguration error not raised."
     logging.info(f"Retention data not present on the pre-existing object as expected.")
 
     # Use get_object_retention to check object-level retention details
-    logging.info("Retrieving object retention details...")
-    # the commented line below is the boto3 command to get object retention, we use a helper function to account for MagaluCloud eventual consistency
-    # retention_info = s3_client.get_object_retention(Bucket=bucket_name, Key=second_object_key)
+    logging.info("Fetching data of the post-lock-config with a get_object_retention request...")
     retention_info = get_object_retention_with_determination(s3_client, bucket_name, second_object_key)
     assert retention_info["Retention"]["Mode"] == lock_mode, f"Expected object lock mode to be {lock_mode}."
     logging.info(f"Retention verified as applied with mode {retention_info['Retention']['Mode']} "
           f"and retain until {retention_info['Retention']['RetainUntilDate']}.")
 
-     # TODO: uncomment if MagaluCloud start returning retention date on the head object
-     # # Use head_object to check retention details
-     # logging.info("Fetching data of the new object with a head request...")
-     # head_response = s3_client.head_object(Bucket=bucket_name, Key=second_object_key)
-     # assert head_response['ObjectLockRetainUntilDate'], 'Expected lock ending date to be present.'
-     # assert head_response['ObjectLockMode'] == lock_mode, f"Expected lock mode to be {lock_mode}"
-     # logging.info(f"Retention verified as applied with mode {head_response['ObjectLockMode']} "
-     #       f"and retain until {head_response['ObjectLockRetainUntilDate']}.")
 run_example(__name__, "test_verify_object_retention", config=config,)
 # -
 
