@@ -13,7 +13,6 @@ from utils.crud import (fixture_bucket_with_name,
 
 # Multiple objects test data
 objects_number = [100, 1_000, 10_000]
-objects_number = [10, 100]
 file_path = "../AUTHORS"
 
 test_ids = [
