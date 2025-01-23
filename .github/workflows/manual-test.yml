@@ -14,6 +14,10 @@ on:
           description: 'Flags Adicionais'
           required: false
           default: --tb=line
+        runner:
+          description: 'Machine to run the tests'
+          default: 'ubuntu-24.04'
+          required: false
 
 jobs:
   run-tests:
@@ -22,5 +26,6 @@ jobs:
       tests: ${{ inputs.tests }}
       config: ${{ inputs.config }}
       flags: ${{ inputs.flags }}
+      runner: ${{ inputs.runner }}
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
