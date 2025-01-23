@@ -14,7 +14,7 @@
 # tanto a nivel de bucket quanto de object, bem como comandos para consultar estas configurações.
 
 # + tags=["parameters"]
-config = "../params/aws-east-1.yaml"
+config = "../params/br-ne1.yaml"
 # -
 
 # + {"jupyter": {"source_hidden": true}}
@@ -25,10 +25,14 @@ import subprocess
 import json
 import os
 from shlex import split, quote
-from s3_helpers import run_example, get_spec_path
+from s3_helpers import (
+    run_example,
+    get_spec_path,
+    get_object_retention_with_determination,
+)
 from datetime import datetime, timedelta, timezone
-# -
 pytestmark = [pytest.mark.locking, pytest.mark.cli]
+# -
 
 # ## Exemplos
 
@@ -111,12 +115,13 @@ def test_set_object_lock(cmd_template, active_mgc_workspace, mgc_path, bucket_wi
     assert result.returncode == 0, f"Command failed with error: {result.stderr}"
     logging.info(f"Output from {cmd_template}: {result.stdout}")
 
-    # Verify the object lock configuration using the s3_client fixture
-    response = s3_client.head_object(Bucket=bucket_name, Key=object_key)
+    # Verify the object lock configuration using the s3_client
+    retention_info = get_object_retention_with_determination(s3_client, bucket_name, object_key)
+    logging.info(f"retention info response: {retention_info}")
 
     # Ensure the object lock configuration matches the expected retain-until date
-    assert 'ObjectLockRetainUntilDate' in response, "Object lock configuration not found in object metadata"
-    returned_date = response['ObjectLockRetainUntilDate'].date().isoformat()
+    assert 'RetainUntilDate' in retention_info['Retention'], "Object lock configuration not found in object metadata"
+    returned_date = retention_info['Retention']['RetainUntilDate'].date().isoformat()
     assert returned_date == retain_until_date, (
         f"Expected retain-until-date {retain_until_date}, but got {returned_date.isoformat()}"
     )
