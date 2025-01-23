@@ -13,6 +13,7 @@ dependencies = [
     "pytest-rerunfailures<16.0,>=15.0",
     "pytest-xdist<4.0.0,>=3.6.1",
     "pytest-repeat<1.0.0,>=0.9.3",
+    "pytest-durations>=1.3.1",
 ]
 name = "s3-specs"
 version = "0.1.0"
