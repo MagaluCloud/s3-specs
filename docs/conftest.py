@@ -6,6 +6,7 @@ import yaml
 import logging
 import subprocess
 import shutil
+import botocore.exceptions
 
 from s3_helpers import (
     generate_unique_bucket_name,
@@ -204,9 +205,22 @@ def bucket_with_one_object(s3_client):
     # Yield the bucket name and object details to the test
     yield bucket_name, object_key, content
 
-    # Teardown: Delete the object and bucket after the test
-    delete_object_and_wait(s3_client, bucket_name, object_key)
-    delete_bucket_and_wait(s3_client, bucket_name)
+    # Teardown: Tente deletar o objeto e o bucket, mas ignore o erro NoSuchBucket
+    try:
+        delete_object_and_wait(s3_client, bucket_name, object_key)
+    except botocore.exceptions.ClientError as e:
+        if "NoSuchBucket" in str(e):  # Ignora o erro se o bucket não existir mais
+            pass
+        else:
+            raise e  # Se for outro erro, levante a exceção normalmente
+
+    try:
+        delete_bucket_and_wait(s3_client, bucket_name)
+    except botocore.exceptions.ClientError as e:
+        if "NoSuchBucket" in str(e):  # Ignora o erro se o bucket não existir mais
+            pass
+        else:
+            raise e  # Se for outro erro, levante a exceção normalmente
 
 @pytest.fixture
 def bucket_with_one_storage_class_cold_object(s3_client, bucket_with_one_object):
