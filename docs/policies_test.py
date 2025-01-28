@@ -125,10 +125,11 @@ def test_denied_policy_operations_by_owner(s3_client, bucket_with_one_object_pol
     #retrieve the method passed as argument
     method = getattr(s3_client, boto3_action)
     try:
-        method(**kwargs)
-        logging.info(method)
+        response = method(**kwargs)
+        logging.info(f"Method response:{response}")
         pytest.fail("Expected exception not raised")
     except ClientError as e:
+        logging.info(f"Method error response:{e.response}")
         assert e.response['Error']['Code'] == 'AccessDeniedByBucketPolicy'
 
 
