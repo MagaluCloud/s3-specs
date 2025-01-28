@@ -1,60 +1,45 @@
-name: Run Test - Pull Request
+# Tests that must pass in order for a PR to be allowed on the main branch
+# it is expected that they finish fast, thal ALL tests pass
+# and no verbose logging / debugging is enabled.
+#
+# They should run as much as possible in parallel.
+
+name: Pull Request Essential Tests
 
 on:
     pull_request:
       types: [opened, synchronize, reopened]
 
 jobs:
-  run-tests:
+  run_tests:
     strategy:
       fail-fast: true
       matrix:
         category:
-          #- acl
           - cold_storage
           - basic
           - presign
-          - bucket_versioning
-          # - policy
+        config:
+          - "../params.example.yaml"
     uses: ./.github/workflows/run-tests.yml
     with:
       tests: "*_test.py"
-      config: "../params.example.yaml"
+      config: "${{ matrix.config }}"
       flags: "-v -n auto --color yes -m '${{ matrix.category }}' --tb=line"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
+
   tests-success:
     runs-on: ubuntu-24.04
-    needs: [run-tests]
+    needs: [run_tests]
     steps:
       - name: ok
         run:
           exit 0
 
-  # since locking is a feature currently under preview, we run it separatedely
-  # and dont block merges if they fail
-  run-locking-tests:
-    strategy:
-      fail-fast: false
-      matrix:
-        category:
-          - not cli and locking
-        config:
-          - "../params/br-ne1.yaml"
-          - "../params/br-se1.yaml"
-    uses: ./.github/workflows/run-tests.yml
-    with:
-      tests: "*_test.py"
-      config: "${{ matrix.config }}"
-      # no multiple workers here just to make it easier to audit the logs (more verbosity with INFO level)
-      flags: "-v --log-cli-level INFO --color yes -m '${{ matrix.category }}'"
-    secrets:
-      PROFILES: ${{ secrets.PROFILES }}
-
-  cleanup-tests:
-    needs: [tests-success, run-locking-tests]
+  cleanup_tests:
+    needs: [run_tests]
     if: always()
     uses: ./.github/workflows/cleanup-tests.yml
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
-

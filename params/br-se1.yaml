@@ -4,3 +4,6 @@ profiles:
   -
     profile_name: "br-se1"
     lock_mode: "COMPLIANCE"
+  -
+    profile_name: "br-se1-second"
+    lock_mode: "COMPLIANCE"
