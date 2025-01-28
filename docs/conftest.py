@@ -20,6 +20,7 @@ from s3_helpers import (
     get_tenants,
     replace_failed_put_without_version,
     put_object_lock_configuration_with_determination,
+    get_policy_with_determination,
     probe_versioning_status,
     delete_all_objects_and_wait,
 )
@@ -49,6 +50,10 @@ def default_profile(test_params):
 @pytest.fixture
 def lock_mode(default_profile):
     return default_profile.get("lock_mode", "COMPLIANCE")
+
+@pytest.fixture
+def policy_wait_time(default_profile):
+    return default_profile.get("policy_wait_time", 0)
 
 @pytest.fixture
 def profile_name(default_profile):
@@ -381,7 +386,7 @@ def bucket_with_lock_and_object(s3_client, bucket_with_lock):
     return bucket_name, object_key, object_version
     
 @pytest.fixture
-def bucket_with_one_object_policy(multiple_s3_clients, request):
+def bucket_with_one_object_policy(multiple_s3_clients, policy_wait_time, request):
     """
     Prepares an S3 bucket with object and defines its object policies.
 
@@ -405,12 +410,19 @@ def bucket_with_one_object_policy(multiple_s3_clients, request):
     
     policy = change_policies_json(bucket=bucket_name, policy_args=request.param, tenants=tenants)
     client.put_bucket_policy(Bucket=bucket_name, Policy = policy)
-    
+
+    # TODO: HACK: #notcool #eventual-consistency wait for policy to be there
+    registered_policy = get_policy_with_determination(client, bucket_name)
+    logging.info(f"Registered policy after (get policy) consistency: {registered_policy}")
+    wait_time = policy_wait_time
+    logging.info(f"Receiving, 5 positive GETs is not a guarantee that the policy is in place. Wait more {wait_time} seconds")
+    time.sleep(wait_time)
+
     # Yield the bucket name and object key to the test
     yield bucket_name, object_key
     
     # Teardown: delete the bucket after the test
-    delete_policy_and_bucket_and_wait(client, bucket_name, request)
+    delete_policy_and_bucket_and_wait(client, bucket_name, policy_wait_time, request)
 
 
 

@@ -370,6 +370,37 @@ def put_object_lock_configuration_with_determination(s3_client, bucket_name, con
     return response
 
 # TODO: review when #eventualconsistency stops being so bad
+def get_policy_with_determination(s3_client, bucket_name):
+    retries = 0
+    interval_multiplier = 3 # seconds
+    response = None
+    start_time = datetime.now()
+    while retries < 20:
+        retries += 1
+        try:
+            # make 5 GETs in an attempt to get responses from all replicas
+            response1 = s3_client.get_bucket_policy(Bucket=bucket_name)
+            logging.info(response1)
+            response2 = s3_client.get_bucket_policy(Bucket=bucket_name)
+            logging.info(response2)
+            response3 = s3_client.get_bucket_policy(Bucket=bucket_name)
+            logging.info(response3)
+            response4 = s3_client.get_bucket_policy(Bucket=bucket_name)
+            logging.info(response4)
+            response5 = s3_client.get_bucket_policy(Bucket=bucket_name)
+            logging.info(response5)
+            break
+        except Exception as e:
+            logging.error(f"[get_policy_with_determination] Error ({retries}): {e}")
+            wait_time = retries * retries * interval_multiplier
+            logging.info(f"wait {wait_time} seconds")
+            time.sleep(wait_time)
+    end_time = datetime.now()
+    logging.warning(f"[get_policy_with_determination] Total consistency wait time={end_time - start_time}")
+    assert response1 and response1.get("Policy"), "Setup error, bucket dont have policy"
+    return response1
+
+# TODO: review when #eventualconsistency stops being so bad
 def get_object_retention_with_determination(s3_client, bucket_name, object_key):
     retries = 0
     interval_multiplier = 3 # seconds
