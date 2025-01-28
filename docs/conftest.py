@@ -21,6 +21,7 @@ from s3_helpers import (
     replace_failed_put_without_version,
     put_object_lock_configuration_with_determination,
     probe_versioning_status,
+    delete_all_objects_and_wait,
 )
 from datetime import datetime, timedelta
 from botocore.exceptions import ClientError
@@ -119,15 +120,17 @@ def existing_bucket_name(s3_client):
 
     # Yield the existing bucket name to the test
     yield bucket_name
-    
-    objects = s3_client.list_objects(Bucket=bucket_name).get("Contents", [])
 
-    if objects:
-        for obj in objects:
-            s3_client.delete_object(Bucket=bucket_name, Key=obj["Key"])
-    
-    # Teardown: delete the bucket after the test
-    delete_bucket_and_wait(s3_client, bucket_name)
+    # Teardown
+    try:
+        # Remove policy if present
+        response = s3_client.delete_bucket_policy(Bucket=bucket_name) 
+        logging.info(f"delete_bucket_policy response:{response}")
+
+        delete_all_objects_and_wait(s3_client, bucket_name)
+        delete_bucket_and_wait(s3_client, bucket_name)
+    except Exception as e:
+        logging.error(f"existing_bucket_name teardown failed: {e}")
     
 @pytest.fixture
 def create_multipart_object_files():
