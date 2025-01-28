@@ -6,8 +6,25 @@
 #   language_info:
 #     name: python
 # ---
+
+# # Bucket Policy (parte 2)
+# 
+# Documentação complementar à `policies_test`.
+# Testes similares aos dois últimos de lá, com a principal diferença sendo que o perfil que vai
+# testar o efeito das políticas é um diferente do da dona do bucket (`s3_clients_list[1]`) nos
+# exemplos abaixo:
+
+# + tags=["parameters"]
+config = "../params/br-ne1.yaml"
+# -
+
+# + {"jupyter": {"source_hidden": true}}
+import os
 import pytest
 from botocore.exceptions import ClientError
+from s3_helpers import(run_example)
+config = os.getenv("CONFIG", config)
+pytestmark = pytest.mark.policy
 
 policy_dict_template = {
     "Version": "2012-10-17",
@@ -21,11 +38,12 @@ policy_dict_template = {
     ]
 }
 
+# -
+
 # Example of the list for actions, tenants, and methods
 actions = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
 number_clients = 2
 methods = ["get_object", "put_object", "delete_object"]
-pytestmark = pytest.mark.policy
 
 @pytest.mark.parametrize(
     'multiple_s3_clients, bucket_with_one_object_policy, boto3_action',
@@ -39,8 +57,6 @@ pytestmark = pytest.mark.policy
     ],
     indirect=['bucket_with_one_object_policy', 'multiple_s3_clients'],
 )
-
-
 def test_denied_policy_operations(multiple_s3_clients, bucket_with_one_object_policy, boto3_action):
     s3_clients_list = multiple_s3_clients
     
@@ -63,6 +79,7 @@ def test_denied_policy_operations(multiple_s3_clients, bucket_with_one_object_po
         pytest.fail("Expected exception not raised")
     except ClientError as e:
         assert e.response['Error']['Code'] == 'AccessDeniedByBucketPolicy'
+run_example(__name__, "test_denied_policy_operations", config=config)
 
 
 expected = [200, 200, 204]
@@ -80,8 +97,6 @@ expected = [200, 200, 204]
     ],
     indirect=['bucket_with_one_object_policy', 'multiple_s3_clients'],
 )
-
-
 def test_allowed_policy_operations(multiple_s3_clients, bucket_with_one_object_policy, boto3_action, expected):
     s3_clients_list = multiple_s3_clients
     allowed_client = s3_clients_list[1] # not the bucket owner
@@ -102,4 +117,5 @@ def test_allowed_policy_operations(multiple_s3_clients, bucket_with_one_object_p
     method = getattr(allowed_client, boto3_action)
     response = method(**kwargs)
     assert response['ResponseMetadata']['HTTPStatusCode'] == expected
+run_example(__name__, "test_allowed_policy_operations", config=config)
 
