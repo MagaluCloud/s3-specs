@@ -6,7 +6,7 @@ on:
         tests: { required: false, type: string }
         config: { required: true, type: string }
         flags: { required: true, type: string }
-        runner: { required: false, type: string }
+        runner: { required: false, type: string, default: "ubuntu-24.04" }
         mgc_version: { required: false, type: string, default: "0.34.0" }
       secrets:
         PROFILES: { required: true }

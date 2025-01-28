@@ -1,0 +1,45 @@
+# Tests that for one reason or another we dont want to make it a blocker for PRs
+# it may be because they are slow, or because tey include features still in 
+# preview/not fully launched.
+#
+# It's ok for the output to be verbose as they might be here to help in the debugging
+# of some behavior/flakiness.
+#
+# It's ok for tests here to fail or to be slow. They should not block any CI pipelines.
+#
+# Here we also run the tests on both regions.
+
+name: Pull Request Extra Tests
+
+on:
+    pull_request:
+      types: [opened, synchronize, reopened]
+
+jobs:
+  run_extra_tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        category:
+          - acl
+          - bucket_versioning
+        config:
+          - "../params/br-ne1.yaml"
+          - "../params/br-se1.yaml"
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      tests: "*_test.py"
+      config: "${{ matrix.config }}"
+      # no multiple workers here just to make it easier to audit the logs (more verbosity with INFO level)
+      flags: "-v --log-cli-level INFO --color yes -m '${{ matrix.category }}'"
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}
+
+  cleanup_tests:
+    needs: [run_extra_tests]
+    if: always()
+    uses: ./.github/workflows/cleanup-tests.yml
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}
+
+
