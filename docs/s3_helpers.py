@@ -32,6 +32,7 @@ def run_example(dunder_name, test_name, config="../params.example.yaml"):
         pytest.main([
             "-qq", 
             "--color", "no", 
+            "--pytest-durations", "0",
             # "-s", 
             # "--log-cli-level", "INFO",
             f"{get_spec_path()}::{test_name}"
@@ -54,8 +55,11 @@ def delete_bucket_and_wait(s3_client, bucket_name):
         logging.info(f"delete bucket errored with: {e}")
 
     waiter = s3_client.get_waiter('bucket_not_exists')
-    waiter.wait(Bucket=bucket_name)
-    logging.info(f"Bucket '{bucket_name}' confirmed as deleted.")
+    try:
+        waiter.wait(Bucket=bucket_name)
+        logging.info(f"Bucket '{bucket_name}' confirmed as deleted.")
+    except Exception as e:
+        logging.info(f"delete bucket waiter errored with: {e}")
 
 def create_bucket(s3_client, bucket_name):
     # anything different than us-east-1 must have LocationConstraint on aws
@@ -103,24 +107,30 @@ def delete_all_objects_and_wait(s3_client, bucket_name):
         for obj in response['Contents']:
             delete_object_and_wait(s3_client, bucket_name, obj['Key'])
  
-def delete_policy_and_bucket_and_wait(s3_client, bucket_name, request):
+def delete_policy_and_bucket_and_wait(s3_client, bucket_name, policy_wait_time, request):
     retries = 3
-    sleeptime = 1
-    for _ in range(retries):   
+    sleeptime = 5
+    for attempt_number in range(retries):   
         try:
             change_policies_json(bucket_name, {"policy_dict": request.param['policy_dict'], "actions": ["s3:GetObjects", "*"], "effect": "Allow"}, tenants=["*"])
+            logging.info(f"deleting policy of bucket {bucket_name}...")
             s3_client.delete_bucket_policy(Bucket=bucket_name)
+            break
         except s3_client.exceptions.ClientError as e:
             if e.response['Error']['Code'] == 'NoSuchBucketPolicy':
                 logging.info(f"No policy found for bucket '{bucket_name}'.")
                 break
             else:
-                time.sleep(sleeptime)
+                time.sleep(sleeptime * attempt_number)
                 continue 
         except Exception as e:
             logging.info(f"delete policy errored with: {e}")
            
+    logging.info(f"waiting for policy delete to propagate, {policy_wait_time} seconds")
+    time.sleep(policy_wait_time)
+    logging.info(f"deleting all objects...")
     delete_all_objects_and_wait(s3_client, bucket_name)
+    logging.info(f"deleting bucket...")
     delete_bucket_and_wait(s3_client, bucket_name)
 
 def put_object_and_wait(s3_client, bucket_name, object_key, content):

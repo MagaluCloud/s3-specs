@@ -16,14 +16,20 @@
 # que podem ser executadas em um bucket ou objeto, e por quais contas ("Principals"), seja para
 # **conceder** mais acessos a determinados recursos, e para quais contas.
 
+# + tags=["parameters"]
+config = "../params/br-ne1.yaml"
+# -
+
 # + {"jupyter": {"source_hidden": true}}
+import os
 import pytest
 import logging
 from botocore.exceptions import ClientError
 from s3_helpers import(
+    run_example,
     change_policies_json,
 )
-
+config = os.getenv("CONFIG", config)
 pytestmark = pytest.mark.policy
 # -
 
@@ -107,6 +113,7 @@ def test_put_invalid_bucket_policy(s3_client, existing_bucket_name, input, expec
     except ClientError as e:
         # Assert the error code matches the expected one 
         assert e.response['Error']['Code'] == expected_error
+run_example(__name__, "test_put_invalid_bucket_policy", config=config)
 
 
 @pytest.mark.parametrize('policies_args', [
@@ -121,6 +128,7 @@ def test_setup_policies(s3_client, existing_bucket_name, policies_args):
     policies = change_policies_json(existing_bucket_name, policies_args, "*")
     response = s3_client.put_bucket_policy(Bucket=bucket_name, Policy=policies) 
     assert response['ResponseMetadata']['HTTPStatusCode'] == 204
+run_example(__name__, "test_setup_policies", config=config)
 
 # ## Negar operações específicas em objetos
 #
@@ -155,6 +163,7 @@ def test_denied_policy_operations_by_owner(s3_client, bucket_with_one_object_pol
     except ClientError as e:
         logging.info(f"Method error response:{e.response}")
         assert e.response['Error']['Code'] == 'AccessDeniedByBucketPolicy'
+run_example(__name__, "test_denied_policy_operations_by_owner", config=config)
 
 # ## Permitir operações específicas em objetos
 #
@@ -184,3 +193,4 @@ def test_allow_policy_operations_by_owner(multiple_s3_clients, bucket_with_one_o
     method = getattr(multiple_s3_clients[0], boto3_action)
     response = method(**kwargs)
     assert response['ResponseMetadata']['HTTPStatusCode'] == expected
+run_example(__name__, "test_allow_policy_operations_by_owner", config=config)
