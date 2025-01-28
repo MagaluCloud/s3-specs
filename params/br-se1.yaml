@@ -4,6 +4,8 @@ profiles:
   -
     profile_name: "br-se1"
     lock_mode: "COMPLIANCE"
+    policy_wait_time: 120
   -
     profile_name: "br-se1-second"
     lock_mode: "COMPLIANCE"
+    policy_wait_time: 120
