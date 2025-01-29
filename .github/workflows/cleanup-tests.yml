@@ -1,0 +1,41 @@
+name: Cleanup Test Buckets
+
+on:
+  workflow_call:
+    secrets:
+      PROFILES: { required: true }
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/marmotitude/s3-tester:tests
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.5.9"
+
+      - name: Install the project
+        run: uv sync --no-dev
+
+      - name: Configure Profiles
+        run: |
+          echo "${{ secrets.PROFILES }}" > profiles.yaml
+          sha256sum profiles.yaml
+          sha256sum ./bin/configure_profiles.py
+          echo "Configuring Profiles..."
+          uv run python ./bin/configure_profiles.py ./profiles.yaml
+
+      - name: Cleanup Test Buckets (Optional)
+        run: |
+          uv run ./bin/purge_test_buckets.py br-se1
+          uv run ./bin/purge_test_buckets.py br-ne1
+          uv run ./bin/purge_test_buckets.py br-se1-second
+        continue-on-error: true
