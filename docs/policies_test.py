@@ -13,8 +13,9 @@
 # recurso. Também por padrão, esta dona possui a permissão de executar **qualquer** operação
 # neste bucket e nos seus objetos. Configurar uma política de bucket é uma maneira de
 # modificar estas permissões padrões, seja para **restringir** de forma granular o número de operações
-# que podem ser executadas em um bucket ou objeto, e por quais contas ("Principals"), seja para
-# **conceder** mais acessos a determinados recursos, e para quais contas.
+# que podem ser executadas em um bucket ou objeto, e por quais contas (_"Principals"_, no sentido
+# de beneficiários, outorgados), seja para **conceder** mais acessos a determinados recursos, e
+# para quais contas.
 
 # + tags=["parameters"]
 config = "../params/br-ne1.yaml"
@@ -24,6 +25,7 @@ config = "../params/br-ne1.yaml"
 import os
 import pytest
 import logging
+from datetime import datetime, timedelta, timezone
 from botocore.exceptions import ClientError
 from s3_helpers import(
     run_example,
@@ -34,10 +36,10 @@ pytestmark = pytest.mark.policy
 # -
 
 # Políticas de bucket são descritas por meio de arquivos no formato JSON, que seguem uma gramática
-# específica, devem conter uma lista de regras _Statement_ onde cada ítem desta lista descreve um
+# específica, devem conter uma lista de regras `Statement` onde cada ítem desta lista descreve um
 # `Effect` (`Allow` ou `Deny`), um campo `Principal` para descrever a(s) beneficiária(s) da regra
 # um campo `Action` com as operações que esta regra permite ou nega e um campo `Resource`, que
-# define a qual recurso esta regra se aplicará. As regras desta sintaxe pode ser consultada no
+# define a qual recurso esta regra se aplicará. As regras desta sintaxe podem ser consultadas no
 # documento [Estrutura de uma Bucket Policy](https://docs.magalu.cloud/docs/storage/object-storage/access-control/bucket_policy_overview#estrutura-de-uma-bucket-policy)
 # Abaixo um modelo de documento de política sem os campos preenchidos:
 
@@ -101,7 +103,9 @@ cases = [
 
 # ## Atribuindo uma política a um bucket usando Python
 #
-# O método para atribuir uma bucket policy na biblioteca boto3 é o [put_bucket_policy](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/put_bucket_policy.html), se o documento de política for válido o retorno trará um HTTPStatusCode `204` enquanto
+# O método para atribuir uma _bucket policy_ na biblioteca boto3 é o
+# [put_bucket_policy](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/put_bucket_policy.html),
+# se o documento de política for válido o retorno trará um HTTPStatusCode `204` enquanto
 # se o documento for inválido por algum motivo uma _exception_ do tipo `ClientError` será levantada,
 # como mostram os testes abaixo:
 
@@ -115,18 +119,28 @@ def test_put_invalid_bucket_policy(s3_client, existing_bucket_name, input, expec
         assert e.response['Error']['Code'] == expected_error
 run_example(__name__, "test_put_invalid_bucket_policy", config=config)
 
-
-@pytest.mark.parametrize('policies_args', [
-    {"policy_dict": policy_dict_template, "actions": "s3:PutObject", "effect": "Deny"},
-    {"policy_dict": policy_dict_template, "actions": "s3:GetObject", "effect": "Deny"},
-    {"policy_dict": policy_dict_template, "actions": "s3:DeleteObject", "effect": "Deny"}
-])
+test_cases_actions = [
+    "s3:PutObject",
+    "s3:GetObject",
+    "s3:DeleteObject",
+    "s3:GetBucketObjectLockConfiguration",
+    "s3:GetObjectRetention",
+    "s3:PutBucketObjectLockConfiguration",
+    "s3:PutObjectRetention",
+]
+test_cases_parameters = [ 
+    {"policy_dict": policy_dict_template, "actions": action, "effect": "Deny"}
+    for action in test_cases_actions
+]
+@pytest.mark.parametrize('policies_args', test_cases_parameters, ids=test_cases_actions)
 def test_setup_policies(s3_client, existing_bucket_name, policies_args):
     bucket_name = existing_bucket_name
 
-    #given a existent and valid bucket
-    policies = change_policies_json(existing_bucket_name, policies_args, "*")
-    response = s3_client.put_bucket_policy(Bucket=bucket_name, Policy=policies) 
+    # fill up the policy template with the parametrized Action and Effect
+    policy_doc = change_policies_json(existing_bucket_name, policies_args, "*")
+
+    logging.info(f"put_bucket_policy: {policy_doc}")
+    response = s3_client.put_bucket_policy(Bucket=bucket_name, Policy=policy_doc) 
     assert response['ResponseMetadata']['HTTPStatusCode'] == 204
 run_example(__name__, "test_setup_policies", config=config)
 
@@ -138,11 +152,23 @@ run_example(__name__, "test_setup_policies", config=config)
 # falham com o erro `AccessDeniedByPolicy`, como demonstra o teste a seguir:
 
 number_clients = 2
-@pytest.mark.parametrize('multiple_s3_clients, bucket_with_one_object_policy, boto3_action', [
-    ({"number_clients": number_clients}, {"policy_dict": policy_dict_template, "actions": "s3:PutObject", "effect": "Deny"}, 'put_object'),
-    ({"number_clients": number_clients}, {"policy_dict": policy_dict_template, "actions": "s3:GetObject", "effect": "Deny"}, 'get_object'),
-    ({"number_clients": number_clients}, {"policy_dict": policy_dict_template, "actions": "s3:DeleteObject", "effect": "Deny"}, 'delete_object')
-], indirect = ['multiple_s3_clients', 'bucket_with_one_object_policy'])
+test_cases_actions_and_methods = [
+    {"action": "s3:PutObject", "boto3_action": "put_object"},
+    {"action": "s3:GetObject", "boto3_action": "get_object"},
+    {"action": "s3:DeleteObject", "boto3_action": "delete_object"},
+    {"action": "s3:PutBucketObjectLockConfiguration", "boto3_action": "put_object_lock_configuration"},
+    {"action": "s3:GetBucketObjectLockConfiguration", "boto3_action": "get_object_lock_configuration"},
+]
+test_cases = [
+    ({"number_clients": number_clients}, {"policy_dict": policy_dict_template, "actions": item["action"], "effect": "Deny"}, item["boto3_action"])
+    for item in test_cases_actions_and_methods
+]
+@pytest.mark.parametrize(
+    'multiple_s3_clients, bucket_with_one_object_policy, boto3_action',
+     test_cases,
+     indirect = ['multiple_s3_clients', 'bucket_with_one_object_policy'],
+     ids = [f"{item['action']},{item['boto3_action']}" for item in test_cases_actions_and_methods],
+)
 def test_denied_policy_operations_by_owner(s3_client, bucket_with_one_object_policy, boto3_action):
     bucket_name, object_key = bucket_with_one_object_policy
     kwargs = {
@@ -150,10 +176,21 @@ def test_denied_policy_operations_by_owner(s3_client, bucket_with_one_object_pol
         'Key': object_key
     }
 
-    #PutObject needs another variable
+    # PutObject expects a Body argument
     if boto3_action == 'put_object' :
         kwargs['Body'] = 'The answer for everthing is 42'
-        
+
+    # put_object_lock_configuration expects a ObjectLockConfiguration argument
+    if boto3_action == 'put_object_lock_configuration' :
+        kwargs['ObjectLockConfiguration'] = policy_dict_template
+
+    # put_object_retention expects a Retention argument
+    if boto3_action == 'put_object_retention' :
+        kwargs['Retention'] = {
+            "Mode": "COMPLIANCE",
+            "RetainUntilDate": (datetime.now(timezone.utc) + timedelta(days=1)).strftime("%Y-%m-%d")
+        }
+
     #retrieve the method passed as argument
     method = getattr(s3_client, boto3_action)
     try:
