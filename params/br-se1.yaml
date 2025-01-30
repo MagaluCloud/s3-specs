@@ -5,7 +5,10 @@ profiles:
     profile_name: "br-se1"
     lock_mode: "COMPLIANCE"
     policy_wait_time: 120
+    lock_wait_time: 120
+    # mgc_path: ../custom-mgc/mgc
   -
     profile_name: "br-se1-second"
     lock_mode: "COMPLIANCE"
     policy_wait_time: 120
+    # mgc_path: ../custom-mgc/mgc
