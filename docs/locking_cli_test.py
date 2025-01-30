@@ -24,6 +24,7 @@ import logging
 import subprocess
 import json
 import os
+import time
 from shlex import split, quote
 from s3_helpers import (
     run_example,
@@ -49,9 +50,10 @@ commands = [
 
 # + {"jupyter": {"source_hidden": true}}
 @pytest.mark.parametrize("cmd_template", commands)
-def test_set_bucket_default_lock(cmd_template, active_mgc_workspace, mgc_path, lockeable_bucket_name):
+def test_set_bucket_default_lock(cmd_template, active_mgc_workspace, mgc_path, versioned_bucket_with_one_object):
     days = "1"
-    cmd = split(cmd_template.format(mgc_path=mgc_path, bucket_name=lockeable_bucket_name, days=days))
+    bucket_name, _, _ = versioned_bucket_with_one_object
+    cmd = split(cmd_template.format(mgc_path=mgc_path, bucket_name=bucket_name, days=days))
 
     result = subprocess.run(cmd, capture_output=True, text=True)
 
@@ -81,6 +83,26 @@ def test_get_bucket_default_lock(cmd_template, active_mgc_workspace, mgc_path, b
 run_example(__name__, "test_get_bucket_default_lock", config=config)
 # -
 
+# ### Remover a configuração de locking em um bucket
+#
+# Na mgc cli, o comando para remover uma configuração padrão de locking de um bucket é o
+# `buckets object-lock unset`, exemplo:
+
+commands = [
+    "{mgc_path} object-storage buckets object-lock unset {bucket_name}",
+]
+
+# + {"jupyter": {"source_hidden": true}}
+@pytest.mark.parametrize("cmd_template", commands)
+def test_unset_bucket_default_lock(cmd_template, active_mgc_workspace, mgc_path, bucket_with_lock):
+    cmd = split(cmd_template.format(mgc_path=mgc_path, bucket_name=bucket_with_lock))
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    assert result.returncode == 0, f"Command failed with error: {result.stderr}"
+    logging.info(f"Output from {cmd_template}: {result.stdout}")
+
+run_example(__name__, "test_unset_bucket_default_lock", config=config)
+# -
+
 # ### Configurar uma trava em apenas um objeto específico
 #
 # Para setar uma regra de retenção a apenas um objeto em específico, utilize
@@ -92,13 +114,18 @@ commands = [
 
 # + {"jupyter": {"source_hidden": true}}
 @pytest.mark.parametrize("cmd_template", commands)
-def test_set_object_lock(cmd_template, active_mgc_workspace, mgc_path, bucket_with_one_object_and_lock_enabled, s3_client):
+def test_set_object_lock(cmd_template, active_mgc_workspace, mgc_path, bucket_with_one_object_and_lock_enabled, s3_client, lock_wait_time):
     # Set the retain-until date 24 hours from now
     retain_until_date = (datetime.now(timezone.utc) + timedelta(days=1)).strftime("%Y-%m-%d")
 
 
     # Unpack bucket name, object key, and version from fixture
     bucket_name, object_key, object_version = bucket_with_one_object_and_lock_enabled
+
+    # wait for the bucket lock change to be effective
+    wait_time = lock_wait_time
+    logging.info(f"Put bucket lock config might take time to propagate. Wait more {wait_time} seconds")
+    time.sleep(wait_time)
 
     # Format the CLI command
     cmd = split(cmd_template.format(
@@ -114,6 +141,11 @@ def test_set_object_lock(cmd_template, active_mgc_workspace, mgc_path, bucket_wi
     # Ensure the command executed successfully
     assert result.returncode == 0, f"Command failed with error: {result.stderr}"
     logging.info(f"Output from {cmd_template}: {result.stdout}")
+
+    # wait for the first lock change to be effective
+    wait_time = lock_wait_time
+    logging.info(f"Put object retention might take time to propagate. Wait more {wait_time} seconds")
+    time.sleep(wait_time)
 
     # Verify the object lock configuration using the s3_client
     retention_info = get_object_retention_with_determination(s3_client, bucket_name, object_key)

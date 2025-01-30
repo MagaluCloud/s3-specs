@@ -1,3 +1,5 @@
+custom-mgc/*
+
 params.yaml
 
 # Ignore all .ipynb_checkpoints folders anywhere in the project
