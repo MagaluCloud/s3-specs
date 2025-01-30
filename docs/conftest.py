@@ -56,6 +56,10 @@ def policy_wait_time(default_profile):
     return default_profile.get("policy_wait_time", 0)
 
 @pytest.fixture
+def lock_wait_time(default_profile):
+    return default_profile.get("lock_wait_time", 0)
+
+@pytest.fixture
 def profile_name(default_profile):
     return (
         default_profile.get("profile_name")

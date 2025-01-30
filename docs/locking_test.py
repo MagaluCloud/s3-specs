@@ -30,10 +30,12 @@ config = "../params/br-ne1.yaml"
 # + {"jupyter": {"source_hidden": true}}
 import boto3
 import os
+import json
 import botocore
 import pytest
+import time
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from s3_helpers import (
     run_example,
     cleanup_old_buckets,
@@ -57,7 +59,7 @@ pytestmark = pytest.mark.locking
 # Para os exemplos abaixo, vamos utilizar um bucket versionado com dois objetos, um de antes da entrada
 # da configuração de lock e outro de depois, quando uma regra de retenção padráo já foi definida.
 # 
-# Isto facilitará a demonstração de que regras de retenção do buckect só se aplicam às novas versões de objetos.
+# Isto facilitará a demonstração de que regras de retenção do bucket só se aplicam às novas versões de objetos.
 
 # +
 @pytest.fixture
@@ -79,6 +81,7 @@ def versioned_bucket_with_lock_config(s3_client, versioned_bucket_with_one_objec
         Bucket=bucket_name,
         ObjectLockConfiguration=lock_config
     )
+    logging.info(f"put_object_lock_configuration response: {response}")
     response_status = response["ResponseMetadata"]["HTTPStatusCode"]
     assert response_status == 200, "Expected HTTPStatusCode 200 for successful lock configuration."
     logging.info(f"Bucket '{bucket_name}' locked with mode {lock_mode}. Status: {response_status}")
@@ -117,7 +120,7 @@ def versioned_bucket_with_lock_config(s3_client, versioned_bucket_with_one_objec
 
 # #### Simple Delete
 # Em um bucket versionado, um delete simples sem o id da versão do objeto não exclui dados, apenas
-# adiciona um marcador (delete marker), esta operação pode ocorrer independentemente se o bucket
+# adiciona um marcador (delete marker), esta operação pode ocorrer independentemente de se o bucket
 # possui ou não uma configuração de locking.
 
 # +
@@ -255,6 +258,136 @@ def test_configure_bucket_lock_on_regular_bucket(s3_client, existing_bucket_name
 run_example(__name__, "test_configure_bucket_lock_on_regular_bucket", config=config)
 # -
 
+# ## Outros exemplos
+
+# ### Aumentar o tempo de trava (retention date) em um objeto
+#
+# O período de locking de um objeto específico pode ser aumentado individualmente com o uso do
+# método `put_object_retention` e uma data para o argumento RetainUntilDate que seja superior ã
+# data de retenção atual. Tentar utilizar uma data menor que a data de retenção atual deve falhar
+# com um erro de `InvalidArgument` como demonstra o teste abaixo:
+
+# +
+def test_put_object_retention(versioned_bucket_with_lock_config, s3_client, lock_mode, lock_wait_time):
+    bucket_name, _, second_object_key, _, _ = versioned_bucket_with_lock_config
+
+    # Use get_object_retention to check object-level retention details
+    logging.info("Retrieving object retention details...")
+    # retention_info = s3_client.get_object_retention(Bucket=bucket_name, Key=second_object_key)
+    retention_info = get_object_retention_with_determination(s3_client, bucket_name, second_object_key)
+    assert retention_info["Retention"]["Mode"] == lock_mode, f"Expected object lock mode to be {lock_mode}."
+    logging.info(f"Retention verified as applied with mode {retention_info['Retention']['Mode']} "
+          f"and retain until {retention_info['Retention']['RetainUntilDate']}.")
+
+    # Increase the RetainUntilDate in one day
+    new_retain_until_date = retention_info['Retention']['RetainUntilDate'] + timedelta(days=1)
+    logging.info(f"new retention date for {second_object_key} will be {new_retain_until_date}")
+
+    retention_update_response = s3_client.put_object_retention(
+        Bucket=bucket_name,
+        Key=second_object_key,
+        Retention={ "RetainUntilDate": new_retain_until_date }
+    )
+    logging.info(f"put_object_retention response 1: {retention_update_response}")
+    assert retention_update_response["ResponseMetadata"]["HTTPStatusCode"] == 200, "Expected HTTPStatusCode 200 for successful lock configuration."
+    new_retention_info = get_object_retention_with_determination(s3_client, bucket_name, second_object_key)
+    logging.info(f"new retention date for {second_object_key} is {new_retention_info['Retention']['RetainUntilDate']}")
+    assert new_retention_info['Retention']['RetainUntilDate'] == new_retain_until_date
+
+    # Decrease the RetainUntilDate to somethin in the past (invalid)
+    invalid_retain_until_date = retention_info['Retention']['RetainUntilDate'] - timedelta(days=2)
+    logging.info(f"invalid retention date for {second_object_key} cant be {new_retain_until_date}")
+
+    # wait for the first lock change to be effective
+    wait_time = lock_wait_time
+    logging.info(f"Put object retention might take time to propagate. Wait more {wait_time} seconds")
+    time.sleep(wait_time)
+
+    # Attempt to put a date that is not in the future as object retention date
+    with pytest.raises(botocore.exceptions.ClientError) as exc_info:
+        retention_update_response = s3_client.put_object_retention(
+            Bucket=bucket_name,
+            Key=second_object_key,
+            Retention={ "RetainUntilDate": invalid_retain_until_date }
+        )
+    logging.info(f"exc_info.value.response {exc_info.value.response}")
+    error_code = exc_info.value.response['Error']['Code']
+    assert error_code == "InvalidArgument", f"Expected InvalidArgument, got {error_code}"
+
+    # Double check that the retention date is still the same
+    latest_retention_info = get_object_retention_with_determination(s3_client, bucket_name, second_object_key)
+    logging.info(f"latest retention date for {second_object_key} should continue to be {latest_retention_info['Retention']['RetainUntilDate']}")
+    assert latest_retention_info['Retention']['RetainUntilDate'] == new_retain_until_date
+run_example(__name__, "test_put_object_retention", config=config,)
+# -
+
+# ### Impedir a modificação do tempo de trava em um objeto, por meio de uma Bucket Policy
+#
+# Abaixo um exemplo de política de bucket para impedir que a action `put_object_retention` seja
+# utilizada em objetos de um determinado bucket. Na sintaxe de bucket policy o nome desta action
+# é `s3:PutObjectRetention`
+
+# +
+policy_template = {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": "s3:PutObjectRetention",
+            "Resource": "{bucket_name}/*"
+        }
+    ]
+}
+# -
+
+# + {"jupyter": {"source_hidden": true}}
+@pytest.fixture
+def bucket_with_policy(versioned_bucket_with_lock_config, s3_client, lock_wait_time, request):
+    bucket_name, _, second_object_key, _, _ = versioned_bucket_with_lock_config
+    policy_doc = request.param
+
+    # change the resource field to be the objects inside the bucket
+    resource_template = policy_doc['Statement'][0]['Resource']
+    policy_doc['Statement'][0]['Resource'] = resource_template.format(bucket_name=bucket_name)
+
+    # set policy
+    logging.info(f"put_bucket_policy: {bucket_name}, {policy_doc}")
+    policy_put_result = s3_client.put_bucket_policy(Bucket=bucket_name, Policy=json.dumps(policy_doc))
+    logging.info(f"put_bucket_policy result: {policy_put_result}")
+
+    # wait for the bucket policy to be effective
+    wait_time = lock_wait_time
+    logging.info(f"Put bucket policy might take time to propagate. Wait more {wait_time} seconds")
+    time.sleep(wait_time)
+
+    return bucket_name, second_object_key
+# -
+
+# O exemplo abaixo tenta mudar a retention de um object, mas é impedida por conta da política:
+
+# +
+@pytest.mark.policy
+@pytest.mark.parametrize('bucket_with_policy', [policy_template], indirect = True)
+def test_policy_for_put_object_retention(bucket_with_policy, s3_client):
+    bucket_name, object_key = bucket_with_policy
+
+    # date in the futrure for the object retention
+    retain_until_date = datetime.now(timezone.utc).replace(microsecond=0) + timedelta(days=2)
+    logging.info(f"retention date for {object_key} will be {retain_until_date}")
+
+    with pytest.raises(botocore.exceptions.ClientError) as exc_info:
+        retention_update_response = s3_client.put_object_retention(
+            Bucket=bucket_name,
+            Key=object_key,
+            Retention={ "RetainUntilDate": retain_until_date }
+        )
+    logging.info(f"exc_info.value.response {exc_info.value.response}")
+    error_code = exc_info.value.response['Error']['Code']
+    assert error_code == "AccessDeniedByBucketPolicy", f"Expected AccessDeniedByPolicy, got {error_code}"
+
+run_example(__name__, "test_policy_for_put_object_retention", config=config,)
+# -
 
 # ## Referências
 # - [Amazon S3 Object Lock Overview](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html) - Visão Geral sobre Object Lock no Amazon S3

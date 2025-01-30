@@ -6,8 +6,12 @@ profiles:
     lock_mode: "COMPLIANCE"
     # mgc_path: "../magalu/mgc/cli/mgc"
     policy_wait_time: 0
+    lock_wait_time: 0
+    # mgc_path: ../custom-mgc/mgc
   -
     profile_name: "br-ne1-second"
     lock_mode: "COMPLIANCE"
     # mgc_path: "../magalu/mgc/cli/mgc"
     policy_wait_time: 0
+    lock_wait_time: 0
+    # mgc_path: ../custom-mgc/mgc
