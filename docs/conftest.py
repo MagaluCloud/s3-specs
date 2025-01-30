@@ -331,7 +331,7 @@ def lockeable_bucket_name(s3_client, lock_mode):
         logging.error(f"Cleanup error for bucket '{bucket_name}': {e}")
 
 @pytest.fixture
-def bucket_with_lock(lockeable_bucket_name, s3_client, lock_mode):
+def bucket_with_lock(lockeable_bucket_name, s3_client, lock_mode, lock_wait_time):
     """
     Fixture to create a bucket with Object Lock and a default retention configuration.
 
@@ -354,6 +354,11 @@ def bucket_with_lock(lockeable_bucket_name, s3_client, lock_mode):
         }
     }
     put_object_lock_configuration_with_determination(s3_client, bucket_name, configuration)
+
+    # wait for the bucket lock change to be effective
+    wait_time = lock_wait_time
+    logging.info(f"Put bucket lock config might take time to propagate. Wait more {wait_time} seconds")
+    time.sleep(wait_time)
 
     logging.info(f"Bucket '{bucket_name}' configured with Object Lock and default retention.")
 
