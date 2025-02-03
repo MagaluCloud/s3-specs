@@ -50,6 +50,8 @@ def delete_bucket_and_wait(s3_client, bucket_name):
     except s3_client.exceptions.NoSuchBucket:
         logging.info("Bucket already deleted by someone else.")
         return
+    except Exception as e:
+        logging.info(f"delete bucket errored with: {e}")
 
     waiter = s3_client.get_waiter('bucket_not_exists')
     waiter.wait(Bucket=bucket_name)
@@ -72,6 +74,8 @@ def create_bucket_and_wait(s3_client, bucket_name):
         logging.info(f"Bucket '{bucket_name}' already exists and is owned by you.")
     except s3_client.exceptions.BucketAlreadyExists:
         raise Exception(f"Bucket '{bucket_name}' already exists and is owned by someone else.")
+    except Exception as e:
+        logging.info(f"create bucket errored with: {e}")
 
     waiter = s3_client.get_waiter('bucket_exists')
     waiter.wait(Bucket=bucket_name)
@@ -83,9 +87,14 @@ def delete_object_and_wait(s3_client, bucket_name, object_key):
     except s3_client.exceptions.NoSuchKey:
         logging.info(f"Object '{object_key}' already deleted or not found.")
         return
+    except Exception as e:
+        logging.info(f"delete object got error: {e}")
 
     waiter = s3_client.get_waiter('object_not_exists')
-    waiter.wait(Bucket=bucket_name, Key=object_key)
+    try:
+        waiter.wait(Bucket=bucket_name, Key=object_key)
+    except Exception as e:
+        logging.info(f"delete waiter got error: {e}")
     logging.info(f"Object '{object_key}' in bucket '{bucket_name}' confirmed as deleted.")
 
 def delete_all_objects_and_wait(s3_client, bucket_name):
@@ -108,6 +117,8 @@ def delete_policy_and_bucket_and_wait(s3_client, bucket_name, request):
             else:
                 time.sleep(sleeptime)
                 continue 
+        except Exception as e:
+            logging.info(f"delete policy errored with: {e}")
            
     delete_all_objects_and_wait(s3_client, bucket_name)
     delete_bucket_and_wait(s3_client, bucket_name)
@@ -182,6 +193,8 @@ def cleanup_old_buckets(s3_client, base_name, lock_mode=None, retention_days=1):
                     logging.info(f"Deleted old bucket '{bucket_name}' created on {creation_date}")
                 except ClientError as e:
                     logging.warning(f"Could not delete bucket '{bucket_name}': {e}")
+                except Exception as e:
+                    logging.info(f"get bucket versioning errored with: {e}")
 
 def delete_version(s3_client, bucket_name, version, lock_mode):
     """
@@ -216,6 +229,8 @@ for _ in range(5):
             logging.warning(
                 f"Failed to delete version {version_id} of object {version['Key']} in bucket {bucket_name}: {e}"
             )
+    except Exception as e:
+        logging.info(f"delete object errored with: {e}")
 
 def change_policies_json(bucket, policy_args: dict, tenants: list) -> json:
     
@@ -304,8 +319,11 @@ def replace_failed_put_without_version(s3_client, bucket_name, object_key, objec
         logging.info(f"wait {wait_time} seconds")
         time.sleep(wait_time)
 
-        # delete object (marker?) on the strange object without version id
-        s3_client.delete_object(Bucket=bucket_name, Key=object_key)
+        try:
+            # delete object (marker?) on the strange object without version id
+            s3_client.delete_object(Bucket=bucket_name, Key=object_key)
+        except Exception as e:
+            logging.info(f"previous put object without version could not be deleted: {e}")
 
         # put the object again in the hopes that this time it will have a version id
         response = s3_client.put_object(Bucket=bucket_name, Key=new_object_key, Body=object_content)
