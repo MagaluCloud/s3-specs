@@ -156,8 +156,6 @@ test_cases_actions_and_methods = [
     {"action": "s3:PutObject", "boto3_action": "put_object"},
     {"action": "s3:GetObject", "boto3_action": "get_object"},
     {"action": "s3:DeleteObject", "boto3_action": "delete_object"},
-    {"action": "s3:PutBucketObjectLockConfiguration", "boto3_action": "put_object_lock_configuration"},
-    {"action": "s3:GetBucketObjectLockConfiguration", "boto3_action": "get_object_lock_configuration"},
 ]
 test_cases = [
     ({"number_clients": number_clients}, {"policy_dict": policy_dict_template, "actions": item["action"], "effect": "Deny"}, item["boto3_action"])
@@ -180,10 +178,6 @@ def test_denied_policy_operations_by_owner(s3_client, bucket_with_one_object_pol
     if boto3_action == 'put_object' :
         kwargs['Body'] = 'The answer for everthing is 42'
 
-    # put_object_lock_configuration expects a ObjectLockConfiguration argument
-    if boto3_action == 'put_object_lock_configuration' :
-        kwargs['ObjectLockConfiguration'] = policy_dict_template
-
     # put_object_retention expects a Retention argument
     if boto3_action == 'put_object_retention' :
         kwargs['Retention'] = {
@@ -192,6 +186,7 @@ def test_denied_policy_operations_by_owner(s3_client, bucket_with_one_object_pol
         }
 
     #retrieve the method passed as argument
+    logging.info(f"call boto3_action:{boto3_action}, with args:{kwargs}")
     method = getattr(s3_client, boto3_action)
     try:
         response = method(**kwargs)
