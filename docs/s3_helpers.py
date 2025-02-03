@@ -1,4 +1,5 @@
 import os
+
 import boto3
 from botocore.exceptions import ClientError
 from datetime import datetime, timedelta
@@ -263,8 +264,9 @@ def change_policies_json(bucket, policy_args: dict, tenants: list) -> json:
     policy["Statement"][0]["Effect"] = effect
     policy["Statement"][0]["Principal"] = tenants
     policy["Statement"][0]["Action"] = actions
-    policy["Statement"][0]["Resource"] = bucket + "/*"
+    policy["Statement"][0]["Resource"] = [bucket + "/*", bucket]
         
+    logging.info(f"POLICY: {json.dumps(policy)}")
     return json.dumps(policy)
 
 
