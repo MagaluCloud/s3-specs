@@ -52,9 +52,9 @@ jobs:
       - name: Run tests ${{ inputs.tests }}
         run: |
           cd docs
-          mkdir -p ${{ github.workspace }}/artifact/
-          uv run pytest --config ${{ inputs.config }} *_test.py ${{ inputs.flags }} | tee ${{ github.workspace }}/artifact/output_${{inputs.tests}}.log
+          mkdir -p s3-specs/artifact/
+          uv run pytest --config ${{ inputs.config }} *_test.py ${{ inputs.flags }} | tee s3-specs/artifact/output_${{inputs.tests}}.log
       - uses: actions/upload-artifact@v4
         with:
          name: output_artifact_${{ inputs.tests }}
-         path: ${{ github.workspace }}/artifact/output_${{inputs.tests}}.log
+         path: s3-specs/artifact/output_${{inputs.tests}}.log
