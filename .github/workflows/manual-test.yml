@@ -34,3 +34,5 @@ jobs:
       mgc_version: ${{ inputs.mgc_version }}
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
+
+      
