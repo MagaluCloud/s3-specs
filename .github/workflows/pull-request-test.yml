@@ -23,7 +23,7 @@ jobs:
           - "../params.example.yaml"
     uses: ./.github/workflows/run-tests.yml
     with:
-      tests: "*_test.py"
+      tests: "${{ matrix.category }}"
       config: "${{ matrix.config }}"
       flags: "-v -n auto --color yes -m '${{ matrix.category }}' --tb=line"
     secrets:
@@ -59,7 +59,6 @@ jobs:
 
   cleanup-tests:
     needs: [tests-success, run-locking-tests]
-    if: always()
-    uses: ./.github/workflows/cleanup-tests.yml
+    if: always() uses: ./.github/workflows/cleanup-tests.yml
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
