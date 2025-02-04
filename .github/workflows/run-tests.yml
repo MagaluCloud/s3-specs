@@ -56,6 +56,7 @@ jobs:
                 sha256sum $(which mgc rclone aws)
                 uv run pytest --config ${{ inputs.config }} ${{ inputs.tests }} ${{ inputs.flags }} > output.log
 
+<<<<<<< HEAD
             - name: Run tests ${{ inputs.tests }}
               run: |
                 cd docs
@@ -66,3 +67,14 @@ jobs:
                 name: output-artifact-${{inputs.tests}}-${{job.container.id}}
                 path: ${{ github.workspace }}/artifact/**/*
             
+=======
+      - name: Run tests ${{ inputs.tests }}
+        run: |
+          cd docs
+          mkdir -p ${{ github.workspace }}/artifact/
+          uv run pytest --config ${{ inputs.config }} ${{ inputs.tests }} ${{ inputs.flags }} > ${{ github.workspace }}/artifact/output_${{inputs.tests}}.log
+      - uses: actions/upload-artifact@v4
+        with:
+         name: output_artifact_${{ inputs.tests }}
+         path: ${{ github.workspace }}/artifact/**/*
+>>>>>>> 91e895d (changed some stuffdsad)
