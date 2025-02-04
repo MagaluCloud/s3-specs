@@ -58,10 +58,10 @@ jobs:
 
             - name: Run tests ${{ inputs.tests }}
               run: |
-                mkdir -p ./output/
+                mkdir -p artifact/
                 cd docs
-                uv run pytest --config ${{ inputs.config }} ${{ inputs.tests }} ${{ inputs.flags }} > ${{ github.workspace }}/artifact/output${{inputs.tests}}.log
+                uv run pytest --config ${{ inputs.config }} ${{ inputs.tests }} ${{ inputs.flags }} > artifact/output${{inputs.tests}}.log
             - uses: actions/upload-artifact@v4
               with:
-               name: output-artifact-${{inputs.tests}}-${{job.container.id}}
-               path: ${{ github.workspace }}/artifact/**/*
+                name: output-artifact-${{inputs.tests}}-${{job.container.id}}
+                path: artifact/**/*
