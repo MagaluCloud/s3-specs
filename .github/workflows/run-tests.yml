@@ -57,5 +57,6 @@ jobs:
       - name: Archive code coverage results 
         uses: actions/upload-artifact@v4
         with:
-          name: pytest-output-${{ github.run_id }}-${{ github.head_ref }}.log
+          # Include job ID and branch name in artifact name for uniqueness.
+          name: pytest-output-${{ github.job }}-${{ github.run_id }}-${{ github.head_ref }}.log
           path: docs/output.log
