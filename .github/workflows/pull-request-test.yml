@@ -59,6 +59,7 @@ jobs:
 
   cleanup-tests:
     needs: [tests-success, run-locking-tests]
-    if: always() uses: ./.github/workflows/cleanup-tests.yml
+    if: always() 
+    uses: ./.github/workflows/cleanup-tests.yml
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
