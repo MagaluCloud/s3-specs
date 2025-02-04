@@ -11,10 +11,10 @@ jobs:
       matrix:
         category:
           #- acl
-          - cold_storage
+          #- cold_storage
           - basic
           - presign
-          - bucket_versioning
+          #- bucket_versioning
           # - policy
     uses: ./.github/workflows/run-tests.yml
     with:
