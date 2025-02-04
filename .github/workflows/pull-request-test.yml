@@ -44,7 +44,7 @@ jobs:
           - "../params/br-se1.yaml"
     uses: ./.github/workflows/run-tests.yml
     with:
-      tests: "*_test.py"
+      tests: "${{matrix.category}}"
       config: "${{ matrix.config }}"
       # no multiple workers here just to make it easier to audit the logs (more verbosity with INFO level)
       flags: "-v --log-cli-level INFO --color yes -m '${{ matrix.category }}'"
