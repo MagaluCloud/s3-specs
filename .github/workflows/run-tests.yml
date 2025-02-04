@@ -3,7 +3,8 @@ name: Run Tests
 on:
   workflow_call:
     inputs:
-      tests: { required: false, type: string }
+      name: { required: true, type: string }
+      test: { required: true, type: string }
       config: { required: true, type: string }
       flags: { required: true, type: string }
     secrets:
@@ -49,12 +50,14 @@ jobs:
           echo "Configuring Profiles..."
           uv run python ./bin/configure_profiles.py ./profiles.yaml
 
-      - name: Run tests ${{ inputs.tests }}
+      - name: Run tests ${{ inputs.name }}
         run: |
           cd docs
-          mkdir -p s3-specs/artifact/
-          uv run pytest --config ${{ inputs.config }} *_test.py ${{ inputs.flags }} | tee s3-specs/artifact/output_${{inputs.tests}}.log
-      - uses: actions/upload-artifact@v4
+          mkdir -p /s3-specs/artifact/
+          uv run pytest --config ${{ inputs.config }} ${{inputs.test}} ${{ inputs.flags }} | tee /s3-specs/artifact/pytest_output_${{ inputs.name }}.${{ github.run_id }}.log
+      
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
         with:
-         name: output_artifact_${{ inputs.tests }}
-         path: s3-specs/artifact/output_${{inputs.tests}}.log
+         name: output_artifact_${{ inputs.name }}.${{ github.run_id }}
+         path: /s3-specs/artifact/pytest_output_${{ inputs.name }}.${{ github.run_id }}.log
