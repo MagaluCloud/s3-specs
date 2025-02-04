@@ -20,7 +20,7 @@ jobs:
     with:
       tests: "${{ matrix.category }}"
       config: "../params.example.yaml"
-      flags: "--no-header -vv -n auto --tb=short --color no --durantions=0 --duration-time=2 -m '${{ matrix.category }}' --tb=line"
+      flags: "--no-header -vv -n auto --tb=short --color no -m '${{ matrix.category }}' --tb=line"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
   tests-success:
@@ -47,7 +47,7 @@ jobs:
       tests: "${{matrix.category}}"
       config: "${{ matrix.config }}"
       # no multiple workers here just to make it easier to audit the logs (more verbosity with INFO level)
-      flags: "--no-header -vv -n auto --tb=short --color no --durantions=0 --duration-time=2 -m 'not cli and locking"
+      flags: "--no-header -vv -n auto --tb=short --color no -m 'not cli and locking"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
