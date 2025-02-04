@@ -18,7 +18,7 @@ jobs:
           # - policy
     uses: ./.github/workflows/run-tests.yml
     with:
-      tests: "*_test.py"
+      tests: "${{ matrix.category }}"
       config: "../params.example.yaml"
       flags: "-v -n auto --color yes -m '${{ matrix.category }}' --tb=line"
     secrets:
