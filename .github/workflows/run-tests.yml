@@ -56,9 +56,16 @@ jobs:
                 sha256sum $(which mgc rclone aws)
                 uv run pytest --config ${{ inputs.config }} ${{ inputs.tests }} ${{ inputs.flags }} > output.log
 
+            - name: Run tests ${{ inputs.tests }}
+              run: |
+                cd docs
+                uv run pytest --config ${{ inputs.config }} ${{ inputs.tests }} ${{ inputs.flags }} > output.log
+
             - name: Archive code coverage results 
               uses: actions/upload-artifact@v4
               with:
-                # Include job ID and branch name in artifact name for uniqueness.
                 name: pytest-output-${{ github.job }}-${{ github.run_id }}-${{ github.head_ref }}.log
                 path: docs/output.log
+            run:
+              rm docs/output.log
+                
