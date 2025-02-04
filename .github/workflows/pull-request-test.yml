@@ -47,7 +47,7 @@ jobs:
       tests: "${{matrix.category}}"
       config: "${{ matrix.config }}"
       # no multiple workers here just to make it easier to audit the logs (more verbosity with INFO level)
-      flags: "--no-header -vv -n auto --tb=short --color no -m not cli and locking"
+      flags: "--no-header -vv -n auto --tb=short --color no -m 'not cli and locking'"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
