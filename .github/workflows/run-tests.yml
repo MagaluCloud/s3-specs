@@ -53,7 +53,7 @@ jobs:
         run: |
           cd docs
           mkdir -p ${{ github.workspace }}/artifact/
-          uv run pytest --config ${{ inputs.config }} ${{ inputs.tests }} ${{ inputs.flags }} > ../artifact/output_${{inputs.tests}}.log
+          uv run pytest --config ${{ inputs.config }} ${{ inputs.tests }} ${{ inputs.flags }} > ${{ github.workspace }}/artifact/output_${{inputs.tests}}.log
       - uses: actions/upload-artifact@v4
         with:
          name: output_artifact_${{ inputs.tests }}
