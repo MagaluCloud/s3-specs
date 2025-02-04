@@ -54,4 +54,10 @@ jobs:
               run: |
                 cd docs
                 sha256sum $(which mgc rclone aws)
-                uv run pytest --config ${{ inputs.config }} ${{ inputs.tests }} ${{ inputs.flags }}
+                uv run pytest --config ${{ inputs.config }} ${{ inputs.tests }} ${{ inputs.flags }} > output.log
+
+            - name: Archive code coverage results 
+              uses: actions/upload-artifact@v4
+              with:
+                name: pytest-output.log
+                path: output.log
