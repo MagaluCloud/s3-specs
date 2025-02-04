@@ -20,7 +20,7 @@ jobs:
     with:
       tests: "${{ matrix.category }}"
       config: "../params.example.yaml"
-      flags: "-v -n auto --color yes -m '${{ matrix.category }}' --tb=line"
+      flags: "--no-header -vv -n auto --tb=short --color no --durantions=0 --duration-time=2 -m '${{ matrix.category }}' --tb=line"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
   tests-success:
@@ -47,7 +47,7 @@ jobs:
       tests: "${{matrix.category}}"
       config: "${{ matrix.config }}"
       # no multiple workers here just to make it easier to audit the logs (more verbosity with INFO level)
-      flags: "-v --log-cli-level INFO --color yes -m 'not cli and locking'
+      flags: "--no-header -vv -n auto --tb=short --color no --durantions=0 --duration-time=2 -m 'not cli and locking"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
@@ -57,4 +57,3 @@ jobs:
     uses: ./.github/workflows/cleanup-tests.yml
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
-
