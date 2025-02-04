@@ -1,0 +1,33 @@
+name: Essential Run Test - Pull Request
+
+on:
+    pull_request:
+      types: [opened, synchronize, reopened]
+
+jobs:
+  run-tests:
+    strategy:
+      fail-fast: true
+      matrix:
+        markers:
+          #- acl
+          - cold_storage
+          - basic
+          - presign
+          #- bucket_versioning
+          #- policy
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      name: "${{ matrix.markers }}" # Markers must have no special chars, so you can use them as test_names
+      test: "*_test.py"
+      config: "../params.example.yaml"
+      flags: "--no-header -vv -n auto --tb=short --color=no -m '${{ matrix.markers }}' --tb=line"
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}
+
+  cleanup-tests:
+    needs: [run-tests]
+    if: always()
+    uses: ./.github/workflows/cleanup-tests.yml
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}
