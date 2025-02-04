@@ -25,7 +25,7 @@ jobs:
     with:
       tests: "${{ matrix.category }}"
       config: "../params.example.yaml"
-      flags: "--no-header -vv -n auto --tb=short --color no -m '${{ matrix.category }}' --tb=line"
+      flags: "--no-header -vv -n auto --tb=short --color=no -m ${{ matrix.category }} --tb=line"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
