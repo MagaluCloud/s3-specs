@@ -13,7 +13,7 @@
 # impedindo sua modificação ou exclusão durante um período especificado.
 #
 # Isto é usado para garantir **conformidade** (compliance) com requisitos legais ou simplesmente
-# garantir uma proteção extra contra modificações ou exclusão.
+# garantir uma proteção extra contra modificações ou exclusões.
 #
 # ## Pontos importantes
 # 
@@ -24,7 +24,7 @@
 # não removem dados, a trava é apenas para deletes permanentes (delete com a version ID).
  
 # + tags=["parameters"]
-config = "../params/br-ne1.yaml"
+config = "../params/br-se1.yaml"
 # -
 
 # + {"jupyter": {"source_hidden": true}}
@@ -47,11 +47,70 @@ from s3_helpers import (
     get_object_lock_configuration_with_determination,
     get_object_retention_with_determination,
 )
+from utils.locking import bucket_with_lock_enabled
+
 config = os.getenv("CONFIG", config)
 pytestmark = pytest.mark.locking
 # -
 
-# ### Configuração de Object Locking em Bucket Versionado
+# ### Criando um novo bucket, já com locking habilitado
+#
+# No boto3 a função `create_bucket` permite que um novo bucket já seja criado com a opção de
+# suporte a _Object Locking_ habilitada, para tanto o argumento booleano
+# `ObjectLockEnabledForBucket` deve ser passado, como mostra o exemplo a seguir.
+
+# +
+def test_create_bucket_with_lock_enabled(bucket_name, s3_client):
+    # create bucket with lock enabled
+    create_bucket_response = s3_client.create_bucket(Bucket=bucket_name, ObjectLockEnabledForBucket=True)
+
+    # check that the bucket has the ability to lock
+    applied_config = s3_client.get_object_lock_configuration(Bucket=bucket_name)
+    assert applied_config["ObjectLockConfiguration"]["ObjectLockEnabled"] == "Enabled", "Expected Object Lock to be enabled."
+
+    # check that the bucket is also versioned
+    get_bucket_versioning_response = s3_client.get_bucket_versioning(Bucket=bucket_name)
+    assert get_bucket_versioning_response['Status'] == "Enabled"
+
+run_example(__name__, "test_create_bucket_with_lock_enabled", config=config)
+# -
+
+# ### Criando um novo objeto, já com uma configuração de trava
+#
+# No boto3 a função `put_object` permite que um novo objeto criado em bucket com locking habilitado
+# suba com uma trava habilitada e uma data de validade para o período de retenção, para isto
+# os argumentos `ObjectLockMode` e `ObjectLockRetainUntilDate` devem ser passados, como mostra o
+# exemplo a seguir
+
+# +
+def test_create_object_with_lock_enabled(bucket_with_lock_enabled, s3_client, lock_mode):
+    bucket_name = bucket_with_lock_enabled
+
+    # upload a new object, with a specific lock configuration with the retention rules to use
+    object_key="test-object"
+    object_body="create object with lock test object content"
+    retain_until_date = datetime.now(timezone.utc) + timedelta(days=1)
+    put_object_response = s3_client.put_object(
+        Bucket=bucket_name,
+        Key=object_key,
+        Body=object_body,
+        ObjectLockMode=lock_mode,
+        ObjectLockRetainUntilDate=retain_until_date,
+    )
+
+    # assert that the put object succeeded
+    response_status = put_object_response["ResponseMetadata"]["HTTPStatusCode"]
+    assert response_status == 200, "Expected HTTPStatusCode 200 for successful object upload"
+
+    # assert that the object has a retention set
+    retention_info = s3_client.get_object_retention(Bucket=bucket_name, Key=object_key)
+    assert retention_info["Retention"]["Mode"] == lock_mode, f"Expected object lock mode to be {lock_mode}."
+
+
+run_example(__name__, "test_create_object_with_lock_enabled", config=config)
+# -
+
+# ### Configuração de Object Locking em Bucket Versionado Existente
 # 
 # A configuração de uma trava em um bucket deve ser feita em um bucket com versionamento habilitado
 # e é setada com o comando **put_object_lock_configuration**
