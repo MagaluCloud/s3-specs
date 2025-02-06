@@ -3,7 +3,7 @@ name: Run Tests
 on:
     workflow_call:
       inputs:
-        tests: { required: false, type: string }
+        tests: { required: false, type: string, default: "*_test.py"}
         config: { required: true, type: string }
         flags: { required: true, type: string }
         runner: { required: false, type: string, default: "ubuntu-24.04" }
@@ -53,4 +53,5 @@ jobs:
             - name: Run tests ${{ inputs.tests }}
               run: |
                 cd docs
+                sha256sum $(which mgc rclone aws)
                 uv run pytest --config ${{ inputs.config }} ${{ inputs.tests }} ${{ inputs.flags }}
