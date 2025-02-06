@@ -16,28 +16,46 @@ on:
       types: [opened, synchronize, reopened]
 
 jobs:
-  run_extra_tests:
+  # tests that we are not debugging at the moment,
+  # tests that can run in parallel with pytest-xdist
+  # it's ok to run only on br-ne1
+  extra_tests_dist:
     strategy:
       fail-fast: false
       matrix:
         category:
           - policy
           - acl
+        config:
+          - "../params/br-ne1.yaml"
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      config: "${{ matrix.config }}"
+      flags: "-v -n auto --color yes -m '${{ matrix.category }}'"
+      # runner: "self-hosted"
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}
+
+  # tests that we want to see all logging messages
+  # tests that we want to test on both regions
+  extra_tests_debug:
+    strategy:
+      fail-fast: false
+      matrix:
+        category:
           - bucket_versioning
         config:
           - "../params/br-ne1.yaml"
           - "../params/br-se1.yaml"
     uses: ./.github/workflows/run-tests.yml
     with:
-      tests: "*_test.py"
       config: "${{ matrix.config }}"
-      # no multiple workers here just to make it easier to audit the logs (more verbosity with INFO level)
       flags: "-v --log-cli-level INFO --color yes -m '${{ matrix.category }}'"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
   cleanup_tests:
-    needs: [run_extra_tests]
+    needs: [extra_tests_debug, extra_tests_dist]
     if: always()
     uses: ./.github/workflows/cleanup-tests.yml
     secrets:
