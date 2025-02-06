@@ -24,6 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         category:
+          - bucket_versioning
           - policy
           - acl
         config:
@@ -43,7 +44,7 @@ jobs:
       fail-fast: false
       matrix:
         category:
-          - bucket_versioning
+          - locking
         config:
           - "../params/br-ne1.yaml"
           - "../params/br-se1.yaml"
