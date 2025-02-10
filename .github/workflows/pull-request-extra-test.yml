@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        category:   # Redundancy is necessary since names must have no spaces
+        marker:   # Redundancy is necessary since names must have no spaces
           - test: bucket_versioning
             name: bucket_versioning
           - test: policy
@@ -31,13 +31,13 @@ jobs:
           - test: acl
             name: acl
         config:
-          - param: "../params/br-ne1.yaml"
+          - path: "../params/br-ne1.yaml"
             name: "br_ne1"
     uses: ./.github/workflows/run-tests.yml
     with:
-      name: "${{ matrix.category.name }}.${{ matrix.config.name }}"
-      config: "${{ matrix.config.param }}"
-      flags: "-v -n auto --color yes -m '${{ matrix.category.test }}'"
+      name: "${{ matrix.marker.name }}.${{ matrix.config.name }}"
+      config: "${{ matrix.config.path }}"
+      flags: "-v -n auto --color yes -m '${{ matrix.marker.test }}'"
       # runner: "self-hosted"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
@@ -48,19 +48,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        category:
+        marker:
           - test: locking
             name: locking
         config:
-          - param: "../params/br-ne1.yaml"
+          - path: "../params/br-ne1.yaml"
             name: "br_ne1"
-          - param: "../params/br-se1.yaml"
+          - path: "../params/br-se1.yaml"
             name: "br_se1"
     uses: ./.github/workflows/run-tests.yml
     with:
-      name: "${{ matrix.category.name }}.${{ matrix.config.name }}"
-      config: "${{ matrix.config.param }}"
-      flags: "-v --log-cli-level INFO --color yes -m '${{ matrix.category.test }}'"
+      name: "${{ matrix.marker.name }}.${{ matrix.config.name }}"
+      config: "${{ matrix.config.path }}"
+      flags: "-v --log-cli-level INFO --color yes -m '${{ matrix.marker.test }}'"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
