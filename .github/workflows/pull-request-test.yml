@@ -16,15 +16,19 @@ jobs:
       fail-fast: true
       matrix:
         category:
-          - cold_storage
-          - basic
-          - presign
+          - test: cold_storage
+            name: cold_storage
+          - test: basic
+            name: basic
+          - test: presign
+            name: presign
         config:
-          - "../params.example.yaml"
+          - param: "../params.example.yaml"
+            name: "example"
     uses: ./.github/workflows/run-tests.yml
     with:
-      tests: "${{ matrix.category }}"
-      config: "../params.example.yaml"
+      name: "${{ matrix.category.name }}.${{ matrix.config.name }}"
+      config: ${{ matrix.config.param}}
       flags: "--no-header -vv -n auto --tb=short --color=no -m ${{ matrix.category }} --tb=line"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
@@ -44,16 +48,19 @@ jobs:
       fail-fast: false
       matrix:
         category:
-          - not_cli_and_locking
+          - param: not cli and locking
+            name: not_cli_and_locking
         config:
-          - "../params/br-ne1.yaml"
-          - "../params/br-se1.yaml"
+          - param: "../params/br-ne1.yaml"
+            name: "br_ne1"
+          - param: "../params/br-se1.yaml"
+            name: "br_se1"
     uses: ./.github/workflows/run-tests.yml
     with:
-      tests: "${{matrix.category}}"
-      config: "${{ matrix.config }}"
+      name: "${{ matrix.category.name }}.${{ matrix.config.name }}"
+      config: "${{ matrix.config.param }}"
       # no multiple workers here just to make it easier to audit the logs (more verbosity with INFO level)
-      flags: "--no-header -vv -n auto --tb=short --color no -m 'not cli and locking'"
+      flags: "--no-header -vv -n auto --tb=short --color no -m ${{matrix.category.param}}"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
