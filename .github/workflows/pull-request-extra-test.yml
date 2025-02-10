@@ -37,7 +37,7 @@ jobs:
     with:
       name: "${{ matrix.marker.name }}.${{ matrix.config.name }}"
       config: "${{ matrix.config.path }}"
-      flags: "-v -n auto --color yes -m '${{ matrix.marker.test }}'"
+      flags: "-v -n auto --color yes -m '${{ matrix.marker.test }}' --tb=line"
       # runner: "self-hosted"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}

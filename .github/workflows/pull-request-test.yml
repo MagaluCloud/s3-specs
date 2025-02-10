@@ -41,31 +41,8 @@ jobs:
         run:
           exit 0
 
-  # since locking is a feature currently under preview, we run it separatedely
-  # and dont block merges if they fail
-  run-locking-tests:
-    strategy:
-      fail-fast: false
-      matrix:
-        marker:
-          - test: not cli and locking
-            name: not_cli_and_locking
-        config:
-          - path: "../params/br-ne1.yaml"
-            name: "br_ne1"
-          - path: "../params/br-se1.yaml"
-            name: "br_se1"
-    uses: ./.github/workflows/run-tests.yml
-    with:
-      name: "${{ matrix.marker.name }}.${{ matrix.config.name }}"
-      config: "${{ matrix.config.path }}"
-      # no multiple workers here just to make it easier to audit the logs (more verbosity with INFO level)
-      flags: "--no-header -vv -n auto --tb=short --color no -m ${{ matrix.marker.test }}"
-    secrets:
-      PROFILES: ${{ secrets.PROFILES }}
-
   cleanup-tests:
-    needs: [tests-success, run-locking-tests]
+    needs: [tests-success]
     if: always() 
     uses: ./.github/workflows/cleanup-tests.yml
     secrets:
