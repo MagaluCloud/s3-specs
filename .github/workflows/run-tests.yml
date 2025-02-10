@@ -38,7 +38,8 @@ jobs:
 
             - name: Install MGC
               run: |
-                curl -Lo mgc.tar.gz "https://github.com/MagaluCloud/mgccli/releases/download/v0.31.0/mgccli_0.31.0_linux_amd64.tar.gz"
+                MGC_VERSION="${{ inputs.mgc_version }}"
+                curl -Lo mgc.tar.gz "https://github.com/MagaluCloud/mgccli/releases/download/v${MGC_VERSION}/mgccli_${MGC_VERSION}_linux_amd64.tar.gz"
                 tar xzvf mgc.tar.gz 
                 rm mgc.tar.gz
                 cp "./mgc" /usr/local/bin/mgc
