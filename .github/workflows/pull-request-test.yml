@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        category:
+        marker:
           - test: cold_storage
             name: cold_storage
           - test: basic
@@ -23,13 +23,13 @@ jobs:
           - test: presign
             name: presign
         config:
-          - param: "../params.example.yaml"
+          - path: "../params.example.yaml"
             name: "example"
     uses: ./.github/workflows/run-tests.yml
     with:
-      name: "${{ matrix.category.name }}.${{ matrix.config.name }}"
-      config: ${{ matrix.config.param}}
-      flags: "--no-header -vv -n auto --tb=short --color=no -m ${{ matrix.category }} --tb=line"
+      name: "${{ matrix.marker.name }}.${{ matrix.config.name }}"
+      config: ${{ matrix.config.path }}
+      flags: "--no-header -vv -n auto --tb=short --color=no -m ${{ matrix.marker.test }} --tb=line"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
@@ -47,20 +47,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        category:
-          - param: not cli and locking
+        marker:
+          - test: not cli and locking
             name: not_cli_and_locking
         config:
-          - param: "../params/br-ne1.yaml"
+          - path: "../params/br-ne1.yaml"
             name: "br_ne1"
-          - param: "../params/br-se1.yaml"
+          - path: "../params/br-se1.yaml"
             name: "br_se1"
     uses: ./.github/workflows/run-tests.yml
     with:
-      name: "${{ matrix.category.name }}.${{ matrix.config.name }}"
-      config: "${{ matrix.config.param }}"
+      name: "${{ matrix.marker.name }}.${{ matrix.config.name }}"
+      config: "${{ matrix.config.path }}"
       # no multiple workers here just to make it easier to audit the logs (more verbosity with INFO level)
-      flags: "--no-header -vv -n auto --tb=short --color no -m ${{matrix.category.param}}"
+      flags: "--no-header -vv -n auto --tb=short --color no -m ${{ matrix.marker.test }}"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
