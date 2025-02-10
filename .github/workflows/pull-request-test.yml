@@ -29,7 +29,7 @@ jobs:
     with:
       name: "${{ matrix.category.name }}.${{ matrix.config.name }}"
       config: ${{ matrix.config.param}}
-      flags: "--no-header -vv -n auto --tb=short --color=no -m ${{ matrix.category }} --tb=line"
+      flags: "--no-header -vv -n auto --tb=short --color=no -m ${{ matrix.category }}"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 

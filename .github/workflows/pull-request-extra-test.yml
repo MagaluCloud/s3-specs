@@ -37,7 +37,7 @@ jobs:
     with:
       name: "${{ matrix.category.name }}.${{ matrix.config.name }}"
       config: "${{ matrix.config.param }}"
-      flags: "-v -n auto --color yes -m '${{ matrix.category.test }}'"
+      flags: "---no-header -vv -n auto --tb=short --color=no -m '${{ matrix.category.test }}'"
       # runner: "self-hosted"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
