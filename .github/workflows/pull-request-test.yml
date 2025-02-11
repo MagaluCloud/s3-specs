@@ -15,17 +15,21 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        category:
-          - cold_storage
-          - basic
-          - presign
+        marker:
+          - test: cold_storage
+            name: cold_storage
+          - test: basic
+            name: basic
+          - test: presign
+            name: presign
         config:
-          - "../params.example.yaml"
+          - path: "../params.example.yaml"
+            name: "example"
     uses: ./.github/workflows/run-tests.yml
     with:
-      tests: "*_test.py"
-      config: "${{ matrix.config }}"
-      flags: "-v -n auto --color yes -m '${{ matrix.category }}' --tb=line"
+      name: "${{ matrix.marker.name }}.${{ matrix.config.name }}"
+      config: ${{ matrix.config.path }}
+      flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
@@ -37,9 +41,9 @@ jobs:
         run:
           exit 0
 
-  cleanup_tests:
-    needs: [run_tests]
-    if: always()
+  cleanup-tests:
+    needs: [tests-success]
+    if: always() 
     uses: ./.github/workflows/cleanup-tests.yml
     secrets:
       PROFILES: ${{ secrets.PROFILES }}

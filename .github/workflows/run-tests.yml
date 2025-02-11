@@ -3,6 +3,7 @@ name: Run Tests
 on:
     workflow_call:
       inputs:
+        name: {required: true, type: string, default: "run_test"}
         tests: { required: false, type: string, default: "*_test.py"}
         config: { required: true, type: string }
         flags: { required: true, type: string }
@@ -26,7 +27,7 @@ jobs:
               uses: astral-sh/setup-uv@v4
               with:
                 version: "0.5.9"
-
+              
             - name: Set up Python
               uses: actions/setup-python@v5
               with:
@@ -34,6 +35,7 @@ jobs:
 
             - name: Install the project
               run: uv sync --no-dev
+
             - name: Install MGC
               run: |
                 MGC_VERSION="${{ inputs.mgc_version }}"
@@ -41,7 +43,7 @@ jobs:
                 tar xzvf mgc.tar.gz 
                 rm mgc.tar.gz
                 cp "./mgc" /usr/local/bin/mgc
-        
+
             - name: Configure Profiles
               run: |
                 echo "${{ secrets.PROFILES }}" > profiles.yaml
@@ -50,8 +52,20 @@ jobs:
                 echo "Configuring Profiles..."
                 uv run python ./bin/configure_profiles.py ./profiles.yaml
 
-            - name: Run tests ${{ inputs.tests }}
+            - name: Format input name
+              id: format_name
+              run: |
+                  FORMATTED_NAME="$(echo "${{ inputs.name }}" | sed 's/[^a-zA-Z0-9.]/_/g')"
+                  echo "formatted_name=$FORMATTED_NAME.${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+
+            - name: Run tests ${{ inputs.name }}
               run: |
                 cd docs
-                sha256sum $(which mgc rclone aws)
-                uv run pytest --config ${{ inputs.config }} ${{ inputs.tests }} ${{ inputs.flags }}
+                mkdir -p /s3-specs/artifact/
+                uv run pytest --config ${{ inputs.config }} ${{inputs.tests}} ${{ inputs.flags }} | tee /s3-specs/artifact/pytest_output_${{ steps.format_name.outputs.formatted_name }}.log
+      
+            - name: Upload Artifact
+              uses: actions/upload-artifact@v4
+              with:
+                name: output_artifact_${{ steps.format_name.outputs.formatted_name }}
+                path: "/s3-specs/artifact/pytest_output_${{ steps.format_name.outputs.formatted_name }}.log"
