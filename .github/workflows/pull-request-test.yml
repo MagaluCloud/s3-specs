@@ -29,7 +29,7 @@ jobs:
     with:
       name: "${{ matrix.marker.name }}.${{ matrix.config.name }}"
       config: ${{ matrix.config.path }}
-      flags: "--no-header -vv -n auto --tb=short --color=no -m ${{ matrix.marker.test }} --tb=line"
+      flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 

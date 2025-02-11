@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        marker:   # Redundancy is necessary since names must have no spaces
+        marker:
           - bucket_versioning
           - policy
           - acl
