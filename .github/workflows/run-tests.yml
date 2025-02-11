@@ -52,15 +52,20 @@ jobs:
                 echo "Configuring Profiles..."
                 uv run python ./bin/configure_profiles.py ./profiles.yaml
 
+            - name: Format input name
+              run: |
+                  FORMATTED_NAME="$(echo "${{ inputs.name }}" | sed 's/[^a-zA-Z0-9]/_/g')"
+                  echo "formatted_name=$FORMATTED_NAME" >> "$GITHUB_ENV"
+
             - name: Run tests ${{ inputs.name }}
               run: |
                 cd docs
                 mkdir -p /s3-specs/artifact/
-                uv run pytest --config ${{ inputs.config }} ${{inputs.tests}} ${{ inputs.flags }} | tee /s3-specs/artifact/pytest_output_${{ inputs.name }}.${{ github.run_id }}.log
+                uv run pytest --config ${{ inputs.config }} ${{inputs.tests}} ${{ inputs.flags }} | tee /s3-specs/artifact/pytest_output_$formatted_name.${{ github.run_id }}.log
       
             - name: Upload Artifact
               uses: actions/upload-artifact@v4
               with:
-                name: output_artifact_${{ inputs.name }}.${{ github.run_id }}
-                path: /s3-specs/artifact/pytest_output_${{ inputs.name }}.${{ github.run_id }}.log
+                name: output_artifact_$formatted_name.${{ github.run_id }}
+                path: /s3-specs/artifact/pytest_output_$formatted_name.${{ github.run_id }}.log
               
