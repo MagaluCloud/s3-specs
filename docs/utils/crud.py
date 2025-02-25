@@ -287,4 +287,4 @@ def fixture_upload_multipart_file(s3_client, fixture_bucket_with_name, request) 
         # Checking if the object was uploaded
         object_size = s3_client.get_object(Bucket=bucket_name, Key=object_key).get('ContentLength', 0)
 
-    return object_size #return int of size in bytes
+    return object_size, response, elapsed #return int of size in bytes

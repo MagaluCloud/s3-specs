@@ -1,6 +1,6 @@
 import pytest
 import logging
-from utils.utils import create_big_file, convert_unit
+from utils.utils import create_big_file
 from utils.crud import fixture_bucket_with_name, fixture_upload_multipart_file
 from boto3.s3.transfer import TransferConfig
 import uuid
@@ -20,7 +20,7 @@ ids_list = [f"{s['size']}{s['unit']}" for s in size_list]
 
 upload_params = [
     {
-        'file_path': f"./tmp_files/big_file_download{size['size']}{size['unit']}",
+        'file_path': f"/tmp/big_file_download{size['size']}{size['unit']}",
         'file_size': size,
         'object_key': "big-object-" + uuid.uuid4().hex[:6],
     }
@@ -65,7 +65,7 @@ def test_multipart_download(s3_client, fixture_bucket_with_name, fixture_upload_
     )
 
     # Uploading the big file
-    uploaded_file_size = fixture_upload_multipart_file
+    uploaded_file_size, _, _ = fixture_upload_multipart_file
 
 
     # Test download file from s3 bucket
@@ -85,4 +85,4 @@ def test_multipart_download(s3_client, fixture_bucket_with_name, fixture_upload_
             # The test was successful only if the size on the bucket size is equal to the ones uploaded and downloaded
             assert downloaded_file_size == uploaded_file_size, f"Downloaded size doesn't match: {downloaded_file_size} with Upload size: {uploaded_file_size}"
     except Exception as e:
-        logging.error(f"Error uploading object {object_key}: {e}")
+        logging.error(f"Error downloading object {object_key}: {e}")

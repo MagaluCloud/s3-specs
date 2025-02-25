@@ -64,8 +64,8 @@ def create_big_file(file_path: str, size={'size': 100, 'unit': 'mb'}) -> int:
 
     total_size = convert_unit(size)
 
-    if not os.path.exists('./tmp_files'):
-        os.mkdir('./tmp_files')
+    if not os.path.exists('/tmp'):
+        os.mkdir('/tmp')
 
 
     if not os.path.exists(file_path):
