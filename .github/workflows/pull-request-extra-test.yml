@@ -23,16 +23,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        category:
+        marker:
           - bucket_versioning
           - policy
           - acl
         config:
-          - "../params/br-ne1.yaml"
+          - path: "../params/br-ne1.yaml"
+            name: "br_ne1"
     uses: ./.github/workflows/run-tests.yml
     with:
-      config: "${{ matrix.config }}"
-      flags: "-v -n auto --color yes -m '${{ matrix.category }}'"
+      name: "${{ matrix.marker }}.${{ matrix.config.name }}"
+      config: "${{ matrix.config.path }}"
+      flags: "-v -n auto --color yes -m '${{ matrix.marker }}' --tb=line"
       # runner: "self-hosted"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
@@ -43,15 +45,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        category:
+        marker:
           - locking
         config:
-          - "../params/br-ne1.yaml"
-          - "../params/br-se1.yaml"
+          - path: "../params/br-ne1.yaml"
+            name: "br_ne1"
+          - path: "../params/br-se1.yaml"
+            name: "br_se1"
     uses: ./.github/workflows/run-tests.yml
     with:
-      config: "${{ matrix.config }}"
-      flags: "-v --log-cli-level INFO --color yes -m '${{ matrix.category }}'"
+      name: "${{ matrix.marker }}.${{ matrix.config.name }}"
+      config: "${{ matrix.config.path }}"
+      flags: "-v --log-cli-level INFO --color yes -m '${{ matrix.marker }}'"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
