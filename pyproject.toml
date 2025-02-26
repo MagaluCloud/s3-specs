@@ -56,4 +56,5 @@ markers = [
     "rapid: quick expected execution magnitude",
     "regular: regular time expected execution magnitude",
     "slow: slow expected execution magnitude",
+    "prod: run all the tests"
 ]

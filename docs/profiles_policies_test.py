@@ -24,7 +24,7 @@ import pytest
 from botocore.exceptions import ClientError
 from s3_helpers import(run_example)
 config = os.getenv("CONFIG", config)
-pytestmark = pytest.mark.policy
+pytestmark = [pytest.mark.policy, pytest.mark.prod]
 
 policy_dict_template = {
     "Version": "2012-10-17",

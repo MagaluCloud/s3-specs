@@ -23,7 +23,7 @@ import logging
 import os
 from s3_helpers import run_example, create_bucket
 
-pytestmark = pytest.mark.basic
+pytestmark = [pytest.mark.basic, pytest.mark.prod]
 config = os.getenv("CONFIG", config)
 # -
 
