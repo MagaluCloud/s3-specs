@@ -50,7 +50,7 @@ from s3_helpers import (
 from utils.locking import bucket_with_lock_enabled
 
 config = os.getenv("CONFIG", config)
-pytestmark = [pytest.mark.locking, pytest.mark.prod]
+pytestmark = [pytest.mark.locking]
 # -
 
 # ### Criando um novo bucket, já com locking habilitado

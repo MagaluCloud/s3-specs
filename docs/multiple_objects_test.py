@@ -5,7 +5,6 @@ from utils.crud import (fixture_bucket_with_name,
                         upload_multiple_objects,
                         download_objects_multithreaded,
                         list_all_objects)
-pytestmark = pytest.mark.prod
 ### Fazendo o upload de grandes quantidades de objetos em paralelo
 
 # O upload de grandes volumes de objetos é demorado, assim o método ideal para esta operação é o paralelismo.

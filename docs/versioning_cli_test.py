@@ -10,7 +10,7 @@ config = "../params/br-se1.yaml"
 
 
 # + {"jupyter": {"source_hidden": true}}
-pytestmark = [pytest.mark.bucket_versioning, pytest.mark.cli, pytest.mark.prod]
+pytestmark = [pytest.mark.bucket_versioning, pytest.mark.cli]
 
 
 commands = [

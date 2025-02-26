@@ -44,7 +44,7 @@ import logging
 import pytest
 from s3_helpers import run_example
 
-pytestmark = [pytest.mark.cold_storage, pytest.mark.prod]
+pytestmark = [pytest.mark.cold_storage]
 # -
 
 # ## Exemplos

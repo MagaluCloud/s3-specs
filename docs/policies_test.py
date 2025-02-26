@@ -32,7 +32,7 @@ from s3_helpers import(
     change_policies_json,
 )
 config = os.getenv("CONFIG", config)
-pytestmark = [pytest.mark.policy, pytest.mark.prod]
+pytestmark = [pytest.mark.policy]
 # -
 
 # Políticas de bucket são descritas por meio de arquivos no formato JSON, que seguem uma gramática

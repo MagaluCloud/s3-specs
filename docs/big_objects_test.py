@@ -7,8 +7,6 @@ import uuid
 from tqdm import tqdm
 import os
 
-pytestmark = pytest.mark.prod
-
 size_list = [
     {'size': 10, 'unit': 'mb'},
     {'size': 100, 'unit': 'mb'},

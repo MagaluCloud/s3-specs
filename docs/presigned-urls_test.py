@@ -29,7 +29,7 @@ from s3_helpers import run_example, delete_object_and_wait
 import requests
 import os
 
-pytestmark = [pytest.mark.presign, pytest.mark.prod]
+pytestmark = [pytest.mark.presign]
 config = os.getenv("CONFIG", config)
 # -
 

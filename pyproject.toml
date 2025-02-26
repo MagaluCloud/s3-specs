@@ -55,6 +55,5 @@ markers = [
     "big_objects: Tests with files bigger than 5 mb",
     "rapid: quick expected execution magnitude",
     "regular: regular time expected execution magnitude",
-    "slow: slow expected execution magnitude",
-    "prod: run all the tests"
+    "slow: slow expected execution magnitude"
 ]
