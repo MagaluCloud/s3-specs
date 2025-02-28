@@ -41,6 +41,16 @@ config = os.getenv("CONFIG", config)
 # Posteriormente faz o download deste objeto através da URL temporária gerada.
 
 # +
+@pytest.mark.parametrize(
+    "bucket_with_one_object", 
+    [
+        { "object_key": "object-key.txt"}, 
+        { "object_key": "another/object-key"}, 
+        { "object_key": "an/object/key/with/many/slashes.txt"}, 
+        { "object_key": "an/object/key/with/many/slashes/Nome de Arquivo grandão e com acentuação 🎉 🥳 😘.txt"}, 
+    ],
+    indirect = True,
+)
 def test_presigned_get_url(s3_client, bucket_with_one_object):
     bucket_name, object_key, content = bucket_with_one_object
 
@@ -72,11 +82,19 @@ run_example(__name__, "test_presigned_get_url", config=config)
 # Gera uma URL para upload (PUT) de um objeto e utiliza essa URL para enviar dados ao bucket S3.
 
 # +
-def test_presigned_put_url(s3_client, existing_bucket_name):
+@pytest.mark.parametrize(
+    "object_key", 
+    [
+        "object-key.txt", 
+        "another/object-key", 
+        "an/object/key/with/many/slashes.txt"
+        "an/object/key/with/many/slashes/Nome de Arquivo grandão e com acentuação 🎉 🥳 😘.txt",
+    ]
+)
+def test_presigned_put_url(s3_client, existing_bucket_name, object_key):
     bucket_name = existing_bucket_name
 
-    # Define the object key and content
-    object_key = "test-upload-object.txt"
+    # Define the object content
     content = b"Sample content for presigned PUT test."
 
     # Generate a presigned PUT URL
@@ -170,7 +188,6 @@ def test_presigned_put_url_with_acl(s3_client, existing_bucket_name):
 
 run_example(__name__, "test_presigned_put_url", config=config)
 # -
-
 
 # ## Referências:
 # - [Boto3 Documentation: Presigned URLs](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-presigned-urls.html)
