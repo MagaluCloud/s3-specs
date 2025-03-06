@@ -4,13 +4,27 @@ profiles:
   -
     profile_name: "br-se1"
     policy_wait_time: 120
+    aws_access_key_id: "YOUR-KEY-ID-HERE"
+    aws_secret_access_key: "YOUR-SECRET-KEY-HERE"
+    endpoint_url: "https://br-se1.magaluobjects.com/"
+    region_name: "br-se1"
   -
     profile_name: "br-se1-second"
     policy_wait_time: 120
+    aws_access_key_id: "YOUR-KEY-ID-HERE"
+    aws_secret_access_key: "YOUR-SECRET-KEY-HERE"
+    endpoint_url: "https://br-se1.magaluobjects.com/"
+    region_name: "br-se1"
   -
     profile_name: "br-ne1"
+    aws_access_key_id: "YOUR-KEY-ID-HERE"
+    aws_secret_access_key: "YOUR-SECRET-KEY-HERE"
+    endpoint_url: "https://br-se1.magaluobjects.com/"
+    region_name: "br-se1"
   -
     profile_name: "br-ne1-second"
+    aws_access_key_id: "YOUR-KEY-ID-HERE"
+    aws_secret_access_key: "YOUR-SECRET-KEY-HERE"
   -
     region_name: "br-ne1"
     endpoint_url: "https://br-se1.magaluobjects.com/"
