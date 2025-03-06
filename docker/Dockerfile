@@ -38,11 +38,9 @@ WORKDIR /app
 # Copia todo o conteúdo da pasta raiz do repositório para dentro do contêiner
 COPY ../ /app
 
-# Copiar o script de entrada
-COPY entrypoint.sh /entrypoint.sh
 
 # Tornar o script executável
-RUN chmod +x /entrypoint.sh
+RUN chmod +x ./docker/entrypoint.sh
 
 # Definir o script como ponto de entrada
-ENTRYPOINT ["/docker/entrypoint.sh"]
+ENTRYPOINT ["./docker/entrypoint.sh"]
