@@ -78,6 +78,10 @@ def configure_profiles(profiles):
             if not (endpoint and access_key and secret_key and region):
                 print(f"Perfil {profile_name} está incompleto. Ignorando...")
                 continue
+            
+            if (access_key == "YOUR-KEY-ID-HERE" or secret_key == "YOUR-SECRET-KEY-HERE" ):
+                print(f"Perfil {profile_name} está incompleto. Ignorando...")
+                continue
 
             set_aws_profiles(profile_name=profile_name, data=profile_data)
             set_rclone_profiles(profile_name=profile_name, data=profile_data)
@@ -91,7 +95,18 @@ def configure_profiles(profiles):
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         with open(sys.argv[1], 'r') as file:
-            profiles = yaml.safe_load(file)
+            profiles_list = yaml.safe_load(file)
+            profiles = {}
+            for profile in list(profiles_list.items())[2][1]:
+                if not isinstance(profile, dict):
+                    profiles = profiles_list
+                    break
+                profiles[profile.get("profile_name")] = {}
+                profiles[profile.get("profile_name")]["endpoint"] = profile.get("endpoint_url")
+                profiles[profile.get("profile_name")]["access_key"] = profile.get("aws_access_key_id")
+                profiles[profile.get("profile_name")]["secret_key"] = profile.get("aws_secret_access_key")
+                profiles[profile.get("profile_name")]["region"] = profile.get("region_name")
+                
     else:
         profiles_data = os.getenv("PROFILES")
         if not profiles_data:
@@ -101,4 +116,4 @@ if __name__ == "__main__":
 
     print(f"Number of profiles - {len(profiles)}")
     configure_profiles(profiles)
-    print(f"Profile Configurations Done!")
+    print("Profile Configurations Done!")
