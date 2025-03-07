@@ -27,7 +27,7 @@ IMAGE_NAME=myimage podman build -t "$IMAGE_NAME" -f ./oci/full.Containerfile .
 
 ```bash
 # $IMAGE_NAME is the local tag name, if you build the Containerfile yourself,
-# or the published one like https://ghcr.io/MagaluCloud/s3-specs:full
+# or the published one like https://ghcr.io/magalucloud/s3-specs:full
 #
 # all examples can be run with docker as well
 podman run -t \
@@ -48,7 +48,6 @@ In following example we use the `-m` arg with the `not` operator to exclude two 
 podman run -t \
   -v $(realpath params.yaml):/app/params.yaml \
   "$IMAGE_NAME" \
-  https://ghcr.io/MagaluCloud/s3-specs-fulltest \
   -n auto -m "not locking not slow"
 ```
 
