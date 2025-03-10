@@ -103,6 +103,6 @@ fi
 
 # Generate report (add your report generation logic here)
 echo "Generating report..."
-uv run docs/__main__.py --file_path "$OUTPUT_FILE"
+uv run src/__main__.py --file_path "$OUTPUT_FILE"
 
 echo "Script execution completed."
