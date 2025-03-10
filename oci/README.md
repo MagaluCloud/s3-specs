@@ -31,7 +31,7 @@ IMAGE_NAME=myimage podman build -t "$IMAGE_NAME" -f ./oci/full.Containerfile .
 #
 # all examples can be run with docker as well
 podman run -t \
-  -v $(realpath params.yaml):/app/params.yaml \
+  -v $(realpath params.yaml):/app/params.example.yaml \
   "$IMAGE_NAME" \
   -n auto
 ```
@@ -46,7 +46,7 @@ In following example we use the `-m` arg with the `not` operator to exclude two 
 
 ```bash
 podman run -t \
-  -v $(realpath params.yaml):/app/params.yaml \
+  -v $(realpath params.yaml):/app/params.example.yaml \
   "$IMAGE_NAME" \
   -n auto -m "not locking not slow"
 ```
@@ -58,7 +58,7 @@ specific categories, using the `-m` arg for markers, like:
 
 ```bash
 podman run -t \
-  -v $(realpath params.yaml):/app/params.yaml \
+  -v $(realpath params.yaml):/app/params.example.yaml \
   "$IMAGE_NAME" \
   -n auto -m "basic cold_storage"
 ```
