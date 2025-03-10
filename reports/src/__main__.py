@@ -1,4 +1,4 @@
-from relatory import PdfMaker
+from report import PdfMaker
 from logDataclasses import TestData
 from logExtractor import PytestArtifactLogExtractor
 import argparse
