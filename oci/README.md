@@ -32,7 +32,7 @@ IMAGE_NAME=myimage podman build -t "$IMAGE_NAME" -f ./oci/full.Containerfile .
 # all examples can be run with docker as well
 podman run -t \
   -v $(realpath params.yaml):/app/params.example.yaml \
-  "$IMAGE_NAME" \
+  "$IMAGE_NAME" tests \
   -n auto
 ```
 
@@ -47,7 +47,7 @@ In following example we use the `-m` arg with the `not` operator to exclude two 
 ```bash
 podman run -t \
   -v $(realpath params.yaml):/app/params.example.yaml \
-  "$IMAGE_NAME" \
+  "$IMAGE_NAME" tests \
   -n auto -m "not locking not slow"
 ```
 
@@ -59,6 +59,28 @@ specific categories, using the `-m` arg for markers, like:
 ```bash
 podman run -t \
   -v $(realpath params.yaml):/app/params.example.yaml \
-  "$IMAGE_NAME" \
+  "$IMAGE_NAME" tests \
   -n auto -m "basic cold_storage"
 ```
+
+## 5. Run generating reports
+
+You can generate reports of the tests using the following command:
+
+```bash
+podman run -t \
+  -v $(realpath .):/app/reports/outputs \
+  -v $(realpath params.yaml):/app/params.example.yaml \
+  "$IMAGE_NAME" reports \
+  category_of_tests
+```
+
+To execute this command you need to pass a category of tests you want to running. The possibles categories are:
+
+- full: execute all the tests
+- versioning: execute versioning tests
+- basic: execute basic tests (included acl, list, presigned url and bucketname)
+- policy: execute policies tests
+- cold: execute cold storage tests
+- locking: execute locking tests
+- big-objects: execute big-objects tests
