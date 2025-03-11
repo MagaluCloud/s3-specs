@@ -101,8 +101,18 @@ else
     echo "Pytest execution failed. Check the log file: $OUTPUT_FILE"
 fi
 
+ENDPOINT="https://br-se1.magaluobjects.com/"  
+
+uv run src/generatedDataDownloader.py --profile br-se1 --endpoint $ENDPOINT --bucket s3-specs-tests-reports-manual-parquet-123
+
 # Generate report (add your report generation logic here)
 echo "Generating report..."
 uv run src/__main__.py --file_path "$OUTPUT_FILE"
+
+rm *pytest*.log
+
+echo "Fazendo Upload dos artefatos gerados"
+uv run src/generatedDataUploader.py --profile br-se1 --endpoint $ENDPOINT --bucket s3-specs-tests-reports-manual-parquet-123 
+
 
 echo "Script execution completed."

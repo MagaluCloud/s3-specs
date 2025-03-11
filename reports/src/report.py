@@ -2,6 +2,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer, ListFlowable, ListItem, Spacer, Image
+import os
 
 import pandas as pd
 from dataPlotter import DataPlotter
@@ -45,7 +46,7 @@ class PdfMaker:
         self.dim = {
             'width': A4[0],
             'height': A4[1],
-            'margin': 0.1 * A4[0],  # Use A4[0] directly to avoid circular dependency
+            'margin': 0.1 * A4[0],  
         }
 
     def __get_time__(self, merged_rows, metric):
@@ -56,9 +57,12 @@ class PdfMaker:
     
     def create_pdf(self):
 
+        pdf_output = f"./bin/report_{self.execution_entity.Endpoint.get(0)}_{self.execution_entity.Execution_Datetime.get(0).strftime('%H-%M-%S_%d-%m-%Y')}.pdf"
+        os.makedirs(os.path.dirname(pdf_output), exist_ok=True)
+
         # Create PDF with margins
         doc = SimpleDocTemplate(
-            f"report_{self.execution_entity.Endpoint.get(0)}_{self.execution_entity.Execution_Datetime.get(0).strftime('%H-%M-%S_%d-%m-%Y')}.pdf", 
+            pdf_output, 
             pagesize=A4,
             leftMargin=self.dim['margin'], 
             rightMargin=self.dim['margin'], 
@@ -66,7 +70,7 @@ class PdfMaker:
             bottomMargin=0.1*self.dim['height']
             )
 
-        # Create the story (content) for the PDF
+        # Create the story for the PDF
         story = []
 
         # Add title with fields

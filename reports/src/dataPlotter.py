@@ -143,10 +143,11 @@ class DataPlotter:
         # Calculate total tests per category
         total_category['TOTAL'] = total_category.sum(axis=1)
 
+
         # Calculate percentage for each status
         for status in total_category.columns:
             if status != 'TOTAL':
-                total_category[f'{status}_PCT'] = (total_category[status] / total_category['TOTAL']) * 50
+                total_category[f'{status}_PCT'] = (total_category[status] / total_category['TOTAL']) * 100
 
         # Prepare data for plotting
         plot_data = []

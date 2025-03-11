@@ -25,6 +25,7 @@ def parser_arguments():
     return parser.parse_args()  # Parse the arguments
 
 if __name__ == '__main__':
+
     parser = parser_arguments()
     p  = PytestArtifactLogExtractor(parser.file_path)
 
