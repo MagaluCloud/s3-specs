@@ -57,3 +57,6 @@ markers = [
     "regular: regular time expected execution magnitude",
     "slow: slow expected execution magnitude",
 ]
+
+[tool.uv.workspace]
+members = ["reports"]
