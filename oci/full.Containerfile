@@ -18,7 +18,8 @@ RUN apt-get update && \
     curl \
     unzip \
     python3 \
-    git;
+    git \
+    just;
 
 # directory to download binaries
 RUN mkdir -p /tools;
@@ -52,14 +53,14 @@ WORKDIR /app
 # Required files to execute the tests
 COPY bin /app/bin/
 COPY params.example.yaml /app/params.example.yaml
-COPY oci/entrypoint.sh /app/oci/entrypoint.sh
+COPY oci/justfile /app/justfile
 COPY uv.lock /app/uv.lock
 COPY pyproject.toml /app/pyproject.toml
 COPY README.md /app/README.md
 COPY docs /app/docs/
-
+COPY reports /app/reports/
 # Download python dependencies to be bundled with the image
 RUN uv sync
 
 # Definir o script como ponto de entrada
-ENTRYPOINT ["./oci/entrypoint.sh"]
+ENTRYPOINT ["just", "--justfile", "/app/justfile"]
