@@ -206,7 +206,9 @@ def bucket_with_one_object_and_cold_storage_class(s3_client):
     delete_object_and_wait(s3_client, bucket_name, object_key)
     delete_bucket_and_wait(s3_client, bucket_name)
 
-@pytest.fixture(params=[{'object_key': 'test-object.txt'}])
+@pytest.fixture(params=[{
+'object_key': 'test-object.txt'
+}])
 def bucket_with_one_object(request, s3_client):
     # this fixture accepts an optional request.param['object_key'] if you
     # need a custom specific key name for your test
@@ -226,6 +228,33 @@ def bucket_with_one_object(request, s3_client):
     # Teardown: Delete the object and bucket after the test
     delete_object_and_wait(s3_client, bucket_name, object_key)
     delete_bucket_and_wait(s3_client, bucket_name)
+
+@pytest.fixture(params=[{
+    'object_prefix': "",
+    'object_key_list': ['test-object-1.txt', 'test-object-2.txt']
+}])
+def bucket_with_many_objects(request, s3_client):
+    # this fixture accepts an optional request.param['object_key_list'] with a list of custom key names
+    object_key_list = request.param['object_key_list']
+    # and a string prefix to prepend on all objects
+    object_prefix = request.param.get('object_prefix', "")
+
+    bucket_name = generate_unique_bucket_name(base_name='fixture-bucket-with-many-objects')
+    create_bucket_and_wait(s3_client, bucket_name)
+
+    content = b"Sample content for testing presigned URLs."
+    for object_key in object_key_list:
+        put_object_and_wait(s3_client, bucket_name, f"{object_prefix}{object_key}", content)
+
+    # Yield the bucket name and object details to the test
+    yield bucket_name, object_prefix, content
+
+    # Teardown: Delete the object and bucket after the test
+    for object_key in object_key_list:
+        delete_object_and_wait(s3_client, bucket_name, object_key)
+    delete_bucket_and_wait(s3_client, bucket_name)
+
+
 
 @pytest.fixture
 def bucket_with_one_storage_class_cold_object(s3_client, bucket_with_one_object):
