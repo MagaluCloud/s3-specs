@@ -16,3 +16,8 @@ tests *pytest_params:
 report category:
     just setup-profiles
     bash -c "cd reports && ./run.sh {{category}} ../params.example.yaml ../docs/ && mv report_*.pdf outputs/"
+
+# Start a Jupyter lab server for browsing and executing the specs, right click and "Open as Notebook"
+browse:
+  uv run --with jupyter --with jupytext jupyter lab docs
+
