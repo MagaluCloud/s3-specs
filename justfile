@@ -1,6 +1,9 @@
+# just submodule to store utility functions
+mod utils
+
 set shell := ["bash", "-cu"]
 
-@default:
+_default:
     just --list
 
 #Configure profiles in the CLI's
@@ -16,3 +19,11 @@ tests *pytest_params:
 report category:
     just setup-profiles
     bash -c "cd reports && ./run.sh {{category}} ../params.example.yaml ../docs/ && mv report_*.pdf outputs/"
+
+# List known categories (pytest markers)
+categories:
+  just utils extract_list "pyproject.toml" "tool.pytest.ini_options" "markers"
+
+# List legacy categories (shellspec tags of legacy s3-tester)
+_legacy-categories:
+  just utils extract_list "pyproject.toml" "tool.s3-tester" "markers"
