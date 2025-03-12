@@ -30,7 +30,7 @@ https://magalucloud.github.io/s3-specs/
 Install dependencies and launch a local Jupyter Lab server to view the specs interactively:
 
 ```bash
-uv run --with jupyter --with jupytext jupyter lab docs
+just browse
 ```
 
 Then, right-click a `_test.py` file and choose "Open With Notebook."
