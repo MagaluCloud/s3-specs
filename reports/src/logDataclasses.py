@@ -25,22 +25,22 @@ class ArtifactInfo:
 
 @dataclass
 class Tests:
-    Artifact_Name: str
-    Name: str
-    Category: str
-    Status: str
-    Arguments: Optional[str]  # Sometimes details the arguments they receive 
-    Execution_Datetime: np.datetime64
+    artifact_name: str
+    name: str
+    category: str
+    status: str
+    arguments: Optional[str]  # Sometimes details the arguments they receive 
+    execution_datetime: np.datetime64
 
 @dataclass
 class ExecutionTime:
-    Execution_name: str  # Can be Test_Name, fixture, or function
-    Execution_type: str
-    Execution_Datetime: np.datetime64
-    Number_Runs: int
-    Avg_Time: float
-    Min_Time: float
-    Total_Time: float
+    execution_name: str  # Can be Test_Name, fixture, or function
+    execution_type: str
+    execution_datetime: np.datetime64
+    number_runs: int
+    avg_time: float
+    min_time: float
+    total_time: float
 
 @dataclass
 class Failures:

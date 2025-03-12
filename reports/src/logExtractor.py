@@ -8,9 +8,9 @@ from arqManipulation import ArqManipulation
 from dataclasses import fields
 
 paths = {
-    'status':'./bin/pytest.status.log.parquet',
-    'categories':'./bin/pytest.categories.log.parquet',
-    'failures':'./bin/pytest.failures.log.parquet',
+    'status':'./output/pytest.status.log.parquet',
+    'categories':'./output/pytest.categories.log.parquet',
+    'failures':'./output/pytest.failures.log.parquet',
     }
 
 class PytestArtifactLogExtractor:

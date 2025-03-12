@@ -57,7 +57,7 @@ class PdfMaker:
     
     def create_pdf(self):
 
-        pdf_output = f"./bin/report_{self.execution_entity.Endpoint.get(0)}_{self.execution_entity.Execution_Datetime.get(0).strftime('%H-%M-%S_%d-%m-%Y')}.pdf"
+        pdf_output = f"./output/report_/report_{self.execution_entity.Endpoint.get(0)}_{self.execution_entity.Execution_Datetime.get(0).strftime('%H-%M-%S_%d-%m-%Y')}.pdf"
         os.makedirs(os.path.dirname(pdf_output), exist_ok=True)
 
         # Create PDF with margins

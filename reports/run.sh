@@ -1,33 +1,18 @@
 #!/bin/bash
 
-# Function to display usage
-usage() {
-    echo "Usage: $0 [-o OUTPUT_FILE] <Test_Category> <Path_Config> <Root_Folder>"
-    echo "Options:"
-    echo "  -o, --output OUTPUT_FILE  Specify the name of the output log file (optional)"
-    echo "Test Categories: full, versioning, basic, policy, cold, locking, big-objects"
-    exit 1
-}
-
-# Parse command-line options
-OUTPUT_FILE=""  # Default output file name
+# Parse options
+OUTPUT_FILE=""
+PROFILE="br-se1" # Default profile
 while [[ $# -gt 0 ]]; do
     case $1 in
         -o|--output)
             if [[ -z "$2" || "$2" == -* ]]; then
                 echo "Error: Missing value for option '$1'."
-                usage
+                echo "Usage: $0 [-o OUTPUT_FILE] [-p PROFILE] <Test_Category> <Path_Config> <Root_Folder> <Bucket> <Endpoint>"
+                exit 1
             fi
             OUTPUT_FILE="$2"
             shift 2
-            ;;
-        --*)
-            echo "Error: Invalid option '$1'."
-            usage
-            ;;
-        -*)
-            echo "Error: Invalid flag '$1'. Use '-o' or '--output' for the output file."
-            usage
             ;;
         *)
             break
@@ -35,18 +20,22 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Check if the correct number of arguments is provided
-if [ "$#" -ne 3 ]; then
+# Validate arguments
+if [ "$#" -ne 6 ]; then
     echo "Error: Missing required arguments."
-    usage
+    echo "Usage: $0 [-o OUTPUT_FILE] <Test_Category> <Path_Config> <Root_Folder> <Bucket> <Endpoint> <Profile>"
+    exit 1
 fi
 
-# Assign arguments to variables
+# Assign variables
 TEST_CATEGORY=$1
 CONFIG_PATH=$2
 ROOT_FOLDER=$3
+BUCKET=$4
+ENDPOINT=$5
+PROFILE=$6
 
-# Define test categories
+# Validate test category
 declare -A TEST_CATEGORIES=(
     ["full"]="acl_test.py big_objects_test.py cold_storage_test.py list-buckets_test.py locking_test.py locking_cli_test.py multiple_objects_test.py policies_test.py presigned-urls_test.py profiles_policies_test.py unique-bucket-name_test.py versioning_cli_test.py versioning_test.py"
     ["versioning"]="versioning_cli_test.py versioning_test.py"
@@ -57,62 +46,55 @@ declare -A TEST_CATEGORIES=(
     ["big-objects"]="big_objects_test.py multiple_objects_test.py"
 )
 
-# Validate test category
 if [[ -z "${TEST_CATEGORIES[$TEST_CATEGORY]}" ]]; then
     echo "Invalid test category: $TEST_CATEGORY"
     echo "Valid categories: ${!TEST_CATEGORIES[@]}"
     exit 1
 fi
 
-# Validate config file
+# Validate paths
 if [ ! -f "$CONFIG_PATH" ]; then
-    echo "Config file not found: $CONFIG_PATH"
+    echo "Error: File not found: $CONFIG_PATH"
     exit 1
 fi
 
-# Validate root folder
 if [ ! -d "$ROOT_FOLDER" ]; then
-    echo "Root folder not found: $ROOT_FOLDER"
+    echo "Error: Directory not found: $ROOT_FOLDER"
     exit 1
 fi
 
-# Generate initialization time
-INIT_TIME=$(date +"%Y%m%dT%H%M%S")
 
-# Define log file name
+# Set log file name
+INIT_TIME=$(date +"%Y%m%dT%H%M%S")
 if [ -z "$OUTPUT_FILE" ]; then
     OUTPUT_FILE="local-pytest-output.$INIT_TIME.log"
 fi
 
-# Define test paths based on category
+# Define tests
 TESTS=()
 for test_file in ${TEST_CATEGORIES[$TEST_CATEGORY]}; do
     TESTS+=("$ROOT_FOLDER/$test_file")
 done
 
-# Execute pytest with UV
-echo "Running pytest with UV..."
-uv run pytest "${TESTS[@]}" --config $CONFIG_PATH -l -n auto -vv --tb=line --durations=0 | tee "$OUTPUT_FILE"
+# Run pytest
+echo "Running pytest..."
+uv run pytest "${TESTS[@]}" --config "$CONFIG_PATH" -l -n auto -vv --tb=line --durations=0 | tee "$OUTPUT_FILE"
 
-# Check if pytest execution was successful
-if [ $? -eq 0 ]; then
-    echo "Pytest execution completed successfully."
-else
+if [ $? -ne 0 ]; then
     echo "Pytest execution failed. Check the log file: $OUTPUT_FILE"
+    exit 1
 fi
 
-ENDPOINT="https://br-se1.magaluobjects.com/"  
+# Download data
+uv run src/generatedDataDownloader.py --config "$PROFILE" --endpoint "$ENDPOINT" --bucket $BUCKET
 
-uv run src/generatedDataDownloader.py --profile br-se1 --endpoint $ENDPOINT --bucket s3-specs-tests-reports-manual-parquet-123
-
-# Generate report (add your report generation logic here)
-echo "Generating report..."
+# Generate report
 uv run src/__main__.py --file_path "$OUTPUT_FILE"
 
-rm *pytest*.log
+# Clean logs
+rm -f *pytest*.log
 
-echo "Fazendo Upload dos artefatos gerados"
-uv run src/generatedDataUploader.py --profile br-se1 --endpoint $ENDPOINT --bucket s3-specs-tests-reports-manual-parquet-123 
-
+# Upload artifacts
+uv run src/generatedDataUploader.py --profile "$PROFILE" --endpoint "$ENDPOINT" --bucket "$BUCKET"
 
 echo "Script execution completed."
