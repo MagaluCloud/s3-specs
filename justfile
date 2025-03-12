@@ -27,3 +27,8 @@ categories:
 # List legacy categories (shellspec tags of legacy s3-tester)
 _legacy-categories:
   just utils extract_list "pyproject.toml" "tool.s3-tester" "markers"
+
+# Start a Jupyter lab server for browsing and executing the specs, right click and "Open as Notebook"
+browse:
+  uv run --with jupyter --with jupytext jupyter lab docs
+
