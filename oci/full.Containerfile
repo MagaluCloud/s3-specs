@@ -53,7 +53,7 @@ WORKDIR /app
 # Required files to execute the tests
 COPY bin /app/bin/
 COPY params.example.yaml /app/params.example.yaml
-COPY oci/justfile /app/justfile
+COPY justfile /app/justfile
 COPY uv.lock /app/uv.lock
 COPY pyproject.toml /app/pyproject.toml
 COPY README.md /app/README.md
