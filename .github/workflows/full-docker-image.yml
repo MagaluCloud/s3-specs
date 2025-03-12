@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - dockerfile
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: magalucloud/s3-specs

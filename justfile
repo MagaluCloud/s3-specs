@@ -1,7 +1,6 @@
 set shell := ["bash", "-cu"]
 
-#Show available commands
-list:
+@default:
     just --list
 
 #Configure profiles in the CLI's
