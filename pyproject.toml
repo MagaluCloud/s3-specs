@@ -58,5 +58,21 @@ markers = [
     "slow: slow expected execution magnitude",
 ]
 
+[tool.s3-tester]
+markers = [
+  #"Benchmark",
+  "BigBuckets",
+  "BucketManagement",
+  "BucketPermission",
+  "BucketPolicy",
+  "BucketSharing",
+  "BucketTagging",
+  "ObjectLocking",
+  "ObjectManagement",
+  "ObjectVersioning",
+  "ColdStorage",
+  "ServiceAccounts",
+]
+
 [tool.uv.workspace]
 members = ["reports"]
