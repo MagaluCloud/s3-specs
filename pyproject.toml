@@ -53,7 +53,7 @@ markers = [
     "cli: Tests using CLI",
     "multiple_objects: Tests involving operations with multiple objects on the same bucket",
     "big_objects: Tests with files bigger than 5 mb",
-    "consistency: Tests for measure consistency time"
+    "consistency: Tests for measure consistency time",
     "rapid: quick expected execution magnitude",
     "regular: regular time expected execution magnitude",
     "slow: slow expected execution magnitude"
