@@ -2,11 +2,11 @@ docs_dir: "."
 default_profile_index: 0
 profiles:
   -
-    profile_name: "br-se1"
-    policy_wait_time: 120
+    profile_name: "br-ne1"
+    policy_wait_time: 0
   -
-    profile_name: "br-se1-second"
-    policy_wait_time: 120
+    profile_name: "br-ne1-second"
+    policy_wait_time: 0
   -
     profile_name: "br-ne1"
   -
