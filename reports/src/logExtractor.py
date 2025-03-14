@@ -264,20 +264,17 @@ class PytestArtifactLogExtractor:
         :return: A DataFrame containing 'test' and 'databaseId' information.
         """
         
-        # Extract filename without extension
+        # Extract filename without extension format = (testName.endpoint.datetime.fileExtension)
         stripped = self.path.split('/')[-1].split('.')
+        while len(stripped) < 4:
+            stripped.append(None)  # Fill missing values with NaN
 
-        if (self.local == False):
-            # Ensure there are exactly three elements (fill missing ones with None)
-            while len(stripped) < 4:
-                stripped.append(None)  # Fill missing values with NaN
-            # Create DataFrame
-            df = pd.DataFrame([stripped], columns=['test', 'endpoint', 'databaseId', 'fileExtension'])
-        else:
-            config_endpoint = 'br-ne1'
-            # local name will have the format # test-name . id-datetime . extension
-            execution_entity = ExecutionEntity(execution_datetime=np.datetime64(datetime.now()), endpoint=config_endpoint, run_time=np.datetime64(datetime.now()))
-            artifact = Artifact(name=stripped[0], execution_datetime=execution_entity.execution_datetime)
+        artifact_info = pd.DataFrame([stripped], columns=['test', 'endpoint', 'datetime', 'fileExtension'])
+        print(artifact_info)
+
+        # Ensure there are exactly three elements (fill missing ones with None)
+        execution_entity = ExecutionEntity(execution_datetime=np.datetime64(artifact_info['datetime'].iloc[0]), endpoint=artifact_info['endpoint'])
+        artifact = Artifact(name=stripped[0], execution_datetime=execution_entity.execution_datetime)
 
         return execution_entity, artifact
 

@@ -1,14 +1,34 @@
 from prometheus_client import start_http_server, Gauge
 import pandas as pd
 import time
+import argparse
 import os
-from concurrent.futures import ThreadPoolExecutor
 
 
-output_path = '../output/'
+execution_time_gauge = Gauge(
+    's3_specs_time_metrics', 
+    'Tests time metrics',  
+    ['execution_name', 'execution_type', 'time_metric']  
+)
+
+# Gauge setup
+execution_status_gauge = Gauge(
+    's3_specs_status_data',  
+    'Test statuses', 
+    ['name', 'category']  
+)
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--parquet_path',
+                    required=True, 
+                    help='Path of folder containing the execution_time and test parquet artifacts')
+
+parser = parser.parse_args()  # Parse the arguments
 
 def execution_metrics_exporter():
-    file_path = output_path + 'execution_time.parquet'
+    file_path = 'execution_time.parquet'
+    file_path = os.path.join(parser.parquet_path, file_path)
     df = pd.read_parquet(file_path)
 
     # Drop unnecessary columns and take the first 5 rows
@@ -19,30 +39,24 @@ def execution_metrics_exporter():
         cleaned_time_metric_df,
         id_vars=['execution_name', 'execution_type'],  
         value_vars=['avg_time', 'min_time', 'total_time'],  
-        var_name='type_time', 
+        var_name='time_metric', 
         value_name='time_values'  
     ).reset_index(drop=True).drop_duplicates()
-
-    # Gauge setup
-    execution_time_gauge = Gauge(
-        's3_specs_time_metrics', 
-        'Tests time metrics',  
-        ['execution_name', 'execution_type', 'type_time']  
-    )
 
     # Set gauge values
     for record in melted_df.to_dict('records'):
         execution_time_gauge.labels(
-            Execution_name=record['execution_name'],
-            Execution_type=record['execution_type'],
-            type_time=record['type_time']
+            execution_name=record['execution_name'],
+            execution_type=record['execution_type'],
+            time_metric=record['time_metric']
         ).set(record['time_values'])
 
     print('Time metrics exported...')
 
 def test_metrics_exporter():
     # Test data gauge
-    file_path = output_path + 'tests.parquet'
+    file_path = 'tests.parquet'
+    file_path = os.path.join(parser.parquet_path, file_path)
     df = pd.read_parquet(file_path)
 
     status_to_numeric = {
@@ -54,13 +68,6 @@ def test_metrics_exporter():
     cleaned_status_df = df.drop(columns=['artifact_name', 'execution_datetime', 'arguments']).head(5)
     cleaned_status_df['status'] = cleaned_status_df['status'].map(status_to_numeric).drop_duplicates()
     dicts_time_metric_df = cleaned_status_df.to_dict(orient='records')
-
-    # Gauge setup
-    execution_status_gauge = Gauge(
-        's3_specs_status_data',  
-        'Test statuses', 
-        ['name', 'category']  
-    )
 
     # Set gauge values
     for record in dicts_time_metric_df:

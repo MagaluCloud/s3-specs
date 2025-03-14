@@ -86,7 +86,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Download data
-uv run ./src/generatedDataDownloader.py --config "$PROFILE" --endpoint "$ENDPOINT" --bucket $BUCKET
+#uv run ./src/generatedDataDownloader.py --config "$PROFILE" --endpoint "$ENDPOINT" --bucket $BUCKET
 
 # Generate report
 uv run ./src/__main__.py --file_path "$OUTPUT_FILE"
@@ -95,6 +95,6 @@ uv run ./src/__main__.py --file_path "$OUTPUT_FILE"
 rm -f *pytest*.log
 
 # Upload artifacts
-uv run ./src/generatedDataUploader.py --profile "$PROFILE" --endpoint "$ENDPOINT" --bucket "$BUCKET"
+#uv run ./src/generatedDataUploader.py --profile "$PROFILE" --endpoint "$ENDPOINT" --bucket "$BUCKET"
 
 echo "Script execution completed."

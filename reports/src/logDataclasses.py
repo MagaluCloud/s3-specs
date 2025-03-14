@@ -9,7 +9,6 @@ import os
 class ExecutionEntity:
     execution_datetime: np.datetime64
     endpoint: Optional[str]
-    run_time: Optional[float]
 
 @dataclass
 class Artifact:
