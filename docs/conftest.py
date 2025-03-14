@@ -467,4 +467,143 @@ def multiple_s3_clients(request, test_params):
         
     return sessions
     
+
+## Fixtures for session scoped tests
+
+@pytest.fixture(scope="session")
+def session_test_params(request):
+    """
+    Loads test parameters from a config file or environment variable.
+    """
+    config_path = request.config.getoption("--config") or os.environ.get("CONFIG_PATH", "../params.example.yaml")
+    with open(config_path, "r") as f:
+        return yaml.safe_load(f)
+
+@pytest.fixture(scope="session")
+def session_default_profile(session_test_params):
+    """
+    Returns the default profile from test parameters.
+    """
+    return session_test_params["profiles"][session_test_params.get("default_profile_index", 0)]
+
+@pytest.fixture(scope="session")
+def session_profile_name(session_default_profile):
+    return (
+        session_default_profile.get("profile_name")
+        if session_default_profile.get("profile_name")
+        else pytest.skip("This test requires a profile name")
+    )
+
+@pytest.fixture(scope="session")
+def session_mgc_path(session_default_profile):
+    """
+    Validates and returns the path to the 'mgc' binary.
+    """
+    mgc_path_field_name = "mgc_path"
+    if not session_default_profile.get(mgc_path_field_name):
+        path = shutil.which("mgc")
+    else:
+        spec_dir = os.path.dirname(get_spec_path())
+        path = os.path.join(spec_dir, session_default_profile.get(mgc_path_field_name))
+    if not os.path.isfile(path):
+        pytest.fail(f"The specified mgc_path '{path}' (absolute: {os.path.abspath(path)}) does not exist or is not a file.")
+    return path
+
+@pytest.fixture(scope="session")
+def session_active_mgc_workspace(session_profile_name, session_mgc_path):
+    # set the profile
+    result = subprocess.run([session_mgc_path, "workspace", "set", session_profile_name],
+                            capture_output=True, text=True)
+    if result.returncode != 0:
+        pytest.skip("This test requires an mgc profile name")
+
+    logging.info(f"mcg workspace set stdout: {result.stdout}")
+    return profile_name
+
+@pytest.fixture(scope="session")
+def session_s3_client(session_default_profile):
+    """
+    Creates a boto3 S3 client using profile credentials or explicit config.
+    """
+    if "profile_name" in session_default_profile:
+        session = boto3.Session(profile_name=session_default_profile["profile_name"])
+    else:
+        session = boto3.Session(
+            region_name=session_default_profile["region_name"],
+            aws_access_key_id=session_default_profile["aws_access_key_id"],
+            aws_secret_access_key=session_default_profile["aws_secret_access_key"],
+        )
+    return session.client("s3", endpoint_url=session_default_profile.get("endpoint_url"))
+
+@pytest.fixture(params=[{'object_key': 'test-object.txt'}], scope="session")
+def session_bucket_with_one_object(request, session_s3_client):
+    # this fixture accepts an optional request.param['object_key'] if you
+    # need a custom specific key name for your test
+    object_key = request.param['object_key']
+
+    # Generate a unique bucket name and ensure it exists
+    bucket_name = generate_unique_bucket_name(base_name="fixture-bucket")
+    create_bucket_and_wait(session_s3_client, bucket_name)
+
+    # Define the object content, then upload the object
+    content = b"Sample content for testing presigned URLs."
+    put_object_and_wait(session_s3_client, bucket_name, object_key, content)
+
+    # Yield the bucket name and object details to the test
+    yield bucket_name, object_key, content
+
+    # Teardown: Delete the object and bucket after the test
+    delete_object_and_wait(session_s3_client, bucket_name, object_key)
+    delete_bucket_and_wait(session_s3_client, bucket_name)
+
+
+@pytest.fixture(scope="session")
+def session_versioned_bucket_with_one_object(session_s3_client):
+    """
+    Fixture to create a versioned bucket with one object for testing.
     
+    :param s3_client: Boto3 S3 client
+    :param lock_mode: Lock mode for the bucket or objects (e.g., 'GOVERNANCE', 'COMPLIANCE')
+    :return: Tuple containing bucket name, object key, and object version ID
+    """
+    start_time = datetime.now()
+    base_name = "versioned-bucket-with-one-object"
+    bucket_name = generate_unique_bucket_name(base_name=base_name)
+
+    # Create bucket and enable versioning
+    create_bucket_and_wait(session_s3_client, bucket_name)
+
+    # Set bucket versioning to Enabled one time
+    response = session_s3_client.put_bucket_versioning(
+        Bucket=bucket_name,
+        VersioningConfiguration={"Status": "Enabled"}
+    )
+    response_status = response["ResponseMetadata"]["HTTPStatusCode"]
+    logging.info(f"put_bucket_versioning response status: {response_status}")
+    assert response_status == 200, "Expected HTTPStatusCode 200 for successful put_bucket_versioning."
+
+    # TODO: HACK: #notcool #eventual-consistency
+    # make multiple ge_bucket_versioning requests to assure that the status is known to be Enabled
+    versioning_status = probe_versioning_status(session_s3_client, bucket_name)
+    assert versioning_status == "Enabled", f"Expected VersionConfiguration for bucket {bucket_name} to be Enabled, got {versioning_status}"
+
+    # Upload a single object and get it's version
+    object_key = "test-object.txt"
+    content = b"Sample content for testing versioned object."
+    object_version = put_object_and_wait(session_s3_client, bucket_name, object_key, content)
+    if not object_version:
+        logging.info(f"Bucket ${bucket_name} was not versioned before the object put, insisting with more objects...")
+        object_version, object_key = replace_failed_put_without_version(session_s3_client, bucket_name, object_key, content)
+
+    end_time = datetime.now()
+    logging.warning(f"[versioned_bucket_with_one_object] Total setup time={end_time - start_time}")
+    assert object_version, "Setup failed, could not get VersionId from put_object in versioned bucket"
+
+    # Yield details to tests
+    yield bucket_name, object_key, object_version
+
+    # Cleanup
+    try:
+        cleanup_old_buckets(session_s3_client, base_name)
+    except Exception as e:
+        print(f"Cleanup error {e}")
