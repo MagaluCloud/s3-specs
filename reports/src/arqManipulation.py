@@ -33,6 +33,7 @@ class ArqManipulation:
         :param parquet_file_name: Parqueet saving path.
         """
         try:
+            print(f"Saving {parquet_file_name}")
             os.makedirs(os.path.dirname(parquet_file_name), exist_ok=True)
             df.to_parquet(parquet_file_name)
         except Exception as e:
