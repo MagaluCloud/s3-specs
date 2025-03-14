@@ -3,3 +3,4 @@
 *.parquet
 *.log
 output/
+*.ipynb

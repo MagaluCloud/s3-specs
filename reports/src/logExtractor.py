@@ -105,32 +105,32 @@ class PytestArtifactLogExtractor:
         #if not 'live log' in self.data:
         headers = self.__extract_test_status_names__(self.__get_list_by_name__(header, 'test session')[0])    
 
-        tests = [Tests(Artifact_Name=artifact.Name, 
-                        Execution_Datetime=execution_entity.Execution_Datetime,
-                        Status=t[0].strip(), 
-                        Category=t[1].split("/")[-1].strip().replace('.py', ''), # Formatting for readability
-                        Name=t[2].strip(), 
-                        Arguments=t[3] if t[3] else None)  for t in headers]
+        tests = [Tests( artifact_name=artifact.name, 
+                        execution_datetime=execution_entity.execution_datetime,
+                        status=t[0].strip(), 
+                        category=t[1].split("/")[-1].strip().replace('.py', ''), # Formatting for readability
+                        name=t[2].strip(), 
+                        arguments=t[3] if t[3] else None)  for t in headers]
 
         # Execution_time
         timestamps = self.__create_time_df__(self.__extract_time_categories__(self.__get_list_by_name__(header, 'duration top')))
 
-        execution_time = ExecutionTime( Execution_Datetime=execution_entity.Execution_Datetime,
-                                        Execution_name=timestamps['name'], 
-                                        Execution_type=timestamps['durationType'],
-                                        Number_Runs=timestamps['num'],
-                                        Avg_Time=timestamps['avg'],
-                                        Min_Time=timestamps['min'],
-                                        Total_Time=timestamps['total'],
+        execution_time = ExecutionTime( execution_datetime=execution_entity.execution_datetime,
+                                        execution_name=timestamps['name'], 
+                                        execution_type=timestamps['durationType'],
+                                        number_runs=timestamps['num'],
+                                        avg_time=timestamps['avg'],
+                                        min_time=timestamps['min'],
+                                        total_time=timestamps['total'],
                                        )
         
         failures_df = self.__create_failure_df__(self.__extract_failures_errors__(self.__get_list_by_name__(header, 'summary')))
 
-        failures = Failures(Test_Name= failures_df['name'],
-                            Artifact_Name=artifact.Name,
-                            Execution_Datetime=execution_entity.Execution_Datetime,
-                            Error=failures_df['error'],
-                            Details=failures_df['error_details'],
+        failures = Failures(test_name= failures_df['name'],
+                            artifact_name=artifact.name,
+                            execution_datetime=execution_entity.execution_datetime,
+                            error=failures_df['error'],
+                            details=failures_df['error_details'],
         )
 
         return tests, execution_time, failures
@@ -276,8 +276,8 @@ class PytestArtifactLogExtractor:
         else:
             config_endpoint = 'br-ne1'
             # local name will have the format # test-name . id-datetime . extension
-            execution_entity = ExecutionEntity(Execution_Datetime=np.datetime64(datetime.now()), Endpoint=config_endpoint, Run_Time=np.datetime64(datetime.now()))
-            artifact = Artifact(Name=stripped[0], Execution_Datetime=execution_entity.Execution_Datetime)
+            execution_entity = ExecutionEntity(execution_datetime=np.datetime64(datetime.now()), endpoint=config_endpoint, run_time=np.datetime64(datetime.now()))
+            artifact = Artifact(name=stripped[0], execution_datetime=execution_entity.execution_datetime)
 
         return execution_entity, artifact
 

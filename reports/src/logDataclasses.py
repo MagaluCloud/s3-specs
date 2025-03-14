@@ -7,21 +7,21 @@ import os
 
 @dataclass
 class ExecutionEntity:
-    Execution_Datetime: np.datetime64
-    Endpoint: Optional[str]
-    Run_Time: Optional[float]
+    execution_datetime: np.datetime64
+    endpoint: Optional[str]
+    run_time: Optional[float]
 
 @dataclass
 class Artifact:
-    Name: str
-    Execution_Datetime: np.datetime64
+    name: str
+    execution_datetime: np.datetime64
 
 @dataclass
 class ArtifactInfo:
-    Artifact_Name: str
-    URL: Optional[str]   #url to the object stored on the cloud, can be null
-    Artifact_Type: str
-    File_Extension: str
+    artifact_name: str
+    url: Optional[str]   #url to the object stored on the cloud, can be null
+    artifact_type: str
+    file_extension: str
 
 @dataclass
 class Tests:
@@ -44,11 +44,11 @@ class ExecutionTime:
 
 @dataclass
 class Failures:
-    Artifact_Name: str
-    Test_Name: str
-    Execution_Datetime: np.datetime64
-    Error: str
-    Details: Optional[str]  # Retrieved pytest error description
+    artifact_name: str
+    test_name: str
+    execution_datetime: np.datetime64
+    error: str
+    details: Optional[str]  # Retrieved pytest error description
 
 class TestData:
     def __init__(self,

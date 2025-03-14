@@ -47,7 +47,7 @@ class DataPlotter:
             )
         else:
             # Chart needs only Test_Names and their frequency
-            test_num_failures = failures_df.Test_Name.value_counts().to_dict()
+            test_num_failures = failures_df.test_name.value_counts().to_dict()
             
             # Get names and values
             names = list(test_num_failures.keys())
@@ -101,15 +101,15 @@ class DataPlotter:
             categories_df = failures_df.merge(
                 self.tests,
                 how='inner',
-                right_on=['Name', 'Execution_Datetime'],
-                left_on=['Test_Name', 'Execution_Datetime']
+                right_on=['name', 'execution_datetime'],
+                left_on=['test_name', 'execution_datetime']
             ).drop_duplicates()
 
             # Group by Category and Error, then unstack
             categories_df = (
-                categories_df.groupby(by=['Category', 'Error'])
+                categories_df.groupby(by=['category', 'error'])
                 .size()
-                .unstack('Error')
+                .unstack('error')
                 .fillna(0)
                 .astype(int)
             )
@@ -138,7 +138,7 @@ class DataPlotter:
     
     def categories_failures_passed_rate(self):
         # Group by status and category, then calculate value counts
-        total_category = self.tests.groupby(['Category', 'Status']).size().unstack(fill_value=0).astype(int)
+        total_category = self.tests.groupby(['category', 'status']).size().unstack(fill_value=0).astype(int)
 
         # Calculate total tests per category
         total_category['TOTAL'] = total_category.sum(axis=1)
@@ -155,9 +155,9 @@ class DataPlotter:
             for status in total_category.columns:
                 if status != 'TOTAL' and not status.endswith('_PCT'):
                     plot_data.append({
-                        'Category': category,
-                        'Status': status,
-                        'Percentage': total_category.loc[category, f'{status}_PCT'] if f'{status}_PCT' in total_category.columns else 0,
+                        'category': category,
+                        'status': status,
+                        'percentage': total_category.loc[category, f'{status}_PCT'] if f'{status}_PCT' in total_category.columns else 0,
                         'Real Value': total_category.loc[category, status]
                     })
 
@@ -166,9 +166,9 @@ class DataPlotter:
         # Create a stacked bar plot
         fig = px.bar(
             plot_df, 
-            x="Category", 
-            y="Percentage", 
-            color="Status", 
+            x="category", 
+            y="percentage", 
+            color="status", 
             barmode='stack', 
             title="Proporção de testes por status",
             labels={'Percentage': 'Porcentagem'},
