@@ -128,6 +128,7 @@ def setup_versioned_bucket(session_active_mgc_workspace, session_versioned_bucke
 # Teste principal
 @pytest.mark.slow
 @pytest.mark.multiple_objects
+@pytest.mark.consistency
 @pytest.mark.parametrize("command", ["get-object", "list-objects", "head-object", "count-objects"])
 @pytest.mark.parametrize("quantity", [512])  # Quantidade de arquivos a serem adicionados
 @pytest.mark.parametrize("workers", [256])  # Número de workers para o upload
