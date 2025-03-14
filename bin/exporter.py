@@ -18,8 +18,7 @@ avg_gauge = Gauge(
 )
 
 def read_csv_and_update_metrics():
-    # report_folder = '/home/ubuntu/s3-tester/report/'
-    report_folder = '/home/folkz/projetos/s3-specs/report/'
+    report_folder = os.path.abspath("./report")
 
     # Limpe as métricas existentes
     objs_consistency_time.clear()
