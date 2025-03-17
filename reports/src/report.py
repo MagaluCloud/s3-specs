@@ -121,6 +121,8 @@ class PdfMaker:
         story.append(Paragraph("Resumo Geral", self.styles['bold']))
         story.append(Spacer(1, 6))
 
+
+        print(self.tests.columns)
         success_rate = self.tests['status'].value_counts('status').get('PASSED', 0) * 100
 
         # Criando a lista de resumo corretamente

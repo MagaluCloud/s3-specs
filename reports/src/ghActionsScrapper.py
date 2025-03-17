@@ -7,8 +7,9 @@ import re
 from arqManipulation import ArqManipulation
 
 paths = {
-    'workflow':'./output/actions_workflow.parquet',
-    'jobs':'./output/actions_jobs.parquet',
+    'workflow':'./reports/output/actions_workflow.parquet',
+    'jobs':'./reports/output/actions_jobs.parquet',
+    'artifact_output': './reports/output/artifact/'
 }
 
 
@@ -17,35 +18,38 @@ class ActionsArtifacts:
     A class to handle downloading, retrieving, and deleting GitHub Actions artifacts.
     """
 
-    def __init__(self, jobIds: list, repository: str):
+    def __init__(self, databaseIds: list, repository: str):
         """
         Initializes the ActionsArtifacts object.
 
+        :param databaseIds: list of databaseIds".
         :param repository: The GitHub repository in the format "owner/repo".
         """
         self.repository = repository
-        self.folder = 'artifacts/'  # Default storage dir
+        self.folder = paths.get('artifact_output')  # Default storage dir
         self.paths = self.retrieve_downloaded_artifacts() 
-        self.jobIds: set = set(jobIds)
+        self.databaseIds = databaseIds
         self.download_artifact()
 
-    def download_artifact(self: str):
+    def download_artifact(self):
         """
         Downloads an artifact from GitHub Actions using the GitHub CLI.
 
-        :param database_id: The database ID of the artifact to download.
+        Updates self.paths with successful downloaded paths
         """
         try:
             # Ensure the folder exists before downloading
             os.makedirs(self.folder, exist_ok=True)
-            # Finding the artifacts that have yet to be downloaded
-            downloaded_paths = set(int(p.split('/')[1]) for p in self.paths)
-            to_download = self.jobIds.difference(downloaded_paths)
+            # Finding the artifacts yet to be downloaded
+            to_download = list(filter(lambda x: filter(lambda y: x in y, self.paths) , self.databaseIds))
 
             for database_id in to_download:
             # Construct the command to download the artifact
                 command=f'gh run --repo {self.repository} download {database_id} --dir {os.path.join(self.folder, str(database_id))}'
                 subprocess.run(command, shell=True, text=True, check=False, capture_output=True)
+            
+            self.paths = list(filter(lambda y: filter(lambda x: x in y, self.databaseIds), self.retrieve_downloaded_artifacts()))
+
         except Exception as e:
             print(f"Unexpected error: {e}")
 
@@ -60,7 +64,8 @@ class ActionsArtifacts:
         # Walk through the artifacts folder and collect all file paths
         for path, _, files in os.walk(self.folder):
             for file in files:
-                paths.append(os.path.join(path, file))
+                if file.endswith('.log'):
+                  paths.append(os.path.join(path, file))
 
         return paths
 

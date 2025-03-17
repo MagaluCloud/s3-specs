@@ -58,14 +58,21 @@ class TestData:
         execution_time: list[ExecutionTime],
         failures: list[Failures]
     ):
-        self.execution_entity = pd.DataFrame([asdict(execution_entity)])
-        self.artifact =pd.DataFrame([asdict(artifact)])
-        self.tests = pd.DataFrame(list(map(lambda t: asdict(t), tests)))
-        self.execution_time = pd.DataFrame(asdict(execution_time))
-        self.failures = pd.DataFrame(asdict(failures))
+
+        #self.execution_entity = self.__list_to_df__(execution_entity)
+        self.artifact = self.__list_to_df__(artifact)
+        self.tests = self.__list_to_df__(tests[0])
+        self.execution_time = self.__list_to_df__(execution_time[0])
+        self.failures = self.__list_to_df__(failures[0])
 
         self.load_existent()
         self.save_loaded()
+
+
+    def __list_to_df__(self, input):
+        if isinstance(input, list):
+            return pd.DataFrame(list(map(lambda a: asdict(a), input)))
+        return pd.DataFrame()
 
     def load_existent(self) -> None:
         """
@@ -83,9 +90,10 @@ class TestData:
         
     def save_loaded(self):
         for atb in vars(self):
-            parquet_file_name = "./output/"+atb+".parquet"
-            print(parquet_file_name)
-            am.save_df_to_parquet(df = getattr(self, atb), parquet_file_name=parquet_file_name)  
+            df = getattr(self, atb)
+            if isinstance(df, pd.DataFrame) and not df.empty:
+                parquet_file_name = "./output/"+atb+".parquet"
+                am.save_df_to_parquet(df = df, parquet_file_name=parquet_file_name)  
 
 
 

@@ -1,0 +1,45 @@
+============================= test session starts ==============================
+created: 2/2 workers
+2 workers [6 items]
+
+scheduling tests via LoadScheduling
+
+list-buckets_test.py::test_boto_list_buckets 
+list-buckets_test.py::test_cli_list_buckets[aws s3 ls --profile {profile_name}] 
+[gw1] [ 16%] PASSED list-buckets_test.py::test_cli_list_buckets[aws s3 ls --profile {profile_name}] 
+list-buckets_test.py::test_cli_list_buckets[aws s3api list-buckets --profile {profile_name}] 
+[gw0] [ 33%] PASSED list-buckets_test.py::test_boto_list_buckets 
+list-buckets_test.py::test_cli_list_buckets[rclone lsd {profile_name}:] 
+[gw0] [ 50%] PASSED list-buckets_test.py::test_cli_list_buckets[rclone lsd {profile_name}:] 
+unique-bucket-name_test.py::test_create_same_bucket 
+[gw1] [ 66%] PASSED list-buckets_test.py::test_cli_list_buckets[aws s3api list-buckets --profile {profile_name}] 
+unique-bucket-name_test.py::test_create_bucket 
+[gw0] [ 83%] PASSED unique-bucket-name_test.py::test_create_same_bucket 
+[gw1] [100%] PASSED unique-bucket-name_test.py::test_create_bucket 
+
+============================= fixture duration top =============================
+total          name                    num avg            min           
+0:00:01.142150    existing_bucket_name   1 0:00:01.142150 0:00:01.142150
+0:00:00.233676               s3_client   3 0:00:00.078160 0:00:00.071144
+0:00:00.008689             test_params   6 0:00:00.001404 0:00:00.001251
+0:00:01.384884             grand total  24 0:00:00.000066 0:00:00.000014
+============================ test call duration top ============================
+total          name                    num avg            min           
+0:00:52.134331   test_cli_list_buckets   3 0:00:17.229699 0:00:16.867645
+0:00:16.874608  test_boto_list_buckets   1 0:00:16.874608 0:00:16.874608
+0:00:01.410293      test_create_bucket   1 0:00:01.410293 0:00:01.410293
+0:00:00.266842 test_create_same_bucket   1 0:00:00.266842 0:00:00.266842
+0:01:10.686073             grand total   6 0:00:09.142450 0:00:00.266842
+=========================== test setup duration top ============================
+total          name                    num avg            min           
+0:00:01.228209 test_create_same_bucket   1 0:00:01.228209 0:00:01.228209
+0:00:00.080409  test_boto_list_buckets   1 0:00:00.080409 0:00:00.080409
+0:00:00.072954      test_create_bucket   1 0:00:00.072954 0:00:00.072954
+0:00:00.005431   test_cli_list_buckets   3 0:00:00.001831 0:00:00.001657
+0:00:01.387004             grand total   6 0:00:00.076682 0:00:00.001657
+========================== test teardown duration top ==========================
+total          name                    num avg            min           
+0:00:01.103152 test_create_same_bucket   1 0:00:01.103152 0:00:01.103152
+0:00:00.844382      test_create_bucket   1 0:00:00.844382 0:00:00.844382
+0:00:01.948504             grand total   6 0:00:00.422350 0:00:00.000199
+============================== 6 passed in 38.24s ==============================

@@ -50,7 +50,6 @@ class PytestArtifactLogExtractor:
         :return: A DataFrame combining test statuses with time metrics.
         """
         execution_entity, artifact = self.__extract_artifact_info__()
-
         tests, execution_time, failures = self.__extract_all_categories__(execution_entity, artifact)
         
         return execution_entity, artifact, tests, execution_time, failures
@@ -81,7 +80,6 @@ class PytestArtifactLogExtractor:
         :param values: A list of lists with extracted time metrics.
         :type values: list[list]
         :return: A list of DataFrames with execution time statistics.
-        :rtype: list[pandas.DataFrame]
         """
         header = []
         # Filtering out irrelevant categories
@@ -100,10 +98,10 @@ class PytestArtifactLogExtractor:
                 # Populate each category and break in the case of the pytest-durations tables while ignoring empty values
                 header[-1].append(value)
 
-        headers = [['live_log','live_log','live_log']]
+        headers = [['live_log','live_log','live_log', 'live_log']]
         # Ignore cases of logging mode is active
-        #if not 'live log' in self.data:
-        headers = self.__extract_test_status_names__(self.__get_list_by_name__(header, 'test session')[0])    
+        if not 'live log' in self.data:
+            headers = self.__extract_test_status_names__(self.__get_list_by_name__(header, 'test session')[0])    
 
         tests = [Tests( artifact_name=artifact.name, 
                         execution_datetime=execution_entity.execution_datetime,
@@ -126,12 +124,15 @@ class PytestArtifactLogExtractor:
         
         failures_df = self.__create_failure_df__(self.__extract_failures_errors__(self.__get_list_by_name__(header, 'summary')))
 
-        failures = Failures(test_name= failures_df['name'],
-                            artifact_name=artifact.name,
-                            execution_datetime=execution_entity.execution_datetime,
-                            error=failures_df['error'],
-                            details=failures_df['error_details'],
-        )
+        if not failures_df.empty:
+            failures = Failures(test_name= failures_df['name'],
+                                artifact_name=artifact.name,
+                                execution_datetime=execution_entity.execution_datetime,
+                                error=failures_df['error'],
+                                details=failures_df['error_details'],
+            )
+        else:
+            failures = failures_df
 
         return tests, execution_time, failures
 
@@ -152,7 +153,7 @@ class PytestArtifactLogExtractor:
                 match = re.search(r'(PASSED|FAILED|ERROR).*', line).group()
                 # Splitting the Keyword NameTest from category and argument
                 match = re.split(r'::', match, 1)
-                tmp = re.split('\s', match[0], maxsplit=1)
+                tmp = re.split(r'\s', match[0], maxsplit=1)
                 # Splitting the category from arguments
                 tmp += re.split(r'\[', match[1], maxsplit=1)
                 # Allow degenerated data to fit in the dataframe
@@ -198,7 +199,7 @@ class PytestArtifactLogExtractor:
                 keywords_string = (re.search(r'(PASSED|FAILED|ERROR).*', line).group())
                 status_errors = re.split(r'::', keywords_string, 1)
 
-                status_category = re.split('\s', status_errors[0], maxsplit=1)
+                status_category = re.split(r'\s', status_errors[0], maxsplit=1)
                 final_failure_list += status_category
                 
                 test_name = re.split(r'\[.*?\] - | - ', status_errors[1], maxsplit=2)
@@ -267,10 +268,16 @@ class PytestArtifactLogExtractor:
         # Extract filename without extension format = (testName.endpoint.datetime.fileExtension)
         stripped = self.path.split('/')[-1].split('.')
         while len(stripped) < 4:
+            print(f"Filename: {self.path}\n")
             raise "Artifact name format must be: 'testName.endpoint.datetime.fileExtension' with datetime = 'YYYYMMDDTHHmmSS'"
 
         # Format input datetime (YYYYMMDDTHHmmSS)
-        datetime_file = np.datetime64(datetime.strptime(stripped[2], "%Y%m%dT%H%M%S"))
+        try:
+            datetime_file = np.datetime64(datetime.strptime(stripped[2], "%Y%m%dT%H%M%S"))
+        except:
+            #print(f"{stripped[2]} doesn't match YYYYMMDDTHHmmSS format, using current datetime")
+            datetime_file = np.datetime64(datetime.now())
+
 
         # Ensure there are exactly three elements (fill missing ones with None)
         execution_entity = ExecutionEntity(execution_datetime=datetime_file,endpoint=stripped[1])

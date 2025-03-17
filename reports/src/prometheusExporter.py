@@ -32,7 +32,7 @@ def execution_metrics_exporter():
     df = pd.read_parquet(file_path)
 
     # Drop unnecessary columns and take the first 5 rows
-    cleaned_time_metric_df = df.drop(columns=['execution_datetime', 'number_runs']).head(5)
+    cleaned_time_metric_df = df.drop(columns=['execution_datetime', 'number_runs'])
 
     # Melt the DataFrame
     melted_df = pd.melt(
@@ -65,7 +65,7 @@ def test_metrics_exporter():
         'ERROR': -2.0,
     }
 
-    cleaned_status_df = df.drop(columns=['artifact_name', 'execution_datetime', 'arguments']).head(5)
+    cleaned_status_df = df.drop(columns=['artifact_name', 'execution_datetime', 'arguments'])
     cleaned_status_df['status'] = cleaned_status_df['status'].map(status_to_numeric).drop_duplicates()
     dicts_time_metric_df = cleaned_status_df.to_dict(orient='records')
 
