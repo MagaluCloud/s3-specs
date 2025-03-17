@@ -67,7 +67,7 @@ fi
 # Set log file name
 INIT_TIME=$(date +"%Y%m%dT%H%M%S")
 if [ -z "$OUTPUT_FILE" ]; then
-    OUTPUT_FILE="local-pytest-output.$INIT_TIME.log"
+    OUTPUT_FILE="local-pytest-output.$PROFILE.$INIT_TIME.log"
 fi
 
 # Define tests

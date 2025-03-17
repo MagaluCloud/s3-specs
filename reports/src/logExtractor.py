@@ -267,13 +267,13 @@ class PytestArtifactLogExtractor:
         # Extract filename without extension format = (testName.endpoint.datetime.fileExtension)
         stripped = self.path.split('/')[-1].split('.')
         while len(stripped) < 4:
-            stripped.append(None)  # Fill missing values with NaN
+            raise "Artifact name format must be: 'testName.endpoint.datetime.fileExtension' with datetime = 'YYYYMMDDTHHmmSS'"
 
-        artifact_info = pd.DataFrame([stripped], columns=['test', 'endpoint', 'datetime', 'fileExtension'])
-        print(artifact_info)
+        # Format input datetime (YYYYMMDDTHHmmSS)
+        datetime_file = np.datetime64(datetime.strptime(stripped[2], "%Y%m%dT%H%M%S"))
 
         # Ensure there are exactly three elements (fill missing ones with None)
-        execution_entity = ExecutionEntity(execution_datetime=np.datetime64(artifact_info['datetime'].iloc[0]), endpoint=artifact_info['endpoint'])
+        execution_entity = ExecutionEntity(execution_datetime=datetime_file,endpoint=stripped[1])
         artifact = Artifact(name=stripped[0], execution_datetime=execution_entity.execution_datetime)
 
         return execution_entity, artifact
