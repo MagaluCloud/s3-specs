@@ -62,10 +62,10 @@ jobs:
               run: |
                 cd docs
                 mkdir -p /s3-specs/artifact/
-                uv run pytest --config ${{ inputs.config }} ${{inputs.tests}} ${{ inputs.flags }} | tee /s3-specs/artifact/pytest_output_${{ steps.format_name.outputs.formatted_name }}.log
+                uv run pytest --config ${{ inputs.config }} ${{inputs.tests}} ${{ inputs.flags }} | tee /s3-specs/artifact/actions_pytest_output.${{ steps.format_name.outputs.formatted_name }}.log
       
             - name: Upload Artifact
               uses: actions/upload-artifact@v4
               with:
                 name: output_artifact_${{ steps.format_name.outputs.formatted_name }}
-                path: "/s3-specs/artifact/pytest_output_${{ steps.format_name.outputs.formatted_name }}.log"
+                path: "/s3-specs/artifact/actions_pytest_output.${{ steps.format_name.outputs.formatted_name }}.log"
