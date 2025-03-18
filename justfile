@@ -36,3 +36,7 @@ categories:
 # Start a Jupyter lab server for browsing and executing the specs, right click and "Open as Notebook"
 browse:
   uv run --with jupyter --with jupytext jupyter lab docs
+
+# Creates a page based on the execution of a spec and saves it under the docs/runs directory
+_build-page spec_path config_file="./params/br-ne1.yaml" output_format="markdown":
+  ./bin/run-spec.sh "{{spec_path}}" "{{config_file}}" "{{output_format}}"
