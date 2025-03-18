@@ -1,0 +1,4 @@
+# Ignore generated pdfs, parquets and downloaded logs
+*.pdf
+*.parquet
+*.log
