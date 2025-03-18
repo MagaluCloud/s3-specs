@@ -32,7 +32,9 @@ if __name__ == '__main__':
     print(f'Extracting data out of {parser.file_path}')
     execution_entity, artifact, tests, execution_time, failures = p.log_to_df()
     t = TestData(execution_entity=[execution_entity], artifact=[artifact], tests=[tests], execution_time=[execution_time], failures=[failures])
-#
-    #print('Generating Relatory...')
-    #pdf = PdfMaker(t)
-    #pdf.create_pdf()
+
+    print(t.execution_time)
+
+    print('Generating Relatory...')
+    pdf = PdfMaker(t)
+    pdf.create_pdf()

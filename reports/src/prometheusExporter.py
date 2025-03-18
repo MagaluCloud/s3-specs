@@ -53,6 +53,8 @@ def execution_metrics_exporter():
 
     print('Time metrics exported...')
 
+
+
 def test_metrics_exporter():
     # Test data gauge
     file_path = 'tests.parquet'

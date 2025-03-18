@@ -7,9 +7,9 @@ import re
 from arqManipulation import ArqManipulation
 
 paths = {
-    'workflow':'./reports/output/actions_workflow.parquet',
-    'jobs':'./reports/output/actions_jobs.parquet',
-    'artifact_output': './reports/output/artifact/'
+    'workflow':'./output/actions_workflow.parquet',
+    'jobs':'./output/actions_jobs.parquet',
+    'artifact_output': './output/downloaded_artifact/'
 }
 
 

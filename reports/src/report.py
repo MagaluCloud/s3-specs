@@ -14,15 +14,15 @@ class PdfMaker:
         self.tests = test_data.tests
         self.execution_time = test_data.execution_time
         self.failures = test_data.failures
-        #self.artifact_info = test_data_base.artifact_info
         self.plotter = DataPlotter(test_data)
+
+        print(self.execution_entity)
 
         # Ensure types are correct
         assert isinstance(self.execution_entity, pd.DataFrame), "Execution Entity must be a df"
         assert isinstance(self.tests, pd.DataFrame), "Tests must be a df"
         assert isinstance(self.execution_time, pd.DataFrame), "Execution Time must be a df"
         assert isinstance(self.failures, pd.DataFrame), "Failures must be a df"
-        #assert isinstance(self.artifact_info, pd.DataFrame), "Artifact Info must be a df"
 
 
         styles = getSampleStyleSheet()
@@ -121,8 +121,6 @@ class PdfMaker:
         story.append(Paragraph("Resumo Geral", self.styles['bold']))
         story.append(Spacer(1, 6))
 
-
-        print(self.tests.columns)
         success_rate = self.tests['status'].value_counts('status').get('PASSED', 0) * 100
 
         # Criando a lista de resumo corretamente

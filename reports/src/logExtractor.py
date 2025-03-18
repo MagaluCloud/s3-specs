@@ -51,7 +51,7 @@ class PytestArtifactLogExtractor:
         """
         execution_entity, artifact = self.__extract_artifact_info__()
         tests, execution_time, failures = self.__extract_all_categories__(execution_entity, artifact)
-        
+
         return execution_entity, artifact, tests, execution_time, failures
      
     def __get_list_by_name__(self, data: list, name: str):
@@ -121,7 +121,7 @@ class PytestArtifactLogExtractor:
                                         min_time=timestamps['min'],
                                         total_time=timestamps['total'],
                                        )
-        
+
         failures_df = self.__create_failure_df__(self.__extract_failures_errors__(self.__get_list_by_name__(header, 'summary')))
 
         if not failures_df.empty:
