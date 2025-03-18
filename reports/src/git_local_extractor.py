@@ -1,14 +1,18 @@
 import requests
 import os
 import argparse
+import time
 
-def download_file(url, filename, save_dir):
+def download_file(url, filename, save_dir, token):
     """
     Faz o download de um arquivo de uma URL e salva localmente na pasta especificada.
     """
     filepath = os.path.join(save_dir, filename)
     print(f"Baixando {filename} para {filepath}...")
-    response = requests.get(url, stream=True)
+    headers = {
+        'Authorization': f'token {token}',
+    }
+    response = requests.get(url, headers=headers, stream=True)
     
     if response.status_code == 200:
         os.makedirs(os.path.dirname(filepath), exist_ok=True)  # Cria o diretório se necessário
@@ -54,7 +58,7 @@ def get_action_artifacts(repo_owner, repo_name, n, token, save_dir):
                     artifact_filename = f"{artifact_name}.zip"  # Nome do arquivo zip para o artefato
                     
                     # Faz o download do artefato
-                    download_file(artifact_url, artifact_filename, save_dir)
+                    download_file(artifact_url, artifact_filename, save_dir, token)
             else:
                 print(f"Erro ao obter artefatos da execução {run_id}: {artifacts_response.status_code}")
     else:
