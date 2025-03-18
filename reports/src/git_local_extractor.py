@@ -1,7 +1,11 @@
 import requests
 import os
 import argparse
-import time
+import zipfile
+from logDataclasses import TestData
+from logExtractor import PytestArtifactLogExtractor
+import argparse
+import inspect
 
 def download_file(url, filename, save_dir, token):
     """
@@ -55,10 +59,12 @@ def get_action_artifacts(repo_owner, repo_name, n, token, save_dir):
                 for artifact in artifacts:
                     artifact_name = artifact['name']
                     artifact_url = artifact['archive_download_url']
-                    artifact_filename = f"{artifact_name}.zip"  # Nome do arquivo zip para o artefato
+                    artifact_zip = f"{artifact_name}.zip"  # Nome do arquivo zip para o artefato
                     
                     # Faz o download do artefato
-                    download_file(artifact_url, artifact_filename, save_dir, token)
+                    download_file(artifact_url, artifact_zip, save_dir, token)
+                    with zipfile.ZipFile(os.path.join(save_dir, artifact_zip), 'r') as zip:
+                        zip.extractall(save_dir)
             else:
                 print(f"Erro ao obter artefatos da execução {run_id}: {artifacts_response.status_code}")
     else:
@@ -84,5 +90,15 @@ if __name__ == "__main__":
     # Chama a função para obter os artefatos das execuções dos workflows
     get_action_artifacts(args.repo_owner, args.repo_name, args.n, args.token, save_dir)
 
+    artifacts_paths = list(filter(lambda log: log.endswith('.log'), os.listdir(save_dir)))
 
-    ## todo: função que trata os parquets e gera os artefatos corretamente para o exporter.
+    test_data_arguments = list(inspect.signature(TestData).parameters.keys())
+    test_data = {args: [] for args in test_data_arguments}
+
+    for path in artifacts_paths:
+        logs = PytestArtifactLogExtractor(save_dir + path).log_to_df()
+        # Adding the new tuple to the dict
+        if test_data:
+            list(map(lambda key, log: test_data[key].append(log), test_data_arguments, logs))
+
+    test_data = TestData(**test_data)
