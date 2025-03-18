@@ -3,7 +3,6 @@ from logDataclasses import TestData
 from logExtractor import PytestArtifactLogExtractor
 import argparse
 import re
-
 def regex_type(pattern: str | re.Pattern):
     """Argument type for matching a regex pattern."""
 
@@ -33,7 +32,6 @@ if __name__ == '__main__':
     execution_entity, artifact, tests, execution_time, failures = p.log_to_df()
     t = TestData(execution_entity=[execution_entity], artifact=[artifact], tests=[tests], execution_time=[execution_time], failures=[failures])
 
-    print(t.execution_time)
 
     print('Generating Relatory...')
     pdf = PdfMaker(t)

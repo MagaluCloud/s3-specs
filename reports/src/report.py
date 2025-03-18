@@ -16,8 +16,6 @@ class PdfMaker:
         self.failures = test_data.failures
         self.plotter = DataPlotter(test_data)
 
-        print(self.execution_entity)
-
         # Ensure types are correct
         assert isinstance(self.execution_entity, pd.DataFrame), "Execution Entity must be a df"
         assert isinstance(self.tests, pd.DataFrame), "Tests must be a df"
