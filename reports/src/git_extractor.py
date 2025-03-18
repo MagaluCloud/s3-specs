@@ -81,4 +81,4 @@ if __name__ == "__main__":
     get_action_artifacts(args.repo_owner, args.repo_name, args.n, args.token, save_dir)
 
 
-    ## todo: função que trata os parquets e gera os artefatos corretamente para o exporter
+    ## todo: função que trata os parquets e gera os artefatos corretamente para o exporter.
