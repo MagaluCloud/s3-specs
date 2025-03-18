@@ -2,6 +2,8 @@ custom-mgc/*
 
 params.yaml
 
+output/
+
 # Ignore all .ipynb_checkpoints folders anywhere in the project
 **/.ipynb_checkpoints/
 
@@ -10,3 +12,4 @@ params.yaml
 
 # Ignore pytest debug log file
 pytestdebug.log
+
