@@ -2,7 +2,7 @@
 *.pdf
 *.parquet
 *.log
-*output/*
+*/output/
 
 # Ignore mock codes
 *.ipynb

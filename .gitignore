@@ -2,7 +2,8 @@ custom-mgc/*
 
 params.yaml
 
-output/
+# Ignore any output folder created on run time
+**output/
 
 # Ignore all .ipynb_checkpoints folders anywhere in the project
 **/.ipynb_checkpoints/
