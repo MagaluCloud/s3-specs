@@ -57,7 +57,15 @@ def read_csv_and_update_metrics():
 
         # Verificar o formato do CSV e processar adequadamente
         if 'operation' in df.columns:
-            for _, row in df.iterrows():
+            # Agrupar pelos primeiros 7 campos e calcular a mediana do 'time'
+            df_grouped = df.groupby(['region', 'tool', 'size', 'times', 'workers', 'quantity', 'operation'])['time'].median().reset_index()
+
+            # Exportar o arquivo agrupado com a mediana
+            df_grouped.to_csv('report/resultado_grouped.csv', index=False)
+            print("Arquivo 'resultado_grouped.csv' com as medianas gerado.")
+
+            # Processar os dados para o 'avg_gauge'
+            for _, row in df_grouped.iterrows():
                 labels = {
                     'region': row['region'],
                     'tool': row['tool'],
