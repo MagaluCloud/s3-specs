@@ -63,7 +63,7 @@ markers = [
 
 [tool.s3-tester]
 markers = [
-  "Benchmark",
+  #"Benchmark",
   "BigBuckets",
   "BucketManagement",
   "BucketPermission",
@@ -75,7 +75,6 @@ markers = [
   "ObjectVersioning",
   "ColdStorage",
   "ServiceAccounts",
-  "Consistency",
 ]
 
 [tool.uv.workspace]
