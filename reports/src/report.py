@@ -2,6 +2,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer, ListFlowable, ListItem, Spacer, Image
+import os
 
 import pandas as pd
 from dataPlotter import DataPlotter
@@ -13,7 +14,6 @@ class PdfMaker:
         self.tests = test_data.tests
         self.execution_time = test_data.execution_time
         self.failures = test_data.failures
-        #self.artifact_info = test_data_base.artifact_info
         self.plotter = DataPlotter(test_data)
 
         # Ensure types are correct
@@ -21,7 +21,6 @@ class PdfMaker:
         assert isinstance(self.tests, pd.DataFrame), "Tests must be a df"
         assert isinstance(self.execution_time, pd.DataFrame), "Execution Time must be a df"
         assert isinstance(self.failures, pd.DataFrame), "Failures must be a df"
-        #assert isinstance(self.artifact_info, pd.DataFrame), "Artifact Info must be a df"
 
 
         styles = getSampleStyleSheet()
@@ -45,20 +44,23 @@ class PdfMaker:
         self.dim = {
             'width': A4[0],
             'height': A4[1],
-            'margin': 0.1 * A4[0],  # Use A4[0] directly to avoid circular dependency
+            'margin': 0.1 * A4[0],  
         }
 
     def __get_time__(self, merged_rows, metric):
         # Create a dict of the total time of each category summing each test time it contains
-        time = pd.Series(dict(map(lambda t, x: (x, merged_rows.loc[merged_rows['Execution_name'] == t, metric].sum()), self.tests['Name'].unique(), self.tests['Name'].unique())))
+        time = pd.Series(dict(map(lambda t, x: (x, merged_rows.loc[merged_rows['execution_name'] == t, metric].sum()), self.tests['name'].unique(), self.tests['name'].unique())))
     
         return time
     
     def create_pdf(self):
 
+        pdf_output = f"./output/report_/report_{self.execution_entity.endpoint.get(0)}_{self.execution_entity.execution_datetime.get(0).strftime('%H-%M-%S_%d-%m-%Y')}.pdf"
+        os.makedirs(os.path.dirname(pdf_output), exist_ok=True)
+
         # Create PDF with margins
         doc = SimpleDocTemplate(
-            f"report_{self.execution_entity.Endpoint.get(0)}_{self.execution_entity.Execution_Datetime.get(0).strftime('%H-%M-%S_%d-%m-%Y')}.pdf", 
+            pdf_output, 
             pagesize=A4,
             leftMargin=self.dim['margin'], 
             rightMargin=self.dim['margin'], 
@@ -66,7 +68,7 @@ class PdfMaker:
             bottomMargin=0.1*self.dim['height']
             )
 
-        # Create the story (content) for the PDF
+        # Create the story for the PDF
         story = []
 
         # Add title with fields
@@ -85,7 +87,7 @@ class PdfMaker:
         story = []
 
         # Get current date and time
-        horario_dia = self.execution_entity.Execution_Datetime.get(0).strftime("%H:%M:%S %d/%m/%Y")
+        horario_dia = self.execution_entity.execution_datetime.get(0).strftime("%H:%M:%S %d/%m/%Y")
 
         # Create the title
         title_text = "Sumário de Resultados dos Testes"
@@ -98,7 +100,7 @@ class PdfMaker:
         # Create the formatted text for the execution date, system version, and environment
         execution_paragraph = Paragraph(f"Data da Execução: {horario_dia}", self.styles['normal'])
         version_paragraph = Paragraph("Versão do Sistema: ", self.styles['normal'])
-        environment_paragraph = Paragraph(f"Endpoint: {self.execution_entity.Endpoint.get(0)}", self.styles['normal'])
+        environment_paragraph = Paragraph(f"Endpoint: {self.execution_entity.endpoint.get(0)}", self.styles['normal'])
 
         # Add other paragraphs to the story
         story.append(execution_paragraph)
@@ -117,14 +119,14 @@ class PdfMaker:
         story.append(Paragraph("Resumo Geral", self.styles['bold']))
         story.append(Spacer(1, 6))
 
-        success_rate = self.tests['Status'].value_counts('Status').get('PASSED', 0) * 100
+        success_rate = self.tests['status'].value_counts('status').get('PASSED', 0) * 100
 
         # Criando a lista de resumo corretamente
         summary_data = {
             'Total de Testes:': self.tests.index.size,
-            'Testes Bem-Sucedidos:': self.tests['Status'].value_counts().get('PASSED', 0),
-            'Testes com Falha:': self.tests['Status'].value_counts().get('FAILED', 0),
-            'Testes com Erros:': self.tests['Status'].value_counts().get('ERROR', 0),
+            'Testes Bem-Sucedidos:': self.tests['status'].value_counts().get('PASSED', 0),
+            'Testes com Falha:': self.tests['status'].value_counts().get('FAILED', 0),
+            'Testes com Erros:': self.tests['status'].value_counts().get('ERROR', 0),
             'Taxa de Sucessos/Falha:': f"{success_rate.round(2)}%",  # Round to 2 decimal places
         }
 
@@ -149,7 +151,7 @@ class PdfMaker:
         story.append(Spacer(1, 12))
         
         # Number of passed, failed, and error tests by Test_Name and Category
-        status_counts = self.tests.copy().groupby(['Name', 'Status']).size().unstack(fill_value=0).astype(int)
+        status_counts = self.tests.copy().groupby(['name', 'status']).size().unstack(fill_value=0).astype(int)
 
         column_mapping = {
             'PASSED': 'Acertos',
@@ -171,22 +173,22 @@ class PdfMaker:
         # Retrieve the tests with their times_metrics
         time_metric_df = pd.merge(
             self.execution_time,
-            self.tests[['Name', 'Execution_Datetime']],
-            left_on=['Execution_name', 'Execution_Datetime'],
-            right_on=['Name', 'Execution_Datetime'],
+            self.tests[['name', 'execution_datetime']],
+            left_on=['execution_name', 'execution_datetime'],
+            right_on=['name', 'execution_datetime'],
             how='inner'
         )
         
         # Retrive time values out of df
-        avg_time = self.__get_time__(time_metric_df, 'Avg_Time').round(2)
-        min_time = self.__get_time__(time_metric_df, 'Min_Time').round(2)
-        total_time = self.__get_time__(time_metric_df, 'Total_Time').round(2)
+        avg_time = self.__get_time__(time_metric_df, 'avg_time').round(2)
+        min_time = self.__get_time__(time_metric_df, 'min_time').round(2)
+        total_time = self.__get_time__(time_metric_df, 'total_time').round(2)
 
         time_df = pd.DataFrame([avg_time, min_time, total_time]).T.reset_index()
         time_df.columns = ['Teste', 'Tempo médio', 'Tempo Mínimo', 'Tempo Total']
         
         # Merge time metrics with status counts
-        time_metric_df = pd.merge(time_df, passed_test, left_on='Teste', right_on='Name', how='inner')
+        time_metric_df = pd.merge(time_df, passed_test, left_on='Teste', right_on='name', how='inner')
         time_metric_df['Contagem'] = time_metric_df['Acertos'] + time_metric_df['Falhas'] + time_metric_df['Erros']
         time_metric_df['Teste'] = time_metric_df['Teste'].str.replace('_', ' ')
 
@@ -235,16 +237,16 @@ class PdfMaker:
             self.tests.merge(
                 self.failures,
                 how='inner',
-                right_on=['Test_Name', 'Execution_Datetime'],
-                left_on=['Name', 'Execution_Datetime'],
-            )[['Test_Name', 'Category', 'Error', 'Details', 'Execution_Datetime', 'Arguments']]
+                right_on=['test_name', 'execution_datetime'],
+                left_on=['name', 'execution_datetime'],
+            )[['test_name', 'category', 'error', 'details', 'execution_datetime', 'arguments']]
             .rename(columns={
-                'Test_Name': 'Nome do teste',
-                'Category': 'Categoria',
-                'Error': 'Error',
-                'Details': 'Detalhes do erro',
-                'Execution_Datetime': 'Momento de execução',
-                'Arguments': 'Argumentos',
+                'test_name': 'Nome do teste',
+                'category': 'Categoria',
+                'error': 'Error',
+                'details': 'Detalhes do erro',
+                'execution_datetime': 'Momento de execução',
+                'arguments': 'Argumentos',
             }).drop_duplicates().drop('Argumentos', axis=1)
         )
 

@@ -3,7 +3,6 @@ from logDataclasses import TestData
 from logExtractor import PytestArtifactLogExtractor
 import argparse
 import re
-
 def regex_type(pattern: str | re.Pattern):
     """Argument type for matching a regex pattern."""
 
@@ -25,12 +24,14 @@ def parser_arguments():
     return parser.parse_args()  # Parse the arguments
 
 if __name__ == '__main__':
+
     parser = parser_arguments()
     p  = PytestArtifactLogExtractor(parser.file_path)
 
     print(f'Extracting data out of {parser.file_path}')
     execution_entity, artifact, tests, execution_time, failures = p.log_to_df()
-    t = TestData(execution_entity=execution_entity, artifact=artifact, tests=tests, execution_time=execution_time, failures=failures)
+    t = TestData(execution_entity=[execution_entity], artifact=[artifact], tests=[tests], execution_time=[execution_time], failures=[failures])
+
 
     print('Generating Relatory...')
     pdf = PdfMaker(t)

@@ -8,9 +8,9 @@ from arqManipulation import ArqManipulation
 from dataclasses import fields
 
 paths = {
-    'status':'./bin/pytest.status.log.parquet',
-    'categories':'./bin/pytest.categories.log.parquet',
-    'failures':'./bin/pytest.failures.log.parquet',
+    'status':'./output/pytest.status.log.parquet',
+    'categories':'./output/pytest.categories.log.parquet',
+    'failures':'./output/pytest.failures.log.parquet',
     }
 
 class PytestArtifactLogExtractor:
@@ -50,9 +50,8 @@ class PytestArtifactLogExtractor:
         :return: A DataFrame combining test statuses with time metrics.
         """
         execution_entity, artifact = self.__extract_artifact_info__()
-
         tests, execution_time, failures = self.__extract_all_categories__(execution_entity, artifact)
-        
+
         return execution_entity, artifact, tests, execution_time, failures
      
     def __get_list_by_name__(self, data: list, name: str):
@@ -81,7 +80,6 @@ class PytestArtifactLogExtractor:
         :param values: A list of lists with extracted time metrics.
         :type values: list[list]
         :return: A list of DataFrames with execution time statistics.
-        :rtype: list[pandas.DataFrame]
         """
         header = []
         # Filtering out irrelevant categories
@@ -100,38 +98,41 @@ class PytestArtifactLogExtractor:
                 # Populate each category and break in the case of the pytest-durations tables while ignoring empty values
                 header[-1].append(value)
 
-        headers = [['live_log','live_log','live_log']]
+        headers = [['live_log','live_log','live_log', 'live_log']]
         # Ignore cases of logging mode is active
-        #if not 'live log' in self.data:
-        headers = self.__extract_test_status_names__(self.__get_list_by_name__(header, 'test session')[0])    
+        if not 'live log' in self.data:
+            headers = self.__extract_test_status_names__(self.__get_list_by_name__(header, 'test session')[0])    
 
-        tests = [Tests(Artifact_Name=artifact.Name, 
-                        Execution_Datetime=execution_entity.Execution_Datetime,
-                        Status=t[0].strip(), 
-                        Category=t[1].split("/")[-1].strip().replace('.py', ''), # Formatting for readability
-                        Name=t[2].strip(), 
-                        Arguments=t[3] if t[3] else None)  for t in headers]
+        tests = [Tests( artifact_name=artifact.name, 
+                        execution_datetime=execution_entity.execution_datetime,
+                        status=t[0].strip(), 
+                        category=t[1].split("/")[-1].strip().replace('.py', ''), # Formatting for readability
+                        name=t[2].strip(), 
+                        arguments=t[3] if t[3] else None)  for t in headers]
 
         # Execution_time
         timestamps = self.__create_time_df__(self.__extract_time_categories__(self.__get_list_by_name__(header, 'duration top')))
 
-        execution_time = ExecutionTime( Execution_Datetime=execution_entity.Execution_Datetime,
-                                        Execution_name=timestamps['name'], 
-                                        Execution_type=timestamps['durationType'],
-                                        Number_Runs=timestamps['num'],
-                                        Avg_Time=timestamps['avg'],
-                                        Min_Time=timestamps['min'],
-                                        Total_Time=timestamps['total'],
+        execution_time = ExecutionTime( execution_datetime=execution_entity.execution_datetime,
+                                        execution_name=timestamps['name'], 
+                                        execution_type=timestamps['durationType'],
+                                        number_runs=timestamps['num'],
+                                        avg_time=timestamps['avg'],
+                                        min_time=timestamps['min'],
+                                        total_time=timestamps['total'],
                                        )
-        
+
         failures_df = self.__create_failure_df__(self.__extract_failures_errors__(self.__get_list_by_name__(header, 'summary')))
 
-        failures = Failures(Test_Name= failures_df['name'],
-                            Artifact_Name=artifact.Name,
-                            Execution_Datetime=execution_entity.Execution_Datetime,
-                            Error=failures_df['error'],
-                            Details=failures_df['error_details'],
-        )
+        if not failures_df.empty:
+            failures = Failures(test_name= failures_df['name'],
+                                artifact_name=artifact.name,
+                                execution_datetime=execution_entity.execution_datetime,
+                                error=failures_df['error'],
+                                details=failures_df['error_details'],
+            )
+        else:
+            failures = failures_df
 
         return tests, execution_time, failures
 
@@ -152,7 +153,7 @@ class PytestArtifactLogExtractor:
                 match = re.search(r'(PASSED|FAILED|ERROR).*', line).group()
                 # Splitting the Keyword NameTest from category and argument
                 match = re.split(r'::', match, 1)
-                tmp = re.split('\s', match[0], maxsplit=1)
+                tmp = re.split(r'\s', match[0], maxsplit=1)
                 # Splitting the category from arguments
                 tmp += re.split(r'\[', match[1], maxsplit=1)
                 # Allow degenerated data to fit in the dataframe
@@ -198,7 +199,7 @@ class PytestArtifactLogExtractor:
                 keywords_string = (re.search(r'(PASSED|FAILED|ERROR).*', line).group())
                 status_errors = re.split(r'::', keywords_string, 1)
 
-                status_category = re.split('\s', status_errors[0], maxsplit=1)
+                status_category = re.split(r'\s', status_errors[0], maxsplit=1)
                 final_failure_list += status_category
                 
                 test_name = re.split(r'\[.*?\] - | - ', status_errors[1], maxsplit=2)
@@ -264,20 +265,23 @@ class PytestArtifactLogExtractor:
         :return: A DataFrame containing 'test' and 'databaseId' information.
         """
         
-        # Extract filename without extension
+        # Extract filename without extension format = (testName.endpoint.datetime.fileExtension)
         stripped = self.path.split('/')[-1].split('.')
+        while len(stripped) < 4:
+            print(f"Filename: {self.path}\n")
+            raise "Artifact name format must be: 'testName.endpoint.datetime.fileExtension' with datetime = 'YYYYMMDDTHHmmSS'"
 
-        if (self.local == False):
-            # Ensure there are exactly three elements (fill missing ones with None)
-            while len(stripped) < 4:
-                stripped.append(None)  # Fill missing values with NaN
-            # Create DataFrame
-            df = pd.DataFrame([stripped], columns=['test', 'endpoint', 'databaseId', 'fileExtension'])
-        else:
-            config_endpoint = 'br-ne1'
-            # local name will have the format # test-name . id-datetime . extension
-            execution_entity = ExecutionEntity(Execution_Datetime=np.datetime64(datetime.now()), Endpoint=config_endpoint, Run_Time=np.datetime64(datetime.now()))
-            artifact = Artifact(Name=stripped[0], Execution_Datetime=execution_entity.Execution_Datetime)
+        # Format input datetime (YYYYMMDDTHHmmSS)
+        try:
+            datetime_file = np.datetime64(datetime.strptime(stripped[2], "%Y%m%dT%H%M%S"))
+        except:
+            #print(f"{stripped[2]} doesn't match YYYYMMDDTHHmmSS format, using current datetime")
+            datetime_file = np.datetime64(datetime.now())
+
+
+        # Ensure there are exactly three elements (fill missing ones with None)
+        execution_entity = ExecutionEntity(execution_datetime=datetime_file,endpoint=stripped[1])
+        artifact = Artifact(name=stripped[0], execution_datetime=execution_entity.execution_datetime)
 
         return execution_entity, artifact
 
