@@ -5,6 +5,22 @@ import time
 import glob
 import os
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--parquet_path',
+                    required=True, 
+                    help='Path of folder containing the execution_time and test parquet artifacts')
+
+
+args = parser.parse_args()
+
+
+paths = {
+    'report_folder': './output/',
+    'grouped_file': './output/resultado_grouped.csv',
+    'inconsistencies_file': './output/resultado_inconsistencias.csv',
+    'benchmark_file': './output/benchmark_results.csv',
+}
+
 # Definir as métricas Gauge
 objs_consistency_time = Gauge(
     'objs_consistency_time',
@@ -30,24 +46,13 @@ execution_status_gauge = Gauge(
     ['name', 'category']  
 )
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--parquet_path',
-                        required=True, 
-                        help='Path of folder containing the execution_time and test parquet artifacts')
-    return parser.parse_args()
-
-args = parse_args()
-
 def read_csv_and_update_metrics():
-    report_folder = os.path.abspath("./report")
-
     # Limpe as métricas existentes
     objs_consistency_time.clear()
     avg_gauge.clear()
 
     # Processar o report-inconsistencies.csv (Novo formato)
-    inconsistencies_file = os.path.join(report_folder, 'report-inconsistencies.csv')
+    inconsistencies_file = paths.get('inconsistencies_file')
     if os.path.exists(inconsistencies_file):
         print(f'Processing file: {inconsistencies_file}')
         df = pd.read_csv(inconsistencies_file)
@@ -68,7 +73,7 @@ def read_csv_and_update_metrics():
         print(f"Arquivo {inconsistencies_file} não encontrado.")
 
     # Processar o processed_data.csv (Formato anterior)
-    processed_files = glob.glob(os.path.join(report_folder, 'benchmark_results.csv'))
+    processed_files = glob.glob(paths.get('benchmark_file'))
     if processed_files:
         latest_processed_file = max(processed_files, key=os.path.getmtime)
         print(f'Processing file: {latest_processed_file}')
@@ -76,7 +81,7 @@ def read_csv_and_update_metrics():
 
         if 'operation' in df.columns:
             df_grouped = df.groupby(['region', 'tool', 'size', 'times', 'workers', 'quantity', 'operation'])['time'].median().reset_index()
-            df_grouped.to_csv('report/resultado_grouped.csv', index=False)
+            df_grouped.to_csv(paths.get('grouped_file'), index=False)
             print("Arquivo 'resultado_grouped.csv' com as medianas gerado.")
 
             for _, row in df_grouped.iterrows():

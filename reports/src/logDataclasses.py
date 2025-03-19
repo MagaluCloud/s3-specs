@@ -1,4 +1,4 @@
-from dataclasses import dataclass, asdict, fields
+from dataclasses import dataclass, asdict, fields, is_dataclass
 from typing import Optional
 import numpy as np
 import pandas as pd
@@ -67,13 +67,37 @@ class TestData:
         self.load_existent()
         self.save_loaded()
 
-    def __list_to_df__(self, input) -> list:
 
-        if isinstance(input, list):
-            return pd.DataFrame(list(map(lambda a: asdict(a), input)))
-        elif isinstance(input, pd.DataFrame) and input.empty:
+
+
+    def __list_to_df__(self, input) -> pd.DataFrame:
+        """
+        Converts a list of dataclass objects or a list of lists of dataclass objects into a DataFrame.
+
+        :param input: A list of dataclass objects or a list of lists of dataclass objects.
+        :return: A pandas DataFrame.
+        """
+        if not input:  # Handle empty input
             return pd.DataFrame()
-        return pd.DataFrame(asdict(input))
+
+        # Flatten the input if it contains nested lists
+        flattened_list = []
+        if isinstance(input, list):
+            for item in input:
+                if isinstance(item, pd.DataFrame):
+                    return pd.DataFrame()
+                else:
+                    flattened_list.append(item)
+        else:
+            flattened_list.append(input)
+
+        tmp = []
+        for item in flattened_list:
+            if is_dataclass(item):
+                tmp.append(asdict(item))
+                
+        return pd.DataFrame(tmp)
+    
 
     def load_existent(self) -> None:
         """
@@ -95,7 +119,6 @@ class TestData:
             if isinstance(df, pd.DataFrame) and not df.empty:
                 parquet_file_name = "./output/"+atb+".parquet"
                 am.save_df_to_parquet(df = df, parquet_file_name=parquet_file_name)  
-
 
 
 def get_fields(Dataclass: type) -> list[str]:

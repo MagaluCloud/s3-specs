@@ -12,7 +12,7 @@ def download_file(url, filename, save_dir, token):
     Faz o download de um arquivo de uma URL e salva localmente na pasta especificada.
     """
     filepath = os.path.join(save_dir, filename)
-    print(f"Baixando {filename} para {filepath}...")
+    #print(f"Baixando {filename} para {filepath}...")
     headers = {
         'Authorization': f'token {token}',
     }
@@ -47,7 +47,7 @@ def get_action_artifacts(repo_owner, repo_name, n, token, save_dir):
         
         for run in runs:
             run_id = run['id']
-            print(f"\nObtendo artefatos da execução do workflow: {run_id}")
+            print(f"Obtendo artefatos da execução do workflow: {run_id}")
             
             # URL para pegar os artefatos da execução do workflow
             artifacts_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/actions/runs/{run_id}/artifacts"
@@ -91,6 +91,9 @@ if __name__ == "__main__":
     
     # Chama a função para obter os artefatos das execuções dos workflows
     get_action_artifacts(args.repo_owner, args.repo_name, args.n, args.token, save_dir)
+
+    # Everything depends on the files present on the output
+    assert os.path.exists(save_dir), f"{save_dir} does not exist"
 
     artifacts_paths = list(filter(lambda log: log.endswith('.log'), os.listdir(save_dir)))
 

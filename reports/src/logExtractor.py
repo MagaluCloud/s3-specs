@@ -113,23 +113,24 @@ class PytestArtifactLogExtractor:
         # Execution_time
         timestamps = self.__create_time_df__(self.__extract_time_categories__(self.__get_list_by_name__(header, 'duration top')))
 
-        execution_time = ExecutionTime( execution_datetime=execution_entity.execution_datetime,
-                                        execution_name=timestamps['name'], 
-                                        execution_type=timestamps['durationType'],
-                                        number_runs=timestamps['num'],
-                                        avg_time=timestamps['avg'],
-                                        min_time=timestamps['min'],
-                                        total_time=timestamps['total'],
-                                       )
 
+        execution_time = ExecutionTime( execution_datetime=execution_entity.execution_datetime,
+                                        execution_name=timestamps['name'].values, 
+                                        execution_type=timestamps['durationType'].values,
+                                        number_runs=timestamps['num'].values,
+                                        avg_time=timestamps['avg'].values,
+                                        min_time=timestamps['min'].values,
+                                        total_time=timestamps['total'].values,
+                                       )
+        
         failures_df = self.__create_failure_df__(self.__extract_failures_errors__(self.__get_list_by_name__(header, 'summary')))
 
         if not failures_df.empty:
-            failures = Failures(test_name= failures_df['name'],
+            failures = Failures(test_name= failures_df['name'].values,
                                 artifact_name=artifact.name,
                                 execution_datetime=execution_entity.execution_datetime,
-                                error=failures_df['error'],
-                                details=failures_df['error_details'],
+                                error=failures_df['error'].values,
+                                details=failures_df['error_details'].values,
             )
         else:
             failures = failures_df
