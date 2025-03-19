@@ -54,6 +54,7 @@ WORKDIR /app
 COPY bin /app/bin/
 COPY params.example.yaml /app/params.example.yaml
 COPY justfile /app/justfile
+COPY utils.just /app/utils.just
 COPY uv.lock /app/uv.lock
 COPY pyproject.toml /app/pyproject.toml
 COPY README.md /app/README.md
