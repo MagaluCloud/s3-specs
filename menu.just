@@ -15,8 +15,8 @@ _text_prompt title default_value:
 test config_file="./params.example.yaml":
   #!/usr/bin/env bash
   test_categories=$(just categories | just menu::_menu_picker \
-      "Select the categories to test")
-  just _run_tests {{config_file}} -m "$test_categories" 
+      "Select the categories to test" | sed ':a;N;$!ba;s/\n/ or /g')
+  just _run_tests {{config_file}} "-m '$test_categories'" 
 
 # Interactively pick legacy categories to test on s3-tester (soon to be deprecated)
 legacy-test:

@@ -7,6 +7,7 @@
 ARG AWS_CLI_VERSION="2.15.27"
 ARG RCLONE_VERSION="1.66.0"
 ARG MGC_VERSION="0.34.1"
+ARG JUST_VERSION="1.40.0"
 
 # aws-cli
 FROM public.ecr.aws/aws-cli/aws-cli:${AWS_CLI_VERSION} as awscli
@@ -19,7 +20,7 @@ RUN apt-get update && \
     unzip \
     python3 \
     git \
-    just;
+    fzf;
 
 # directory to download binaries
 RUN mkdir -p /tools;
@@ -47,6 +48,10 @@ RUN curl -Lo mgc.tar.gz "https://github.com/MagaluCloud/mgccli/releases/download
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     ln -s $HOME/.local/bin/uv /usr/local/bin/uv;
 
+# just (task runner, justfile)
+ARG JUST_VERSION
+RUN curl -LsSf https://just.systems/install.sh | bash -s -- --tag ${JUST_VERSION} --to /usr/local/bin;
+
 # container workdir
 WORKDIR /app
 
@@ -55,6 +60,7 @@ COPY bin /app/bin/
 COPY params.example.yaml /app/params.example.yaml
 COPY justfile /app/justfile
 COPY utils.just /app/utils.just
+COPY menu.just /app/menu.just
 COPY uv.lock /app/uv.lock
 COPY pyproject.toml /app/pyproject.toml
 COPY README.md /app/README.md
@@ -64,4 +70,4 @@ COPY reports /app/reports/
 RUN uv sync
 
 # Definir o script como ponto de entrada
-ENTRYPOINT ["just", "--justfile", "/app/justfile"]
+ENTRYPOINT ["just"]
