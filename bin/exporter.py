@@ -119,7 +119,11 @@ def execution_metrics_exporter():
         value_vars=['avg_time', 'min_time', 'total_time'],
         var_name='time_metric',
         value_name='time_values'
-    ).reset_index(drop=True).drop_duplicates()
+    ).reset_index(drop=True)
+
+    
+    #print(melted_df.to_dict('records')[1]['time_values'])
+    print(melted_df.time_values)
 
     # Setar valores das métricas
     for record in melted_df.to_dict('records'):
@@ -148,7 +152,7 @@ def test_metrics_exporter():
     }
 
     cleaned_status_df = df.drop(columns=['artifact_name', 'execution_datetime', 'arguments'])
-    cleaned_status_df['status'] = cleaned_status_df['status'].map(status_to_numeric).drop_duplicates()
+    cleaned_status_df['status'] = cleaned_status_df['status'].map(status_to_numeric).dropna(axis=0)
     dicts_time_metric_df = cleaned_status_df.to_dict(orient='records')
 
     # Setar valores das métricas

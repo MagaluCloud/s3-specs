@@ -113,16 +113,16 @@ class PytestArtifactLogExtractor:
         # Execution_time
         timestamps = self.__create_time_df__(self.__extract_time_categories__(self.__get_list_by_name__(header, 'duration top')))
 
+        execution_time = [ExecutionTime(
+            execution_datetime=execution_entity.execution_datetime,  # Assuming this is a fixed value
+            execution_name=row['name'],
+            execution_type=row['durationType'],
+            number_runs=row['num'],
+            avg_time=row['avg'],
+            min_time=row['min'],
+            total_time=row['total']
+        ) for _, row in timestamps.iterrows()]   
 
-        execution_time = ExecutionTime( execution_datetime=execution_entity.execution_datetime,
-                                        execution_name=timestamps['name'].values, 
-                                        execution_type=timestamps['durationType'].values,
-                                        number_runs=timestamps['num'].values,
-                                        avg_time=timestamps['avg'].values,
-                                        min_time=timestamps['min'].values,
-                                        total_time=timestamps['total'].values,
-                                       )
-        
         failures_df = self.__create_failure_df__(self.__extract_failures_errors__(self.__get_list_by_name__(header, 'summary')))
 
         if not failures_df.empty:
@@ -133,7 +133,7 @@ class PytestArtifactLogExtractor:
                                 details=failures_df['error_details'].values,
             )
         else:
-            failures = failures_df
+            failures = Failures(test_name='',artifact_name='',execution_datetime=0,error='',details='')
 
         return tests, execution_time, failures
 

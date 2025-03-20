@@ -67,9 +67,6 @@ class TestData:
         self.load_existent()
         self.save_loaded()
 
-
-
-
     def __list_to_df__(self, input) -> pd.DataFrame:
         """
         Converts a list of dataclass objects or a list of lists of dataclass objects into a DataFrame.
@@ -77,28 +74,30 @@ class TestData:
         :param input: A list of dataclass objects or a list of lists of dataclass objects.
         :return: A pandas DataFrame.
         """
-        if not input:  # Handle empty input
+
+        # Handle empty input
+        if not input:
             return pd.DataFrame()
 
         # Flatten the input if it contains nested lists
         flattened_list = []
         if isinstance(input, list):
             for item in input:
-                if isinstance(item, pd.DataFrame):
-                    return pd.DataFrame()
+                if isinstance(item, list):
+                    flattened_list.extend(item)
                 else:
                     flattened_list.append(item)
         else:
             flattened_list.append(input)
 
-        tmp = []
+        # Validate that all items are dataclass instances
         for item in flattened_list:
-            if is_dataclass(item):
-                tmp.append(asdict(item))
-                
-        return pd.DataFrame(tmp)
-    
+            if not is_dataclass(item):
+                raise TypeError(f"Input must be a dataclass object or a list of dataclass objects. Found: {type(item)}")
 
+        # Convert dataclass objects to dictionaries and create DataFrame
+        return pd.DataFrame([asdict(item) for item in flattened_list])
+    
     def load_existent(self) -> None:
         """
         Load data from Parquet files for each attribute if the file exists and has data.
@@ -117,7 +116,8 @@ class TestData:
         for atb in vars(self):
             df = getattr(self, atb)
             if isinstance(df, pd.DataFrame) and not df.empty:
-                parquet_file_name = "./output/"+atb+".parquet"
+                parquet_file_name = f"./output/{atb}.parquet"
+                print(f"Saving {atb} into {parquet_file_name}")
                 am.save_df_to_parquet(df = df, parquet_file_name=parquet_file_name)  
 
 
