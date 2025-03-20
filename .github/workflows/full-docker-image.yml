@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - recent-just-oci
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: magalucloud/s3-specs
