@@ -63,7 +63,9 @@ def get_action_artifacts(repo_owner, repo_name, n, token, save_dir):
                     
                     # Faz o download do artefato
                     download_file(artifact_url, artifact_zip, save_dir, token)
-                    with zipfile.ZipFile(os.path.join(save_dir, artifact_zip), 'r') as zip:
+                    zip_path = os.path.join(save_dir, artifact_zip)
+                    with zipfile.ZipFile(zip_path, 'r') as zip:
+                        print(f"Unzipping {zip_path}")
                         zip.extractall(save_dir)
             else:
                 print(f"Erro ao obter artefatos da execução {run_id}: {artifacts_response.status_code}")
@@ -82,7 +84,7 @@ if __name__ == "__main__":
     parser.add_argument('token', type=str, help='Seu token de autenticação do GitHub')
     
     # Diretório onde os artefatos serão salvos
-    save_dir ='./output/downloaded_artifact/'
+    save_dir ='./reports/output/downloaded_artifact/'
 
     # Faz o parsing dos argumentos passados
     args = parser.parse_args()

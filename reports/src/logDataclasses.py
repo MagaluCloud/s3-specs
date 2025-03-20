@@ -53,22 +53,22 @@ class TestData:
     def __init__(self,
         execution_entity: list[ExecutionEntity],
         artifact: list[Artifact],
-        #artifact_info: list[ArtifactInfo],
-        tests: list[Tests],
-        execution_time: list[ExecutionTime],
-        failures: list[Failures]
+        tests: Tests,
+        execution_time: ExecutionTime,
+        failures: Failures
     ):
 
         self.execution_entity = self.__list_to_df__(execution_entity)
         self.artifact = self.__list_to_df__(artifact)
-        self.tests = self.__list_to_df__(tests[0])
-        self.execution_time = self.__list_to_df__(execution_time[0])
-        self.failures = self.__list_to_df__(failures[0])
+        self.tests = self.__list_to_df__(tests)
+        self.execution_time = self.__list_to_df__(execution_time)
+        self.failures = self.__list_to_df__(failures)
 
         self.load_existent()
         self.save_loaded()
 
     def __list_to_df__(self, input) -> list:
+
         if isinstance(input, list):
             return pd.DataFrame(list(map(lambda a: asdict(a), input)))
         elif isinstance(input, pd.DataFrame) and input.empty:
