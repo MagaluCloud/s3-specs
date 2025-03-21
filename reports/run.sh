@@ -8,10 +8,19 @@ while [[ $# -gt 0 ]]; do
         -o|--output)
             if [[ -z "$2" || "$2" == -* ]]; then
                 echo "Error: Missing value for option '$1'."
-                echo "Usage: $0 [-o OUTPUT_FILE] [-p PROFILE] <Test_Category> <Path_Config> <Root_Folder> <Bucket> <Endpoint>"
+                echo "Usage: $0 [-o OUTPUT_FILE] [-p PROFILE] <Test_Category> <Path_Config> <Root_Folder>"
                 exit 1
             fi
             OUTPUT_FILE="$2"
+            shift 2
+            ;;
+        -p|--profile)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo "Error: Missing value for option '$1'."
+                echo "Usage: $0 [-o OUTPUT_FILE] [-p PROFILE] <Test_Category> <Path_Config> <Root_Folder>"
+                exit 1
+            fi
+            PROFILE="$2"
             shift 2
             ;;
         *)
@@ -21,9 +30,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validate arguments
-if [ "$#" -ne 6 ]; then
+if [ "$#" -ne 3 ]; then
     echo "Error: Missing required arguments."
-    echo "Usage: $0 [-o OUTPUT_FILE] <Test_Category> <Path_Config> <Root_Folder> <Bucket> <Endpoint> <Profile>"
+    echo "Usage: $0 [-o OUTPUT_FILE] [-p PROFILE] <Test_Category> <Path_Config> <Root_Folder>"
     exit 1
 fi
 
@@ -31,9 +40,6 @@ fi
 TEST_CATEGORY=$1
 CONFIG_PATH=$2
 ROOT_FOLDER=$3
-BUCKET=$4
-ENDPOINT=$5
-PROFILE=$6
 
 # Validate test category
 declare -A TEST_CATEGORIES=(
@@ -63,7 +69,6 @@ if [ ! -d "$ROOT_FOLDER" ]; then
     exit 1
 fi
 
-
 # Set log file name
 INIT_TIME=$(date +"%Y%m%dT%H%M%S")
 if [ -z "$OUTPUT_FILE" ]; then
@@ -73,8 +78,17 @@ fi
 # Define tests
 TESTS=()
 for test_file in ${TEST_CATEGORIES[$TEST_CATEGORY]}; do
-    TESTS+=("$ROOT_FOLDER/$test_file")
+    if [ -f "$ROOT_FOLDER/$test_file" ]; then
+        TESTS+=("$ROOT_FOLDER/$test_file")
+    else
+        echo "Warning: Test file not found: $ROOT_FOLDER/$test_file"
+    fi
 done
+
+if [ ${#TESTS[@]} -eq 0 ]; then
+    echo "Error: No valid test files found for category: $TEST_CATEGORY"
+    exit 1
+fi
 
 # Run pytest
 echo "Running pytest..."
@@ -85,16 +99,10 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Download data
-#uv run ./src/generatedDataDownloader.py --config "$PROFILE" --endpoint "$ENDPOINT" --bucket $BUCKET
-
 # Generate report
 uv run ./src/__main__.py --file_path "$OUTPUT_FILE"
 
 # Clean logs
-rm -f *pytest*.log
-
-# Upload artifacts
-#uv run ./src/generatedDataUploader.py --profile "$PROFILE" --endpoint "$ENDPOINT" --bucket "$BUCKET"
+rm -f "$OUTPUT_FILE"
 
 echo "Script execution completed."

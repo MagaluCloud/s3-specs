@@ -32,7 +32,6 @@ if __name__ == '__main__':
     execution_entity, artifact, tests, execution_time, failures = p.log_to_df()
     t = TestData(execution_entity=[execution_entity], artifact=[artifact], tests=tests, execution_time=execution_time, failures=failures)
 
-
     print('Generating Relatory...')
     pdf = PdfMaker(t)
     pdf.create_pdf()
