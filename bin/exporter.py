@@ -5,6 +5,22 @@ import time
 import glob
 import os
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--parquet_path',
+                    required=True, 
+                    help='Path of folder containing the execution_time and test parquet artifacts')
+
+
+args = parser.parse_args()
+
+
+paths = {
+    'report_folder': './output/',
+    'grouped_file': './output/resultado_grouped.csv',
+    'inconsistencies_file': './output/report_inconsistencies.csv',
+    'benchmark_file': './output/benchmark_results.csv',
+}
+
 # Definir as métricas Gauge
 objs_consistency_time = Gauge(
     'objs_consistency_time',
