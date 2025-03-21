@@ -167,5 +167,5 @@ def test_object_validations(setup_standard_bucket, setup_versioned_bucket, comma
     elapsed_time = end_time - start_time
 
     # Salva os resultados
-    with open('./report/report-inconsistencies.csv', 'a') as f:
+    with open('output/report_inconsistencies.csv', 'a') as f:
         f.write(f"{quantity},{workers},{command}_after_put,{profile_name},{bucket_type},{elapsed_time}\n")
