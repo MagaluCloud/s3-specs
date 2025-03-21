@@ -17,7 +17,7 @@ args = parser.parse_args()
 paths = {
     'report_folder': './output/',
     'grouped_file': './output/resultado_grouped.csv',
-    'inconsistencies_file': './output/resultado_inconsistencias.csv',
+    'inconsistencies_file': './output/inconsistencies_results.csv',
     'benchmark_file': './output/benchmark_results.csv',
 }
 
