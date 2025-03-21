@@ -121,10 +121,6 @@ def execution_metrics_exporter():
         value_name='time_values'
     ).reset_index(drop=True)
 
-    
-    #print(melted_df.to_dict('records')[1]['time_values'])
-    print(melted_df.time_values)
-
     # Setar valores das métricas
     for record in melted_df.to_dict('records'):
         execution_time_gauge.labels(

@@ -133,7 +133,7 @@ class PytestArtifactLogExtractor:
                                 details=failures_df['error_details'].values,
             )
         else:
-            failures = Failures(test_name='',artifact_name='',execution_datetime=0,error='',details='')
+            failures = Failures(test_name=None,artifact_name=None,execution_datetime=0,error=None,details=None)
 
         return tests, execution_time, failures
 

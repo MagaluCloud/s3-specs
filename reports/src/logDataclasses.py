@@ -96,7 +96,7 @@ class TestData:
                 raise TypeError(f"Input must be a dataclass object or a list of dataclass objects. Found: {type(item)}")
 
         # Convert dataclass objects to dictionaries and create DataFrame
-        return pd.DataFrame([asdict(item) for item in flattened_list])
+        return pd.DataFrame([asdict(item) for item in flattened_list]).dropna()
     
     def load_existent(self) -> None:
         """
