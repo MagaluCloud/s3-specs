@@ -14,3 +14,4 @@ params.yaml
 # Ignore pytest debug log file
 pytestdebug.log
 
+**/output/

@@ -22,7 +22,7 @@ _run_tests config_file *pytest_params:
 
 #Execute the tests of s3-specs
 tests *pytest_params: setup-profiles
-    just _run_tests "./params.example.yaml" {{pytest_params}}
+    just _run_tests "./params.example.yaml" "{{pytest_params}}"
 
 #Execute the tests of s3-specs and generate a report of the tests after running.
 report category:

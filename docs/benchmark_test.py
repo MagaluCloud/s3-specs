@@ -92,7 +92,7 @@ def test_benchmark(
                 os.makedirs("report", exist_ok=True)
                 
                 # Caminho do arquivo de relatório
-                report_file = "report/benchmark_results.csv"
+                report_file = "output/benchmark_results.csv"
                 
                 time_taken = measure_time(cmd)
                 subprocess.run(f"rm -rf temp-down-*", shell=True)
