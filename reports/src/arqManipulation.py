@@ -37,8 +37,6 @@ class ArqManipulation:
             os.makedirs(os.path.dirname(parquet_file_name), exist_ok=True)
             df.to_parquet(parquet_file_name)
         except Exception as e:
-            print(df)
-            print(df.columns, df.dtypes)
             raise RuntimeError(f"Error saving DataFrame to Parquet file '{parquet_file_name}': {e}")
 
     @staticmethod

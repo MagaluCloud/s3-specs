@@ -268,17 +268,11 @@ class PytestArtifactLogExtractor:
         
         # Extract filename without extension format = (testName.endpoint.datetime.fileExtension)
         stripped = self.path.split('/')[-1].split('.')
-        while len(stripped) < 4:
+        if len(stripped) != 4:
             print(f"Filename: {self.path}\n")
             raise "Artifact name format must be: 'testName.endpoint.datetime.fileExtension' with datetime = 'YYYYMMDDTHHmmSS'"
 
-        # Format input datetime (YYYYMMDDTHHmmSS)
-        try:
-            datetime_file = np.datetime64(datetime.strptime(stripped[2], "%Y%m%dT%H%M%S"))
-        except:
-            #print(f"{stripped[2]} doesn't match YYYYMMDDTHHmmSS format, using current datetime")
-            datetime_file = np.datetime64(datetime.now())
-
+        datetime_file = parse_datetime(stripped[2])
 
         # Ensure there are exactly three elements (fill missing ones with None)
         execution_entity = ExecutionEntity(execution_datetime=datetime_file,endpoint=stripped[1])
@@ -286,3 +280,19 @@ class PytestArtifactLogExtractor:
 
         return execution_entity, artifact
 
+def parse_datetime(datetime_str):
+    # Try parsing with the first format: YYYY-MM-DDTHH:mm:ss.SSSSSS
+    try:
+        return np.datetime64(datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%S.%f"))
+    except ValueError:
+        pass
+
+    # Try parsing with the second format: YYYY-MM-DD HH:mm:ss.SSSSSS
+    try:
+        return np.datetime64(datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S.%f"))
+    except ValueError:
+        pass
+
+    # If neither format works, return the current datetime
+    print(f"Warning: {datetime_str} doesn't match any known format, using current datetime")
+    return np.datetime64(datetime.now())
