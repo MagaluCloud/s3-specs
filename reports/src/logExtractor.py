@@ -113,26 +113,27 @@ class PytestArtifactLogExtractor:
         # Execution_time
         timestamps = self.__create_time_df__(self.__extract_time_categories__(self.__get_list_by_name__(header, 'duration top')))
 
-        execution_time = ExecutionTime( execution_datetime=execution_entity.execution_datetime,
-                                        execution_name=timestamps['name'], 
-                                        execution_type=timestamps['durationType'],
-                                        number_runs=timestamps['num'],
-                                        avg_time=timestamps['avg'],
-                                        min_time=timestamps['min'],
-                                        total_time=timestamps['total'],
-                                       )
+        execution_time = [ExecutionTime(
+            execution_datetime=execution_entity.execution_datetime,  # Assuming this is a fixed value
+            execution_name=row['name'],
+            execution_type=row['durationType'],
+            number_runs=row['num'],
+            avg_time=row['avg'],
+            min_time=row['min'],
+            total_time=row['total']
+        ) for _, row in timestamps.iterrows()]   
 
         failures_df = self.__create_failure_df__(self.__extract_failures_errors__(self.__get_list_by_name__(header, 'summary')))
 
         if not failures_df.empty:
-            failures = Failures(test_name= failures_df['name'],
+            failures = Failures(test_name= failures_df['name'].values,
                                 artifact_name=artifact.name,
                                 execution_datetime=execution_entity.execution_datetime,
-                                error=failures_df['error'],
-                                details=failures_df['error_details'],
+                                error=failures_df['error'].values,
+                                details=failures_df['error_details'].values,
             )
         else:
-            failures = failures_df
+            failures = Failures(test_name=None,artifact_name=None,execution_datetime=0,error=None,details=None)
 
         return tests, execution_time, failures
 
@@ -267,17 +268,11 @@ class PytestArtifactLogExtractor:
         
         # Extract filename without extension format = (testName.endpoint.datetime.fileExtension)
         stripped = self.path.split('/')[-1].split('.')
-        while len(stripped) < 4:
+        if len(stripped) != 4:
             print(f"Filename: {self.path}\n")
             raise "Artifact name format must be: 'testName.endpoint.datetime.fileExtension' with datetime = 'YYYYMMDDTHHmmSS'"
 
-        # Format input datetime (YYYYMMDDTHHmmSS)
-        try:
-            datetime_file = np.datetime64(datetime.strptime(stripped[2], "%Y%m%dT%H%M%S"))
-        except:
-            #print(f"{stripped[2]} doesn't match YYYYMMDDTHHmmSS format, using current datetime")
-            datetime_file = np.datetime64(datetime.now())
-
+        datetime_file = parse_datetime(stripped[2])
 
         # Ensure there are exactly three elements (fill missing ones with None)
         execution_entity = ExecutionEntity(execution_datetime=datetime_file,endpoint=stripped[1])
@@ -285,3 +280,19 @@ class PytestArtifactLogExtractor:
 
         return execution_entity, artifact
 
+def parse_datetime(datetime_str):
+    # Try parsing with the first format: YYYY-MM-DDTHH:mm:ss.SSSSSS
+    try:
+        return np.datetime64(datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%S.%f"))
+    except ValueError:
+        pass
+
+    # Try parsing with the second format: YYYY-MM-DD HH:mm:ss.SSSSSS
+    try:
+        return np.datetime64(datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S.%f"))
+    except ValueError:
+        pass
+
+    # If neither format works, return the current datetime
+    print(f"Warning: {datetime_str} doesn't match any known format, using current datetime")
+    return np.datetime64(datetime.now())
