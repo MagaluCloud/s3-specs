@@ -25,9 +25,9 @@ tests *pytest_params: setup-profiles
     just _run_tests "./params.example.yaml" "{{pytest_params}}"
 
 #Execute the tests of s3-specs and generate a report of the tests after running.
-report category:
+report category="":
     just setup-profiles
-    bash -c "cd reports && ./run.sh {{category}} ../params.example.yaml ../docs/ && mv report_*.pdf outputs/"
+    reports/run.sh '{{category}}' ./params.example.yaml ./docs/
 
 # List known categories (pytest markers)
 categories:
