@@ -50,6 +50,8 @@ declare -A TEST_CATEGORIES=(
     ["cold"]="cold_storage_test.py"
     ["locking"]="locking_test.py locking_cli_test.py"
     ["big-objects"]="big_objects_test.py multiple_objects_test.py"
+    ["consistency"]="consistency_test.py"
+    ["benchmark"]="benchmark_test.py"
 )
 
 if [[ -z "${TEST_CATEGORIES[$TEST_CATEGORY]}" ]]; then
