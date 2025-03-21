@@ -69,5 +69,7 @@ COPY reports /app/reports/
 # Download python dependencies to be bundled with the image
 RUN uv sync
 
+RUN bash -c "cd reports && uv sync"
+
 # Definir o script como ponto de entrada
 ENTRYPOINT ["just"]
