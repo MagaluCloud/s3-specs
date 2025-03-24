@@ -1,0 +1,78 @@
+# Tests that must pass in order for a PR to be allowed on the main branch
+# it is expected that they finish fast, thal ALL tests pass
+# and no verbose logging / debugging is enabled.
+#
+# They should run as much as possible in parallel.
+
+name: Pull Request Essential Tests
+
+on:
+    schedule:
+      - cron: "0 * * * *" # Every hour at 00 min
+      - cron: "30 */6 * * *" # Every 6 hours at *h30 min  
+      - cron: "15 */12 * * *" # Every 12 hours at *h15 min  
+
+jobs:
+  run_tests:
+    strategy:
+      fail-fast: true
+      matrix:
+        marker:
+          # 1h tests
+          - test: basic
+            name: basic
+            schedule: '0 * * * *'
+          - test: cold_storage
+            name: cold_storage
+            schedule: '0 * * * *'
+          - test: presign
+            name: presign
+            schedule: '0 * * * *'
+
+          # 6h tests
+          - test: acl
+            name: acl
+            schedule: '30 */6 * * *'
+          - test: locking
+            name: locking
+            schedule: '30 */6 * * *'
+          - test: policy
+            name: policy
+            schedule: '30 */6 * * *'
+          - test: bucket_versioning
+            name: bucket_versioning
+            schedule: '30 */6 * * *'
+
+          # 12h tests
+          - test: multiple_objects
+            name: multiple_objects
+            schedule: '15 */12 * * *'
+          - test: big_objects
+            name: big_objects
+            schedule: '15 */12 * * *'    
+
+    if: github.event.schedule == matrix.marker.schedule 
+    uses: ./.github/workflows/run-tests.yml
+
+    with:
+      name: "${{ matrix.marker.name }}.${{ matrix.config.name }}"
+      config: ${{ matrix.config.path }}
+      flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}
+
+
+  tests-success:
+    runs-on: ubuntu-24.04
+    needs: [run_tests]
+    steps:
+      - name: ok
+        run:
+          exit 0
+
+  cleanup-tests:
+    needs: [tests-success]
+    if: always() 
+    uses: ./.github/workflows/cleanup-tests.yml
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}
