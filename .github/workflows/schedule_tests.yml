@@ -1,0 +1,56 @@
+name: Scheduled test runs
+
+on:
+  schedule:
+    - cron: '0 */8 * * *'
+    - cron: '30 * * * *'
+    - cron: '35 * * * *'
+env:
+  PROFILES: ${{ secrets.profiles }}
+
+jobs:
+  "CRON_TESTS":
+    runs-on: ubuntu-latest
+    container: ghcr.io/marmotitude/s3-tester:tests
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: "Profiles: ${{ vars.CRON_PROFILES_1 }}; Clients: ${{ vars.CRON_CLIENTS_1}}; Tests: ${{ vars.CRON_TESTS_1 }};"
+        if: github.event.schedule == '30 * * * *'
+        run: |
+          echo copying specs from the workspace volume to the image workspace...
+          cp $GITHUB_WORKSPACE/spec/*.sh /app/spec/.
+          cd /app
+          mgc --version
+          sha256sum `which mgc`
+          ./entrypoint.sh test.sh --profiles "${{ vars.CRON_PROFILES_1 }}" --tests "${{ vars.CRON_TESTS_1 }}" --clients "${{ vars.CRON_CLIENTS_1 }}" -- --env NUMBER_OF_WAITS=${{ vars.NUMBER_OF_WAITS }} --env SKIP_KNOWN_ISSUES=${{ vars.SKIP_KNOWN_ISSUES }} --color
+
+      - name: "Profiles: ${{ vars.CRON_PROFILES_2 }}; Clients: ${{ vars.CRON_CLIENTS_2}}; Tests: ${{ vars.CRON_TESTS_2 }};"
+        if: github.event.schedule == '35 * * * *'
+        run: |
+          echo copying specs from the workspace volume to the image workspace...
+          cp $GITHUB_WORKSPACE/spec/*.sh /app/spec/.
+          cd /app
+          mgc --version
+          sha256sum `which mgc`
+          ./entrypoint.sh test.sh --profiles "${{ vars.CRON_PROFILES_2 }}" --tests "${{ vars.CRON_TESTS_2 }}" --clients "${{ vars.CRON_CLIENTS_2 }}" -- --env NUMBER_OF_WAITS=${{ vars.NUMBER_OF_WAITS }} --env SKIP_KNOWN_ISSUES=${{ vars.SKIP_KNOWN_ISSUES }} --color
+      - name: "Profiles: ${{ vars.CRON_PROFILES_3 }}; Clients: ${{ vars.CRON_CLIENTS_3}}; Tests: ${{ vars.CRON_TESTS_3 }};"
+        if: github.event.schedule == '0 */8 * * *'
+        run: |
+          echo copying specs from the workspace volume to the image workspace...
+          cp $GITHUB_WORKSPACE/spec/*.sh /app/spec/.
+          cd /app
+          mgc --version
+          sha256sum `which mgc`
+          ./entrypoint.sh test.sh --profiles "${{ vars.CRON_PROFILES_3 }}" --tests "${{ vars.CRON_TESTS_3 }}" --clients "${{ vars.CRON_CLIENTS_3 }}" -- --env NUMBER_OF_WAITS=${{ vars.NUMBER_OF_WAITS }} --env SKIP_KNOWN_ISSUES=${{ vars.SKIP_KNOWN_ISSUES }} --color
+      - name: webhook send
+        if: always()
+        run: |
+          cd /app
+          ./bin/webhook.py "${{ vars.WEBHOOK_URL }}" "${{ vars.WEBHOOK_CLEAN_URL }}" "${{ github.repository }}" "${{ github.run_id }}" "${{ vars.TOKEN }}"
+      - name: Upload results.tap artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-tap
+          path: /app/report/*.tap
