@@ -7,10 +7,10 @@ on:
     - cron: "30 */12 * * *"    # Every 12 hours at *h15 min  
 
 jobs:
-  if: github.event.schedule == '0 * * * *'  :
   run_1h_tests:
+    if: github.event.schedule == '0 * * * *'  
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         marker:
           # 1h tests
@@ -25,16 +25,16 @@ jobs:
             name: "example"
     uses: ./.github/workflows/run-tests.yml
     with:
-      name: "${{ matrix.marker.name }}.${{ matrix.config.name }}"
+      name: "${{ matrix.marker.name }}_1hours.${{ matrix.config.name }}"
       config: ${{ matrix.config.path }}
       flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
-  if: github.event.schedule == '15 */6 * * *'  :
   run_6h_tests:
+    if: github.event.schedule == '15 */6 * * *'
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         marker:
             # 6h tests
@@ -51,16 +51,16 @@ jobs:
             name: "example"
     uses: ./.github/workflows/run-tests.yml
     with:
-      name: "${{ matrix.marker.name }}.${{ matrix.config.name }}"
+      name: "${{ matrix.marker.name }}_6hours.${{ matrix.config.name }}"
       config: ${{ matrix.config.path }}
       flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
-  if: github.event.schedule == '30 */12 * * *'  :
   run_12h_tests:
+    if: github.event.schedule == '30 */12 * * *'  
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         marker:
             # 6h tests
@@ -77,23 +77,15 @@ jobs:
             name: "example"
     uses: ./.github/workflows/run-tests.yml
     with:
-      name: "${{ matrix.marker.name }}.${{ matrix.config.name }}"
+      name: "${{ matrix.marker.name }}_12hours.${{ matrix.config.name }}"
       config: ${{ matrix.config.path }}
       flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
-
-  tests-success:
-    runs-on: ubuntu-24.04
-    needs: [run_tests]
-    steps:
-      - name: ok
-        run:
-          exit 0
 
   cleanup-tests:
-    needs: [tests-success]
+    needs: [run_1h_tests]
     if: always() 
     uses: ./.github/workflows/cleanup-tests.yml
     secrets:
