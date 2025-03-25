@@ -1,19 +1,14 @@
-# Tests that must pass in order for a PR to be allowed on the main branch
-# it is expected that they finish fast, thal ALL tests pass
-# and no verbose logging / debugging is enabled.
-#
-# They should run as much as possible in parallel.
-
-name: Pull Request Essential Tests
+name: Recurrent tests
 
 on:
-    schedule:
-      - cron: "0 * * * *" # Every hour at 00 min
-      - cron: "30 */6 * * *" # Every 6 hours at *h30 min  
-      - cron: "15 */12 * * *" # Every 12 hours at *h15 min  
+  schedule:
+    - cron: "0 * * * *"        # Every hour at 00 min
+    - cron: "15 */6 * * *"     # Every 6 hours at *h30 min  
+    - cron: "30 */12 * * *"    # Every 12 hours at *h15 min  
 
 jobs:
-  run_tests:
+  if: github.event.schedule == '0 * * * *'  :
+  run_1h_tests:
     strategy:
       fail-fast: true
       matrix:
@@ -21,39 +16,66 @@ jobs:
           # 1h tests
           - test: basic
             name: basic
-            schedule: '0 * * * *'
           - test: cold_storage
             name: cold_storage
-            schedule: '0 * * * *'
           - test: presign
             name: presign
-            schedule: '0 * * * *'
+        config:
+          - path: "../params.example.yaml"
+            name: "example"
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      name: "${{ matrix.marker.name }}.${{ matrix.config.name }}"
+      config: ${{ matrix.config.path }}
+      flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}
 
-          # 6h tests
+  if: github.event.schedule == '15 */6 * * *'  :
+  run_6h_tests:
+    strategy:
+      fail-fast: true
+      matrix:
+        marker:
+            # 6h tests
           - test: acl
             name: acl
-            schedule: '30 */6 * * *'
           - test: locking
             name: locking
-            schedule: '30 */6 * * *'
           - test: policy
             name: policy
-            schedule: '30 */6 * * *'
           - test: bucket_versioning
             name: bucket_versioning
-            schedule: '30 */6 * * *'
-
-          # 12h tests
-          - test: multiple_objects
-            name: multiple_objects
-            schedule: '15 */12 * * *'
-          - test: big_objects
-            name: big_objects
-            schedule: '15 */12 * * *'    
-
-    if: github.event.schedule == matrix.marker.schedule 
+        config:
+          - path: "../params.example.yaml"
+            name: "example"
     uses: ./.github/workflows/run-tests.yml
+    with:
+      name: "${{ matrix.marker.name }}.${{ matrix.config.name }}"
+      config: ${{ matrix.config.path }}
+      flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}
 
+  if: github.event.schedule == '30 */12 * * *'  :
+  run_12h_tests:
+    strategy:
+      fail-fast: true
+      matrix:
+        marker:
+            # 6h tests
+          - test: acl
+            name: acl
+          - test: locking
+            name: locking
+          - test: policy
+            name: policy
+          - test: bucket_versioning
+            name: bucket_versioning
+        config:
+          - path: "../params.example.yaml"
+            name: "example"
+    uses: ./.github/workflows/run-tests.yml
     with:
       name: "${{ matrix.marker.name }}.${{ matrix.config.name }}"
       config: ${{ matrix.config.path }}
