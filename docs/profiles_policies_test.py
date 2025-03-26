@@ -41,21 +41,29 @@ policy_dict_template = {
 # -
 
 # Example of the list for actions, tenants, and methods
-actions = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+actions = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"] * 3
 number_clients = 2
-methods = ["get_object", "put_object", "delete_object"]
+methods = ["get_object", "put_object", "delete_object"] * 3
+object_keys = [
+    None, None, None,
+    "test_object_get", "test_object_put", "test_object_delete",
+    "ítem_😘_get", "ítem_😘_put", "ítem_😘_delete",
+]
+
+denied_testcase_params = zip(actions, methods, object_keys)
 
 @pytest.mark.parametrize(
     'multiple_s3_clients, bucket_with_one_object_policy, boto3_action',
     [
         (
             {"number_clients": number_clients},
-            {"policy_dict": policy_dict_template, "actions": action, "effect": "Deny"},
+            {"policy_dict": policy_dict_template, "actions": action, "effect": "Deny", "resource_key": key},
             method
         )
-        for action, method in zip(actions, methods)
+        for action, method, key in denied_testcase_params
     ],
     indirect=['bucket_with_one_object_policy', 'multiple_s3_clients'],
+    ids = [f"{action},{method},{key}" for action, method, key in denied_testcase_params ]
 )
 def test_denied_policy_operations(multiple_s3_clients, bucket_with_one_object_policy, boto3_action):
     s3_clients_list = multiple_s3_clients
@@ -84,18 +92,20 @@ run_example(__name__, "test_denied_policy_operations", config=config)
 
 expected = [200, 200, 204]
 
+allowed_testcase_params = zip(actions, methods, object_keys, expected)
 @pytest.mark.parametrize(
     'bucket_with_one_object_policy, multiple_s3_clients, boto3_action, expected',
     [
         (
-            {"policy_dict": policy_dict_template, "actions": action, "effect": "Allow"},
+            {"policy_dict": policy_dict_template, "actions": action, "effect": "Allow", "resource_key": "ítem_😘"},
             {"number_clients": number_clients},
             method,
             result,
         )
-        for action, method, result in zip(actions, methods, expected)
+        for action, method, kry, result in allowed_testcase_params
     ],
     indirect=['bucket_with_one_object_policy', 'multiple_s3_clients'],
+    ids = [f"{action},{method},{key},{result}" for action, method, key, result in allowed_testcase_params ]
 )
 def test_allowed_policy_operations(multiple_s3_clients, bucket_with_one_object_policy, boto3_action, expected):
     s3_clients_list = multiple_s3_clients
