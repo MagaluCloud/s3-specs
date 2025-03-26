@@ -1,0 +1,92 @@
+name: Recurrent tests
+
+on:
+  schedule:
+    - cron: "0 * * * *"        # Every hour at 00 min
+    - cron: "15 */6 * * *"     # Every 6 hours at *h30 min  
+    - cron: "30 */12 * * *"    # Every 12 hours at *h15 min  
+
+jobs:
+  run_1h_tests:
+    if: github.event.schedule == '0 * * * *'  
+    strategy:
+      fail-fast: false
+      matrix:
+        marker:
+          # 1h tests
+          - test: basic
+            name: basic
+          - test: cold_storage
+            name: cold_storage
+          - test: presign
+            name: presign
+        config:
+          - path: "../params.example.yaml"
+            name: "example"
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      name: "${{ matrix.marker.name }}_1hours.${{ matrix.config.name }}"
+      config: ${{ matrix.config.path }}
+      flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}
+
+  run_6h_tests:
+    if: github.event.schedule == '15 */6 * * *'
+    strategy:
+      fail-fast: false
+      matrix:
+        marker:
+            # 6h tests
+          - test: acl
+            name: acl
+          - test: locking
+            name: locking
+          - test: policy
+            name: policy
+          - test: bucket_versioning
+            name: bucket_versioning
+        config:
+          - path: "../params.example.yaml"
+            name: "example"
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      name: "${{ matrix.marker.name }}_6hours.${{ matrix.config.name }}"
+      config: ${{ matrix.config.path }}
+      flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}
+
+  run_12h_tests:
+    if: github.event.schedule == '30 */12 * * *'  
+    strategy:
+      fail-fast: false
+      matrix:
+        marker:
+            # 12h tests
+          - test: acl
+            name: acl
+          - test: locking
+            name: locking
+          - test: policy
+            name: policy
+          - test: bucket_versioning
+            name: bucket_versioning
+        config:
+          - path: "../params.example.yaml"
+            name: "example"
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      name: "${{ matrix.marker.name }}_12hours.${{ matrix.config.name }}"
+      config: ${{ matrix.config.path }}
+      flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}
+
+
+  cleanup-tests:
+    needs: [run_1h_tests]
+    if: always() 
+    uses: ./.github/workflows/cleanup-tests.yml
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}

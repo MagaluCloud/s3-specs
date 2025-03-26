@@ -111,7 +111,7 @@ class PytestArtifactLogExtractor:
                         arguments=t[3] if t[3] else None)  for t in headers]
 
         # Execution_time
-        timestamps = self.__create_time_df__(self.__extract_time_categories__(self.__get_list_by_name__(header, 'duration top')))
+        execution_time_df = self.__create_time_df__(self.__extract_time_categories__(self.__get_list_by_name__(header, 'duration top')))
 
         execution_time = [ExecutionTime(
             execution_datetime=execution_entity.execution_datetime,  # Assuming this is a fixed value
@@ -121,19 +121,19 @@ class PytestArtifactLogExtractor:
             avg_time=row['avg'],
             min_time=row['min'],
             total_time=row['total']
-        ) for _, row in timestamps.iterrows()]   
+        ) for _, row in execution_time_df.iterrows()]   
 
         failures_df = self.__create_failure_df__(self.__extract_failures_errors__(self.__get_list_by_name__(header, 'summary')))
 
         if not failures_df.empty:
-            failures = Failures(test_name= failures_df['name'].values,
+            failures = [Failures(test_name= row['test_name'],
                                 artifact_name=artifact.name,
                                 execution_datetime=execution_entity.execution_datetime,
-                                error=failures_df['error'].values,
-                                details=failures_df['error_details'].values,
-            )
+                                error=row['error'],
+                                details=row['detalis'],
+            ) for _, row in failures_df.iterrows()]
         else:
-            failures = Failures(test_name=None,artifact_name=None,execution_datetime=0,error=None,details=None)
+            failures = [Failures(test_name=None,artifact_name=None,execution_datetime=0,error=None,details=None)]
 
         return tests, execution_time, failures
 
