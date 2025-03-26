@@ -170,7 +170,7 @@ class PytestArtifactLogExtractor:
         for d in data:
             categories.append([])
             for s in d: 
-                formatted_s = list(filter(None,s.split(" ")))
+                formatted_s = list(filter(None,s.split(" ", maxsplit=5)))
                 if 'duration' in formatted_s: #converting the header name back into string
                     formatted_s = ' '.join(formatted_s)
                 categories[-1].append(formatted_s)
@@ -267,7 +267,7 @@ class PytestArtifactLogExtractor:
         """
         
         # Extract filename without extension format = (testName.endpoint.datetime.fileExtension)
-        stripped = self.path.split('/')[-1].split('.')
+        stripped = self.path.split('/')[-1].split('.', maxsplit=3)
         if len(stripped) != 4:
             print(f"Filename: {self.path}\n")
             raise "Artifact name format must be: 'testName.endpoint.datetime.fileExtension' with datetime = 'YYYYMMDDTHHmmSS'"
@@ -281,18 +281,23 @@ class PytestArtifactLogExtractor:
         return execution_entity, artifact
 
 def parse_datetime(datetime_str):
-    # Try parsing with the first format: YYYY-MM-DDTHH:mm:ss.SSSSSS
-    try:
-        return np.datetime64(datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%S.%f"))
-    except ValueError:
-        pass
-
-    # Try parsing with the second format: YYYY-MM-DD HH:mm:ss.SSSSSS
-    try:
-        return np.datetime64(datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S.%f"))
-    except ValueError:
-        pass
-
-    # If neither format works, return the current datetime
+    """Parse a datetime string with multiple possible formats into a numpy datetime64 object.
+    
+    param: datetime_str: String representing a datetime in one of the following formats: %Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%d %H:%M:%S.%f", "%Y%m%dT%H%M%S%f"
+    return: np.datetime64: Parsed datetime object or current datetime if parsing fails
+    """
+    format_templates = [
+        "%Y-%m-%dT%H:%M:%S.%f",  
+        "%Y-%m-%d %H:%M:%S.%f",  
+        "%Y%m%dT%H%M%S%f",       
+    ]
+    
+    for fmt in format_templates:
+        try:
+            dt = datetime.strptime(datetime_str, fmt)
+            return np.datetime64(dt)
+        except ValueError:
+            continue
+    
     print(f"Warning: {datetime_str} doesn't match any known format, using current datetime")
     return np.datetime64(datetime.now())
