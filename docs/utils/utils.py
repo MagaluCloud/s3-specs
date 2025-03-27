@@ -12,7 +12,7 @@ def generate_valid_bucket_name(base_name="my-unique-bucket"):
     :return: str: valid s3 bucket name
     """
 
-    unique_id = uuid.uuid4().hex[:6]  # Short unique suffix
+    unique_id = uuid.uuid4().hex[:64]  # Short unique suffix
 
     # assuring base name is a string
     try:
@@ -26,8 +26,8 @@ def generate_valid_bucket_name(base_name="my-unique-bucket"):
         if ((char >= 'a' and char <= 'z') or (char >= '0' and char <= '9') or char == '-'):
             new_name.append(char)
 
-
-    return "".join(new_name)
+    # assuming max bucket name size is 63
+    return "".join(new_name)[:63]
 
 
 
