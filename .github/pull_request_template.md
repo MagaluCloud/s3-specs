@@ -1,11 +1,21 @@
-## Objetivo do PR
-Descreva claramente o objetivo deste PR. O que está sendo implementado ou corrigido?
+## Categoria do PR? 
 
-## Motivo do PR
-Explique o motivo pelo qual esta mudança é necessária. Isso pode incluir a resolução de um bug, uma melhoria ou uma nova funcionalidade.
+- [ ] Refactor
+- [ ] Feature
+- [ ] Bug Fix
+- [ ] Optimização
+- [ ] Documentação
+- [ ] Testes
 
-## Expectativa do PR
-O que se espera alcançar com essa mudança? Quais são os resultados ou comportamentos esperados após a implementação?
+## Motivação do PR
+Descreva claramente a motivação deste PR, esta podendo ser uma necessidade, pedido ou opcional. 
+
+## Descrição do PR
+    Descreva em detalhes as alterações e obejtivo da mudança de seu PR.
+
+## [Opcional] Tickets, documentos ou outros dados relevantes
+
+## [Opcional] Alguma necessidade de adaptação post deployment?
 
 ## Link do Card no Kanban
 [Link para o card no Kanban](URL_DO_CARD)
