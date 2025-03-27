@@ -248,11 +248,9 @@ def change_policies_json(bucket, policy_args: dict, tenants: list) -> json:
     """
     From a policy changes its contest with the requested params and transform it into a JSON.
 
-    :param s3_client: Boto3 S3 client.
-    :param bucket_name: Name of the bucket.
-    :param version: The version or delete marker to delete.
-    :param filtered_tenants: Receives a list of tenants.
-   
+    :param policy_args: list of args to put into the policy json.
+    :param tenants: list of tenants of principals.
+    :return json: json containing a policy
     """
     
     #parse the request
