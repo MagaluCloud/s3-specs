@@ -27,7 +27,7 @@ import pytest
 import logging
 from datetime import datetime, timedelta, timezone
 from botocore.exceptions import ClientError
-from s3_helpers import(
+from .s3_helpers import(
     run_example,
     change_policies_json,
 )

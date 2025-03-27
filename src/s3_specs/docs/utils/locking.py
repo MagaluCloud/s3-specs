@@ -1,7 +1,7 @@
 import pytest
 import logging
-from utils.utils import generate_valid_bucket_name
-from s3_helpers import cleanup_old_buckets
+from .utils import generate_valid_bucket_name
+from ..s3_helpers import cleanup_old_buckets
 
 @pytest.fixture
 def bucket_with_lock_enabled(s3_client, request):

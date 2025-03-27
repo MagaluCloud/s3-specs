@@ -25,7 +25,7 @@ config = "../params/br-ne1.yaml"
 # + {"jupyter": {"source_hidden": true}}
 import pytest
 import logging
-from s3_helpers import run_example, delete_object_and_wait
+from .s3_helpers import run_example, delete_object_and_wait
 import requests
 import os
 

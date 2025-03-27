@@ -1,7 +1,7 @@
 # + {"jupyter": {"source_hidden": true}}
 import logging
 import pytest
-from s3_helpers import run_example
+from .s3_helpers import run_example
 from botocore.exceptions import ClientError
 from shlex import split, quote
 import subprocess

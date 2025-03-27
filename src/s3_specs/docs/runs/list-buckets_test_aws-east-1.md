@@ -15,7 +15,7 @@ import os
 import logging
 import subprocess
 from shlex import split, quote
-from s3_helpers import run_example
+from .s3_helpers import run_example
 config = os.getenv("CONFIG", config)
 ```
 

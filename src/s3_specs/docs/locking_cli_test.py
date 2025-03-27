@@ -26,7 +26,7 @@ import json
 import os
 import time
 from shlex import split, quote
-from s3_helpers import (
+from .s3_helpers import (
     run_example,
     get_spec_path,
     get_object_retention_with_determination,

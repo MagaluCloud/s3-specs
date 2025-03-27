@@ -39,7 +39,7 @@ import os
 import logging
 import subprocess
 from shlex import split, quote
-from s3_helpers import run_example
+from .s3_helpers import run_example
 
 pytestmark = pytest.mark.basic
 config = os.getenv("CONFIG", config)
@@ -52,7 +52,7 @@ config = os.getenv("CONFIG", config)
 # O comando para listar buckets no boto3 é o `list_buckets`.
 
 # +
-def test_boto_list_buckets(s3_client, profile_name):
+def test_boto_list_buckets(s3_client):
     response = s3_client.list_buckets()
     response_status = response["ResponseMetadata"]["HTTPStatusCode"]
     assert response_status == 200, "Expected HTTPStatusCode 200 for successful bucket list."

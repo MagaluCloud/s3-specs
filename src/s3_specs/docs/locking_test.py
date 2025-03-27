@@ -36,7 +36,7 @@ import pytest
 import time
 import logging
 from datetime import datetime, timedelta, timezone
-from s3_helpers import (
+from .s3_helpers import (
     run_example,
     cleanup_old_buckets,
     generate_unique_bucket_name,
