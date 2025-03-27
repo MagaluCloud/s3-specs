@@ -232,6 +232,10 @@ class PdfMaker:
         story.append(Paragraph("Resumo dos Erros e Falhas", self.styles['bold']))
         story.append(Spacer(1, 12))
 
+        print(self.tests.head()['execution_datetime'])
+        print(self.failures.head())
+
+
         # Merge failures and tests DataFrames and select relevant columns
         categories_df = (
             self.tests.merge(
@@ -239,7 +243,14 @@ class PdfMaker:
                 how='inner',
                 right_on=['test_name', 'execution_datetime'],
                 left_on=['name', 'execution_datetime'],
-            )[['test_name', 'category', 'error', 'details', 'execution_datetime', 'arguments']]
+            )[[
+                'test_name',  
+                'category',   
+                'error',      
+                'details',    
+                'execution_datetime',  
+                'arguments'   
+            ]]
             .rename(columns={
                 'test_name': 'Nome do teste',
                 'category': 'Categoria',
@@ -247,7 +258,9 @@ class PdfMaker:
                 'details': 'Detalhes do erro',
                 'execution_datetime': 'Momento de execução',
                 'arguments': 'Argumentos',
-            }).drop_duplicates().drop('Argumentos', axis=1)
+            })
+            .drop_duplicates()
+            .drop('Argumentos', axis=1)
         )
 
         # Prepare the detailed data for the table

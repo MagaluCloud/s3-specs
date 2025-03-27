@@ -133,7 +133,7 @@ class PytestArtifactLogExtractor:
                                 details=row['detalis'],
             ) for _, row in failures_df.iterrows()]
         else:
-            failures = [Failures(test_name=None,artifact_name=None,execution_datetime=0,error=None,details=None)]
+            failures = [Failures(test_name=None,artifact_name=None,execution_datetime=execution_entity.execution_datetime,error=None,details=None)]
 
         return tests, execution_time, failures
 
@@ -151,7 +151,7 @@ class PytestArtifactLogExtractor:
 
         for line in data:
             if any(k in line for k in keywords):
-                match = re.search(r'(PASSED|FAILED|ERROR).*', line).group()
+                match = re.search(r'(PASSED|FAILED|ERROR|SKIPPED).*', line).group()
                 # Splitting the Keyword NameTest from category and argument
                 match = re.split(r'::', match, 1)
                 tmp = re.split(r'\s', match[0], maxsplit=1)
@@ -170,7 +170,7 @@ class PytestArtifactLogExtractor:
         for d in data:
             categories.append([])
             for s in d: 
-                formatted_s = list(filter(None,s.split(" ", maxsplit=5)))
+                formatted_s = list(filter(None,s.split(" ")))
                 if 'duration' in formatted_s: #converting the header name back into string
                     formatted_s = ' '.join(formatted_s)
                 categories[-1].append(formatted_s)
@@ -197,7 +197,7 @@ class PytestArtifactLogExtractor:
         for line in data[0]:
             if any(k in line for k in keywords):
                 final_failure_list = []
-                keywords_string = (re.search(r'(PASSED|FAILED|ERROR).*', line).group())
+                keywords_string = (re.search(r'(PASSED|FAILED|ERROR|SKIPPED).*', line).group())
                 status_errors = re.split(r'::', keywords_string, 1)
 
                 status_category = re.split(r'\s', status_errors[0], maxsplit=1)
