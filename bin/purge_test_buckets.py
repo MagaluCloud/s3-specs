@@ -10,12 +10,12 @@ def list_old_test_buckets(profile_name):
     s3 = session.client('s3')
     try:
         response = s3.list_buckets()
-        two_hours_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=2)
+        six_hours_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=6)
 
         return [
             bucket['Name']
             for bucket in response['Buckets']
-            if bucket['Name'].startswith('test-') and bucket['CreationDate'] < two_hours_ago
+            if bucket['Name'].startswith('test-') and bucket['CreationDate'] < six_hours_ago
         ]
     except (BotoCoreError, ClientError) as e:
         print(f"Error listing buckets: {e}")
