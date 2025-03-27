@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - recent-just-oci
+      - fix-report
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: magalucloud/s3-specs

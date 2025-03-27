@@ -42,7 +42,8 @@ RUN ln -s "/tools/aws-cli/v2/${AWS_CLI_VERSION}/bin/aws" /usr/local/bin/aws && \
 ARG MGC_VERSION
 RUN curl -Lo mgc.tar.gz "https://github.com/MagaluCloud/mgccli/releases/download/v${MGC_VERSION}/mgccli_${MGC_VERSION}_linux_amd64.tar.gz" && \
     tar xzvf mgc.tar.gz && rm mgc.tar.gz && \
-    ln -s "/tools/mgc" /usr/local/bin/mgc;
+    # ln -s "/tools/mgc" /usr/local/bin/mgc;
+    mv mgc /usr/local/bin/mgc
 
 # uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
@@ -66,8 +67,11 @@ COPY pyproject.toml /app/pyproject.toml
 COPY README.md /app/README.md
 COPY docs /app/docs/
 COPY reports /app/reports/
+COPY output /app/output/
 # Download python dependencies to be bundled with the image
 RUN uv sync
+
+RUN bash -c "cd reports && uv sync"
 
 # Definir o script como ponto de entrada
 ENTRYPOINT ["just"]

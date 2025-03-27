@@ -46,7 +46,9 @@ from s3_helpers import (
     replace_failed_put_without_version,
     get_object_lock_configuration_with_determination,
     get_object_retention_with_determination,
+    change_policies_json,
 )
+from utils.crud import fixture_bucket_with_name
 from utils.locking import bucket_with_lock_enabled
 
 config = os.getenv("CONFIG", config)
@@ -453,3 +455,36 @@ run_example(__name__, "test_policy_for_put_object_retention", config=config,)
 # - [put_object_lock_configuration](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/put_object_lock_configuration.html) - Configurar Object Lock em um bucket
 # - [get_object_lock_configuration](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/get_object_lock_configuration.html) - Recuperar configuração de Object Lock de um bucket
 # - [Why can I delete objects even after I turned on Object Lock for my Amazon S3 bucket?](https://repost.aws/knowledge-center/s3-object-lock-delete) - Detalhamento de como deletar e gerenciar retenção e legal hold em objetos S3
+pytestmark = [pytest.mark.policy, pytest.mark.locking, pytest.mark.rapid]
+
+policy_dict_template = {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "",
+            "Principal": "",
+            "Action": "",
+            "Resource": ""
+        }
+    ]
+}
+
+def test_get_locking_configuration(s3_client, fixture_bucket_with_name):
+    bucket = fixture_bucket_with_name
+
+    policy_dict = {"policy_dict": policy_dict_template, "actions":"s3:ListBucket", "effect": "Allow", "Principal": "*"}
+
+    policy = change_policies_json(bucket=bucket, policy_args=policy_dict, tenants="*")
+    s3_client.put_bucket_policy(Bucket=bucket, Policy=policy)
+
+
+    with pytest.raises(botocore.exceptions.ClientError) as exc_info:
+        s3_client.get_object_lock_configuration(Bucket=bucket)
+        assert exc_info == 'InternalError', "Test passed"
+        
+    # Remove policy if present
+    try:
+        response = s3_client.delete_bucket_policy(Bucket=bucket) 
+        logging.info(f"delete_bucket_policy response:{response}")
+    except Exception as e:
+        logging.error(f"Deleting policy failed: {e}")
