@@ -74,6 +74,4 @@ def create_big_file(file_path: str, size={'size': 100, 'unit': 'mb'}) -> int:
             f.write(os.urandom(total_size))
         f.close()
 
-    return total_size
-
-    
+    return total_size         
