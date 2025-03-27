@@ -62,7 +62,7 @@ commands = [
 
 # +
 @pytest.mark.parametrize("cmd_template", commands)
-def test_cli_list_buckets(cmd_template, profile_name):
+def test_list_buckets_cli(cmd_template, profile_name):
     cmd = split(cmd_template.format(profile_name=profile_name))
     result = subprocess.run(cmd, capture_output=True, text=True)
 
@@ -74,7 +74,6 @@ run_example(__name__, "test_cli_list_buckets", config=config)
 
 # ## Referências
 #
-# - [Boto3 Documentation: list_bucket](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/list_buckets.html)
 # - [rclone lsd](https://rclone.org/commands/rclone_lsd/)
 # - [aws cli ls](https://docs.aws.amazon.com/cli/latest/reference/s3/ls.html)
 # - [aws cli list-buckets](https://docs.aws.amazon.com/cli/latest/reference/s3api/list-buckets.html)
