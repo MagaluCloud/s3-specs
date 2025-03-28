@@ -11,10 +11,13 @@ YAML_PARAMS=$(realpath $2)
 OUTPUT_FORMAT=$3
 SPEC_NAME=$(basename "$SPEC_PATH" .py)
 EXECUTION_NAME=$(basename "$YAML_PARAMS" .yaml)
-OUTPUT_FOLDER="docs/runs"
+OUTPUT_FOLDER="src/s3_specs/docs/runs"
 
 # Add docs to the PYTHONPATH
-export PYTHONPATH=$PYTHONPATH:$(pwd)/docs
+export PYTHONPATH=$PYTHONPATH:$(pwd)/src/s3_specs/docs
+
+echo $PYTHONPATH
+
 export SPEC_PATH=${SPEC_PATH}
 export CONFIG_PATH=${YAML_PARAMS}
 

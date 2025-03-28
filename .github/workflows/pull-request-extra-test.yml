@@ -28,7 +28,7 @@ jobs:
           - policy
           - acl
         config:
-          - path: "../params/br-ne1.yaml"
+          - path: "../../../params.example.yaml"
             name: "br_ne1"
     uses: ./.github/workflows/run-tests.yml
     with:
@@ -48,9 +48,9 @@ jobs:
         marker:
           - locking
         config:
-          - path: "../params/br-ne1.yaml"
+          - path: "../../../params.example.yaml"
             name: "br_ne1"
-          - path: "../params/br-se1.yaml"
+          - path: "../../../params.example.yaml"
             name: "br_se1"
     uses: ./.github/workflows/run-tests.yml
     with:

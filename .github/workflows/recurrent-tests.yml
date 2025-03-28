@@ -21,7 +21,7 @@ jobs:
           - test: presign
             name: presign
         config:
-          - path: "../params.example.yaml"
+          - path: "../../../params.example.yaml"
             name: "example"
     uses: ./.github/workflows/run-tests.yml
     with:
@@ -47,7 +47,7 @@ jobs:
           - test: bucket_versioning
             name: bucket_versioning
         config:
-          - path: "../params.example.yaml"
+          - path: "../../../params.example.yaml"
             name: "example"
     uses: ./.github/workflows/run-tests.yml
     with:
@@ -73,7 +73,7 @@ jobs:
           - test: bucket_versioning
             name: bucket_versioning
         config:
-          - path: "../params.example.yaml"
+          - path: "../../../params.example.yaml"
             name: "example"
     uses: ./.github/workflows/run-tests.yml
     with:

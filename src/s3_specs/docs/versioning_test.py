@@ -38,7 +38,7 @@
 
 import logging
 import pytest
-from s3_helpers import run_example
+from s3_specs.docs.s3_helpers import run_example
 from botocore.exceptions import ClientError
 
 # + {"tags": ["parameters"]}

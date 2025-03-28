@@ -1,7 +1,7 @@
 import pytest
 import logging
-from utils.utils import create_big_file
-from utils.crud import fixture_bucket_with_name, fixture_upload_multipart_file
+from s3_specs.docs.utils.utils import create_big_file
+from s3_specs.docs.utils.crud import fixture_bucket_with_name, fixture_upload_multipart_file
 from boto3.s3.transfer import TransferConfig
 import uuid
 from tqdm import tqdm

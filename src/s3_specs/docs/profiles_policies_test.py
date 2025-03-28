@@ -22,7 +22,7 @@ config = "../params/br-ne1.yaml"
 import os
 import pytest
 from botocore.exceptions import ClientError
-from s3_helpers import(run_example)
+from s3_specs.docs.s3_helpers import(run_example)
 config = os.getenv("CONFIG", config)
 pytestmark = pytest.mark.policy
 
