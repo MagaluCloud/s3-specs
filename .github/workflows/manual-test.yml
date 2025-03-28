@@ -9,7 +9,7 @@ on:
         config:
           description: 'Digite o caminho da configuração a ser utilizado'
           required: true
-          default: ../params.example.yaml
+          default: ../../../params.example.yaml
         flags:
           description: 'Flags Adicionais'
           required: false
