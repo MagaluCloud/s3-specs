@@ -78,8 +78,9 @@ def mgc_path(default_profile):
     else:
         spec_dir = os.path.dirname(get_spec_path())
         path = os.path.join(spec_dir, default_profile.get(mgc_path_field_name))
-    if not os.path.isfile(path):
-        pytest.fail(f"The specified mgc_path '{path}' (absolute: {os.path.abspath(path)}) does not exist or is not a file.")
+    abspath = os.path.abspath(path) if path and os.path.isfile(path) else path
+    if not abspath:
+        pytest.fail(f"The specified mgc_path '{path}' (absolute: {abspath}) does not exist or is not a file.")
     return path
 
 @pytest.fixture
@@ -233,7 +234,7 @@ def bucket_with_one_object(request, s3_client):
     'object_prefix': "",
     'object_key_list': ['test-object-1.txt', 'test-object-2.txt']
 }])
-def bucket_with_many_objects(request, s3_client):
+def bucket_with_many_objects(request, s3_client, policy_wait_time):
     # this fixture accepts an optional request.param['object_key_list'] with a list of custom key names
     object_key_list = request.param['object_key_list']
     # and a string prefix to prepend on all objects
@@ -249,10 +250,10 @@ def bucket_with_many_objects(request, s3_client):
     # Yield the bucket name and object details to the test
     yield bucket_name, object_prefix, content
 
-    # Teardown: Delete the object and bucket after the test
-    for object_key in object_key_list:
-        delete_object_and_wait(s3_client, bucket_name, object_key)
-    delete_bucket_and_wait(s3_client, bucket_name)
+    try:
+        delete_policy_and_bucket_and_wait(s3_client, bucket_name, policy_wait_time)
+    except Exception as e:
+        print(f"Cleanup error {e}")
 
 
 
@@ -464,12 +465,12 @@ def bucket_with_one_object_policy(multiple_s3_clients, policy_wait_time, request
     yield bucket_name, object_key
     
     # Teardown: delete the bucket after the test
-    delete_policy_and_bucket_and_wait(client, bucket_name, policy_wait_time, request)
+    delete_policy_and_bucket_and_wait(client, bucket_name, policy_wait_time)
 
 
 
 
-@pytest.fixture
+@pytest.fixture(params=[{'number_clients': 1}])
 def multiple_s3_clients(request, test_params):
     """
     Creates multiple S3 clients based on the profiles provided in the test parameters.

@@ -108,12 +108,11 @@ def delete_all_objects_and_wait(s3_client, bucket_name):
         for obj in response['Contents']:
             delete_object_and_wait(s3_client, bucket_name, obj['Key'])
  
-def delete_policy_and_bucket_and_wait(s3_client, bucket_name, policy_wait_time, request):
+def delete_policy_and_bucket_and_wait(s3_client, bucket_name, policy_wait_time):
     retries = 3
     sleeptime = 5
     for attempt_number in range(retries):   
         try:
-            change_policies_json(bucket_name, {"policy_dict": request.param['policy_dict'], "actions": ["s3:GetObjects", "*"], "effect": "Allow"}, tenants=["*"])
             logging.info(f"deleting policy of bucket {bucket_name}...")
             s3_client.delete_bucket_policy(Bucket=bucket_name)
             break
