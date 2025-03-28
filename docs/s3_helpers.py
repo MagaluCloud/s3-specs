@@ -35,7 +35,8 @@ def run_example(dunder_name, test_name, config="../params.example.yaml"):
             "--color", "no", 
             "--pytest-durations", "0",
             # "-s", 
-            # "--log-cli-level", "INFO",
+            # "-x",
+            "--log-cli-level", "INFO",
             f"{get_spec_path()}::{test_name}"
         ])
  
@@ -108,12 +109,11 @@ def delete_all_objects_and_wait(s3_client, bucket_name):
         for obj in response['Contents']:
             delete_object_and_wait(s3_client, bucket_name, obj['Key'])
  
-def delete_policy_and_bucket_and_wait(s3_client, bucket_name, policy_wait_time, request):
+def delete_policy_and_bucket_and_wait(s3_client, bucket_name, policy_wait_time):
     retries = 3
     sleeptime = 5
     for attempt_number in range(retries):   
         try:
-            change_policies_json(bucket_name, {"policy_dict": request.param['policy_dict'], "actions": ["s3:GetObjects", "*"], "effect": "Allow"}, tenants=["*"])
             logging.info(f"deleting policy of bucket {bucket_name}...")
             s3_client.delete_bucket_policy(Bucket=bucket_name)
             break
@@ -257,12 +257,13 @@ def change_policies_json(bucket, policy_args: dict, tenants: list) -> json:
     policy = policy_args['policy_dict']
     effect = policy_args['effect']
     actions = policy_args['actions']
+    object_key = policy_args.get("resource_key", "*")
     
     #change arguments inside of the policy dict
     policy["Statement"][0]["Effect"] = effect
     policy["Statement"][0]["Principal"] = tenants
     policy["Statement"][0]["Action"] = actions
-    policy["Statement"][0]["Resource"] = [bucket + "/*", bucket]
+    policy["Statement"][0]["Resource"] = [f"{bucket}/{object_key}", bucket]
         
     logging.info(f"POLICY: {json.dumps(policy)}")
     return json.dumps(policy)
