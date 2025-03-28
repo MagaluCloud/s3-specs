@@ -11,7 +11,7 @@ from pathlib import Path
 import ipynbname
 import json
 import time
-from utils.utils import generate_valid_bucket_name
+from s3_specs.docs.utils.utils import generate_valid_bucket_name
 
 def get_spec_path():
     spec_path = os.getenv("SPEC_PATH")
