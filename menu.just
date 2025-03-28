@@ -25,7 +25,7 @@ test:
 build output_format="markdown":
   #!/usr/bin/env bash
   spec_files=$(\
-    find docs -type f -name '*_test.py' | \
+    find ./src/s3_specs/docs -type f -name '*_test.py' | \
     just menu::_menu_picker \
       "Select the specs to render as doc pages")
   config_file=$(\

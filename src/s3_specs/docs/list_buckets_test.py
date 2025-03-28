@@ -39,7 +39,7 @@ import os
 import logging
 import subprocess
 from shlex import split, quote
-from .s3_helpers import run_example
+from s3_specs.docs.s3_helpers import run_example
 
 pytestmark = pytest.mark.basic
 config = os.getenv("CONFIG", config)

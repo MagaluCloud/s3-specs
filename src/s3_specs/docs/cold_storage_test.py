@@ -37,12 +37,12 @@
 # para comparar as diferentes classes de armazenamento.
 
 # + {"tags": ["parameters"]}
-config = "../params/br-se1.yaml"
+config = "../../../params/br-se1.yaml"
 
 # + {"jupyter": {"source_hidden": true}}
 import logging
 import pytest
-from .s3_helpers import run_example
+from s3_specs.docs.s3_helpers import run_example
 
 pytestmark = pytest.mark.cold_storage
 # -
@@ -50,7 +50,7 @@ pytestmark = pytest.mark.cold_storage
 # ## Exemplos
 
 # + {"tags": ["parameters"]}
-config = "../params/aws-east-1.yaml"
+config = "../../../params/aws-east-1.yaml"
 # -
 
 # ### Subindo um objeto utilizando boto3

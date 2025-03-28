@@ -38,7 +38,7 @@ import os
 import logging
 import subprocess
 from shlex import split
-from .s3_helpers import run_example
+from s3_specs.docs.s3_helpers import run_example
 
 pytestmark = [pytest.mark.basic, pytest.mark.cli]
 config = os.getenv("CONFIG", config)

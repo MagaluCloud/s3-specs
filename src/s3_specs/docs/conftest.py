@@ -7,7 +7,7 @@ import logging
 import subprocess
 import shutil
 
-from .s3_helpers import (
+from s3_specs.docs.s3_helpers import (
     generate_unique_bucket_name,
     delete_bucket_and_wait,
     create_bucket_and_wait,

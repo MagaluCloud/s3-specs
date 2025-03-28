@@ -36,7 +36,7 @@ import pytest
 import time
 import logging
 from datetime import datetime, timedelta, timezone
-from .s3_helpers import (
+from s3_specs.docs.s3_helpers import (
     run_example,
     cleanup_old_buckets,
     generate_unique_bucket_name,
@@ -48,8 +48,8 @@ from .s3_helpers import (
     get_object_retention_with_determination,
     change_policies_json,
 )
-from utils.crud import fixture_bucket_with_name
-from utils.locking import bucket_with_lock_enabled
+from s3_specs.docs.utils.crud import fixture_bucket_with_name
+from s3_specs.docs.utils.locking import bucket_with_lock_enabled
 
 config = os.getenv("CONFIG", config)
 pytestmark = pytest.mark.locking
