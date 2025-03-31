@@ -62,7 +62,7 @@ config = "../../../params/aws-east-1.yaml"
 # No Magalu Cloud, a classe fria é chamada **COLD_INSTANT**, mas, por motivos de compatibilidade com o boto3, utiliza-se a classe **GLACIER_IR** para especificar um objeto com a classe fria.
 
 # +
-def test_boto_upload_object_with_cold_storage_class(s3_client, existing_bucket_name):
+def test_upload_object_with_cold_storage_class(s3_client, existing_bucket_name):
     bucket_name = existing_bucket_name
     object_key = "cold_file.txt"
     content = "Arquivo de exemplo com a classe cold storage"
@@ -83,7 +83,7 @@ def test_boto_upload_object_with_cold_storage_class(s3_client, existing_bucket_n
     
     assert storage_class == "GLACIER_IR" or storage_class == "COLD_INSTANT", "Expected StorageClass GLACIER_IR or COLD_INSTANT"
     
-run_example(__name__, "test_boto_upload_object_with_cold_storage_class", config=config)
+run_example(__name__, "test_upload_object_with_cold_storage_class", config=config)
 # -
 
 # ### Trocar a classe de um objeto existente    
@@ -93,7 +93,7 @@ run_example(__name__, "test_boto_upload_object_with_cold_storage_class", config=
 # (mesma object key), mas passando um valor diferente para o argumento StorageClass, como é possível visualizar no exemplo abaixo.
 
 # +
-def test_boto_change_object_class_to_cold_storage(s3_client, bucket_with_one_object):
+def test_change_object_class_to_cold_storage(s3_client, bucket_with_one_object):
     bucket_name, object_key, _ = bucket_with_one_object
 
     response = s3_client.copy_object(
@@ -110,7 +110,7 @@ def test_boto_change_object_class_to_cold_storage(s3_client, bucket_with_one_obj
     
     assert storage_class == "GLACIER_IR" or storage_class == "COLD_INSTANT", "Expected StorageClass GLACIER_IR or COLD_INSTANT"
 
-run_example(__name__, "test_boto_change_object_class_to_cold_storage", config=config)
+run_example(__name__, "test_change_object_class_to_cold_storage", config=config)
 # -
 
 # ### Upload de um objeto com metadados customizados e ACLs
@@ -120,7 +120,7 @@ run_example(__name__, "test_boto_change_object_class_to_cold_storage", config=co
 # com metadados customizados, ACLs e a classe fria.
 
 # +
-def test_boto_object_with_custom_metadata_acls_and_storage_class(s3_client, existing_bucket_name):
+def test_object_with_custom_metadata_acls_and_cold_storage_class(s3_client, existing_bucket_name):
     bucket_name = existing_bucket_name
     object_key = "cold_file.txt"
     content = "Arquivo de exemplo com a classe cold storage"
@@ -159,7 +159,7 @@ def test_boto_object_with_custom_metadata_acls_and_storage_class(s3_client, exis
     
     assert 'READ' == acl.get('Permission'), "Expected acl permission be READ"
 
-run_example(__name__, "test_boto_object_with_custom_metadata_acls_and_storage_class", config=config)
+run_example(__name__, "test_object_with_custom_metadata_acls_and_storage_class", config=config)
 # -
 
 # ### Listagem de objetos
@@ -170,7 +170,7 @@ run_example(__name__, "test_boto_object_with_custom_metadata_acls_and_storage_cl
 # de um objeto ou das informações do objeto no Magalu Cloud, a classe retornada é COLD_INSTANT.
 
 # +
-def test_boto_list_objects_with_cold_storage_class(s3_client, bucket_with_one_storage_class_cold_object):
+def test_list_objects_with_cold_storage_class(s3_client, bucket_with_one_storage_class_cold_object):
     bucket_name, _, _ = bucket_with_one_storage_class_cold_object
 
     response = s3_client.list_objects_v2(Bucket=bucket_name)
@@ -185,7 +185,7 @@ def test_boto_list_objects_with_cold_storage_class(s3_client, bucket_with_one_st
 
     assert obj_storage_class == 'COLD_INSTANT' or obj_storage_class == 'GLACIER_IR', "Expected GACIER_IR or COLD_INSTANT as Storage Class"
 
-run_example(__name__, "test_boto_multipart_upload_with_cold_storage_class", config=config)
+run_example(__name__, "test_multipart_upload_with_cold_storage_class", config=config)
 # -
 
 # ### Multipart Upload com a Classe Fria
@@ -193,7 +193,7 @@ run_example(__name__, "test_boto_multipart_upload_with_cold_storage_class", conf
 # Outra possibilidade é realizar o multipart upload utilizando a classe fria. 
 
 # +
-def test_boto_multipart_upload_with_cold_storage_class(s3_client, existing_bucket_name, create_multipart_object_files):
+def test_multipart_upload_with_cold_storage_class(s3_client, existing_bucket_name, create_multipart_object_files):
     bucket_name = existing_bucket_name
 
     object_key,_, part_bytes = create_multipart_object_files
@@ -256,4 +256,4 @@ def test_boto_multipart_upload_with_cold_storage_class(s3_client, existing_bucke
     logging.info("Storage Class: %s", head.get("StorageClass"))
     assert head.get("StorageClass") == "GLACIER_IR" or head.get("StorageClass") == "COLD_INSTANT", "Expected StorageClass GLACIER_IR or COLD_INSTANT"
 
-run_example(__name__, "test_boto_multipart_upload_with_cold_storage_class", config=config)
+run_example(__name__, "test_multipart_upload_with_cold_storage_class", config=config)
