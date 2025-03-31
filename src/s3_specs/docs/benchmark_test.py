@@ -84,10 +84,7 @@ def test_benchmark(
                             profile_name=profile_name,
                             temp_dir=temp_dir,
                             bucket_name=bucket_name,
-                            size=size,
-                            quantity=quantity,
                             workers=workers,
-                            file_name=f"{temp_dir}/file_{size}_{j}.txt",  # Nome do arquivo específico
                             prefix=prefix  # Incluindo o prefixo
                         )
 
