@@ -1,6 +1,7 @@
 import os
 import subprocess
 import pytest
+import tempfile
 
 # Função para medir o tempo de uma operação
 import subprocess
@@ -63,53 +64,51 @@ def test_benchmark(
     bucket_name, obj_key, _ = session_bucket_with_one_object
 
     for size in sizes:  # Agora, iterando sobre os diferentes tamanhos
-        # Caminho do diretório temporário para cada tamanho
-        temp_dir = f"temp-report-{size}-{quantity}"
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Cria o diretório temporário para os arquivos de teste (simulando arquivos a serem carregados)
+            os.makedirs(temp_dir, exist_ok=True)
 
-        # Cria o diretório temporário para os arquivos de teste (simulando arquivos a serem carregados)
-        os.makedirs(temp_dir, exist_ok=True)
+            # Criação de arquivos temporários para upload
+            for i in range(quantity):
+                file_name = f"{temp_dir}/file_{size}_{i}.txt"  # Nome único para cada arquivo
 
-        # Criação de arquivos temporários para upload
-        for i in range(quantity):
-            file_name = f"{temp_dir}/file_{size}_{i}.txt"  # Nome único para cada arquivo
+                # Criando um arquivo temporário com o tamanho especificado
+                with open(file_name, 'wb') as f:
+                    f.write(b"0" * (int(size) * 1024))  # Escreve o conteúdo do arquivo com o tamanho especificado (em KB)
 
-            # Criando um arquivo temporário com o tamanho especificado
-            with open(file_name, 'wb') as f:
-                f.write(b"0" * (int(size) * 1024))  # Escreve o conteúdo do arquivo com o tamanho especificado (em KB)
+            for cmd_template in cmd_templates:
+                # Substitua os parâmetros no comando, incluindo o arquivo correto para a operação
+                for i in range(times):  # Agora, iterando sobre o número de vezes para rodar os testes
+                    # Criar o prefixo para essa iteração
+                    prefix = f"{size}-{quantity}-{i}"  # Prefixo único por iteração
 
-        for cmd_template in cmd_templates:
-            # Substitua os parâmetros no comando, incluindo o arquivo correto para a operação
-            for i in range(times):  # Agora, iterando sobre o número de vezes para rodar os testes
-                # Criar o prefixo para essa iteração
-                prefix = f"{size}-{quantity}-{i}"  # Prefixo único por iteração
-
-                for j in range(quantity):  # Para cada arquivo
-                    cmd = cmd_template.format(
-                        profile_name=profile_name,
-                        temp_dir=temp_dir,
-                        bucket_name=bucket_name,
-                        size=size,
-                        quantity=quantity,
-                        workers=workers,
-                        file_name=f"{temp_dir}/file_{size}_{j}.txt",  # Nome do arquivo específico
-                        prefix=prefix  # Incluindo o prefixo
-                    )
-
-                    # Verificar se a pasta report existe, senão cria
-                    os.makedirs("report", exist_ok=True)
-
-                    # Caminho do arquivo de relatório
-                    report_file = "output/benchmark_results.csv"
-
-                    time_taken = measure_time(cmd)
-                    subprocess.run(f"rm -rf temp-down-*", shell=True)
-                    # Salva os resultados no arquivo de relatório
-                    with open(report_file, "a") as f:
-                        tool = cmd.split()[0]
-                        operation = (
-                            "upload" if ("cp" in cmd and "./" not in cmd) or ("copy" in cmd and "./" not in cmd) or "upload-dir" in cmd else
-                            "download" if ("cp" in cmd and "./" in cmd) or ("copy" in cmd and "./" in cmd) or "download-all" in cmd else
-                            "delete" if "rm" in cmd or "delete-all" in cmd or "delete" in cmd else
-                            "unknown"
+                    for j in range(quantity):  # Para cada arquivo
+                        cmd = cmd_template.format(
+                            profile_name=profile_name,
+                            temp_dir=temp_dir,
+                            bucket_name=bucket_name,
+                            size=size,
+                            quantity=quantity,
+                            workers=workers,
+                            file_name=f"{temp_dir}/file_{size}_{j}.txt",  # Nome do arquivo específico
+                            prefix=prefix  # Incluindo o prefixo
                         )
-                        f.write(f"{profile_name},{tool},{size},{times},{workers},{quantity},{operation},{time_taken}\n")
+
+                        # Verificar se a pasta report existe, senão cria
+                        os.makedirs("report", exist_ok=True)
+
+                        # Caminho do arquivo de relatório
+                        report_file = "output/benchmark_results.csv"
+
+                        time_taken = measure_time(cmd)
+                        subprocess.run(f"rm -rf temp-down-*", shell=True)
+                        # Salva os resultados no arquivo de relatório
+                        with open(report_file, "a") as f:
+                            tool = cmd.split()[0]
+                            operation = (
+                                "upload" if ("cp" in cmd and "./" not in cmd) or ("copy" in cmd and "./" not in cmd) or "upload-dir" in cmd else
+                                "download" if ("cp" in cmd and "./" in cmd) or ("copy" in cmd and "./" in cmd) or "download-all" in cmd else
+                                "delete" if "rm" in cmd or "delete-all" in cmd or "delete" in cmd else
+                                "unknown"
+                            )
+                            f.write(f"{profile_name},{tool},{size},{times},{workers},{quantity},{operation},{time_taken}\n")
