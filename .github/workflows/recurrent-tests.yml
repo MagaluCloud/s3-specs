@@ -64,14 +64,10 @@ jobs:
       matrix:
         marker:
            # 12h tests
-          - test: acl
-            name: acl
-          - test: locking
-            name: locking
-          - test: policy
-            name: policy
-          - test: bucket_versioning
-            name: bucket_versioning
+          - test: multiple_objects
+            name: multiple_objects
+          - test: big_objects
+            name: big_objects
         config:
           - path: "../../../params.example.yaml"
             name: "example"
