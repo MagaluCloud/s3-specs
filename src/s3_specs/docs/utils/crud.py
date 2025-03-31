@@ -1,12 +1,13 @@
 import logging
 import pytest
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from utils.utils import generate_valid_bucket_name, convert_unit
+from s3_specs.docs.utils.utils import generate_valid_bucket_name, convert_unit
 from boto3.s3.transfer import TransferConfig
 import os
 from tqdm import tqdm
 
 ### Functions
+
 
 def create_bucket(s3_client, bucket_name):
     """
@@ -19,22 +20,24 @@ def create_bucket(s3_client, bucket_name):
     # anything different than us-east-1 must have LocationConstraint on aws
     try:
         region = s3_client.meta.region_name
-        if (region != "us-east-1"):
+        if region != "us-east-1":
             return s3_client.create_bucket(
                 Bucket=bucket_name,
-                CreateBucketConfiguration={'LocationConstraint': region}
+                CreateBucketConfiguration={"LocationConstraint": region},
             )
     except s3_client.exceptions.BucketAlreadyOwnedByYou:
         logging.info(f"Bucket '{bucket_name}' already exists and is owned by you.")
     except s3_client.exceptions.BucketAlreadyExists:
-        raise Exception(f"Bucket '{bucket_name}' already exists and is owned by someone else.")
-    
+        raise Exception(
+            f"Bucket '{bucket_name}' already exists and is owned by someone else."
+        )
+
     return s3_client.create_bucket(Bucket=bucket_name)
 
 
 def upload_object(s3_client, bucket_name, object_key, body_file):
     """
-    Create a new object on S3 
+    Create a new object on S3
     :param s3_client: boto3 s3 client
     :param bucket_name: str: name of bucket to upload the object
     :param object_key: str: key of the object
@@ -48,10 +51,12 @@ def upload_object(s3_client, bucket_name, object_key, body_file):
         Body=body_file,
     )
     logging.info(f"Object {object_key} uploaded to bucket {bucket_name}")
-    return response['ResponseMetadata']['HTTPStatusCode'] 
+    return response["ResponseMetadata"]["HTTPStatusCode"]
 
 
-def upload_multiple_objects(s3_client, bucket_name, file_path:str, object_prefix:str, object_quantity:int) -> int:
+def upload_multiple_objects(
+    s3_client, bucket_name, file_path: str, object_prefix: str, object_quantity: int
+) -> int:
     """
     Utilizing multithreading uploads multiple objects while changing their names
     :param s3_client: boto3 s3 client
@@ -61,14 +66,19 @@ def upload_multiple_objects(s3_client, bucket_name, file_path:str, object_prefix
     :param object_quantity: int: number of objects to be uploaded
     :return: int: number of successful uploads
     """
-    
-    objects_names = [{"key": f"{object_prefix}-{i}", "path": file_path} for i in range(object_quantity)]
-    successful_uploads = upload_objects_multithreaded(s3_client, bucket_name, objects_names)
+
+    objects_names = [
+        {"key": f"{object_prefix}-{i}", "path": file_path}
+        for i in range(object_quantity)
+    ]
+    successful_uploads = upload_objects_multithreaded(
+        s3_client, bucket_name, objects_names
+    )
 
     return successful_uploads
 
 
-def download_object(s3_client, bucket_name, object_key):    
+def download_object(s3_client, bucket_name, object_key):
     """
     Download an object from a s3 Bucket
     :param s3_client: boto3 s3 client
@@ -80,10 +90,11 @@ def download_object(s3_client, bucket_name, object_key):
     try:
         response = s3_client.get_object(Bucket=bucket_name, Key=object_key)
         logging.info(f"Object {object_key} downloaded from bucket {bucket_name}")
-        return response['ResponseMetadata']['HTTPStatusCode'] 
+        return response["ResponseMetadata"]["HTTPStatusCode"]
     except Exception as e:
         logging.error(f"Error downloading object {object_key}: {e}")
-    
+
+
 # List all objects all at once as opossed to the regular list_objects_v2 which is limited to 1000 objects per request
 def list_all_objects(s3_client, bucket_name):
     """
@@ -97,9 +108,9 @@ def list_all_objects(s3_client, bucket_name):
     paginator = s3_client.get_paginator("list_objects_v2")
     pages = paginator.paginate(Bucket=bucket_name)
     for page in pages:
-        if 'Contents' in page:
-            for obj in page['Contents']:
-                objects_names.append(obj['Key'])
+        if "Contents" in page:
+            for obj in page["Contents"]:
+                objects_names.append(obj["Key"])
 
     return objects_names
 
@@ -116,14 +127,14 @@ def delete_object(s3_client, bucket_name, object_key):
     try:
         response = s3_client.delete_object(Bucket=bucket_name, Key=object_key)
         logging.info(f"Deleted object: {object_key} from bucket: {bucket_name}")
-        return response['ResponseMetadata']['HTTPStatusCode']
+        return response["ResponseMetadata"]["HTTPStatusCode"]
     except Exception as e:
         logging.error(f"Error deleting object {object_key}: {e}")
 
 
 def delete_bucket(s3_client, bucket_name):
     """
-    Delete a s3 bucket 
+    Delete a s3 bucket
     :param s3_client: boto3 s3 client
     :param bucket_name: str: name of the bucket
     :return: dict: response from boto3 create_bucket
@@ -139,11 +150,11 @@ def delete_bucket(s3_client, bucket_name):
     except Exception as e:
         logging.error(f"Error deleting bucket {bucket_name}: {e}")
 
-    return response 
-
+    return response
 
 
 # ## Multi-threading
+
 
 def upload_objects_multithreaded(s3_client, bucket_name, objects_paths):
     """
@@ -157,12 +168,19 @@ def upload_objects_multithreaded(s3_client, bucket_name, objects_paths):
 
     with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
         # atributes processes to the available workers
-        futures = [executor.submit(upload_object, s3_client, bucket_name, path['key'], path['path']) for path in objects_paths]
-        
+        futures = [
+            executor.submit(
+                upload_object, s3_client, bucket_name, path["key"], path["path"]
+            )
+            for path in objects_paths
+        ]
+
         # List all results of the futures
-        successful_uploads = list(filter(lambda f: f.result()==200, as_completed(futures)))
+        successful_uploads = list(
+            filter(lambda f: f.result() == 200, as_completed(futures))
+        )
         logging.info(f"Successful uploads: {successful_uploads}")
-    
+
         return len(successful_uploads)
 
 
@@ -179,12 +197,16 @@ def download_objects_multithreaded(s3_client, bucket_name):
 
     with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
         # atributes processes to the available workers
-        futures = [executor.submit(download_object, s3_client, bucket_name, key) for key in objects_keys]
-        
-        # List all results of the futures
-        successful_downloads = list(filter(lambda f: f.result()==200, as_completed(futures)))
-        logging.info(f"Successful downloads: {successful_downloads}")
+        futures = [
+            executor.submit(download_object, s3_client, bucket_name, key)
+            for key in objects_keys
+        ]
 
+        # List all results of the futures
+        successful_downloads = list(
+            filter(lambda f: f.result() == 200, as_completed(futures))
+        )
+        logging.info(f"Successful downloads: {successful_downloads}")
 
     return len(successful_downloads)
 
@@ -200,17 +222,22 @@ def delete_objects_multithreaded(s3_client, bucket_name):
 
     with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
         # atributes processes to the available workers
-        futures = [executor.submit(delete_object, s3_client, bucket_name, key) for key in objects_keys]
+        futures = [
+            executor.submit(delete_object, s3_client, bucket_name, key)
+            for key in objects_keys
+        ]
 
         # List all results of the futures
-        successful_deletions = list(filter(lambda f: f.result()==204, as_completed(futures)))
+        successful_deletions = list(
+            filter(lambda f: f.result() == 204, as_completed(futures))
+        )
         logging.info(f"Successful deletions: {successful_deletions}")
 
     return len(successful_deletions)
 
 
-
 # ## Fixtures
+
 
 @pytest.fixture
 def fixture_bucket_with_name(s3_client, request):
@@ -235,7 +262,9 @@ def fixture_bucket_with_name(s3_client, request):
 
 
 @pytest.fixture
-def fixture_upload_multiple_objects(s3_client, fixture_bucket_with_name, request) -> int:
+def fixture_upload_multiple_objects(
+    s3_client, fixture_bucket_with_name, request
+) -> int:
     """
     Utilizing multithreading Fixture uploads multiple objects while changing their names
     :param s3_client: boto3 s3 client
@@ -243,14 +272,17 @@ def fixture_upload_multiple_objects(s3_client, fixture_bucket_with_name, request
     :param request: dict: "quantity" and "path"
      :return: int: number of successful uploads
     """
-    
+
     qnt = request.param.get("quantity")
-    path = request.param.get('path')
+    path = request.param.get("path")
 
     logging.info(f"{qnt}, {path}")
 
     objects_names = [{"key": f"multiple-object'-{i}", "path": path} for i in range(qnt)]
-    return upload_objects_multithreaded(s3_client, fixture_bucket_with_name, objects_names)
+    return upload_objects_multithreaded(
+        s3_client, fixture_bucket_with_name, objects_names
+    )
+
 
 @pytest.fixture
 def fixture_upload_multipart_file(s3_client, fixture_bucket_with_name, request) -> int:
@@ -262,29 +294,35 @@ def fixture_upload_multipart_file(s3_client, fixture_bucket_with_name, request) 
     :return int: size in bytes of the obejct
     """
     bucket_name = fixture_bucket_with_name
-    file_path = request.param.get('file_path')
-    file_size = convert_unit(request.param.get('file_size'))
-    object_key = request.param.get('object_key')
+    file_path = request.param.get("file_path")
+    file_size = convert_unit(request.param.get("file_size"))
+    object_key = request.param.get("object_key")
 
     # Config for multhreading of boto3 building multipart upload/download
     config = TransferConfig(
-        multipart_threshold=8 * 1024 * 1024, # Minimum size to start multipart upload
+        multipart_threshold=8 * 1024 * 1024,  # Minimum size to start multipart upload
         max_concurrency=10,
         multipart_chunksize=8 * 1024 * 1024,
-        use_threads=True
+        use_threads=True,
     )
 
     # Upload Progress Bar with time stamp
-    with tqdm(total=file_size, 
-                desc=bucket_name, 
-                bar_format="Upload| {percentage:.1f}%|{bar:25}| {rate_fmt} | Time: {elapsed} | {desc}",  
-                unit='B', 
-                unit_scale=True, unit_divisor=1024) as pbar:
-        
-        response = s3_client.upload_file(file_path, bucket_name, object_key, Config=config,  Callback=pbar.update)  
-        elapsed = pbar.format_dict['elapsed']
+    with tqdm(
+        total=file_size,
+        desc=bucket_name,
+        bar_format="Upload| {percentage:.1f}%|{bar:25}| {rate_fmt} | Time: {elapsed} | {desc}",
+        unit="B",
+        unit_scale=True,
+        unit_divisor=1024,
+    ) as pbar:
+        response = s3_client.upload_file(
+            file_path, bucket_name, object_key, Config=config, Callback=pbar.update
+        )
+        elapsed = pbar.format_dict["elapsed"]
 
         # Checking if the object was uploaded
-        object_size = s3_client.get_object(Bucket=bucket_name, Key=object_key).get('ContentLength', 0)
+        object_size = s3_client.get_object(Bucket=bucket_name, Key=object_key).get(
+            "ContentLength", 0
+        )
 
-    return object_size, response, elapsed #return int of size in bytes
+    return object_size, response, elapsed  # return int of size in bytes

@@ -1,24 +1,17 @@
-# ---
-# jupyter:
-#   kernelspec:
-#     name: s3-specs
-#     display_name: S3 Specs
-#   language_info:
-#     name: python
-# ---
+# Bucket Policy (parte 2)
 
-# # Bucket Policy (parte 2)
-# 
-# Documentação complementar à `policies_test`.
-# Testes similares aos dois últimos de lá, com a principal diferença sendo que o perfil que vai
-# testar o efeito das políticas é um diferente do da dona do bucket (`s3_clients_list[1]`) nos
-# exemplos abaixo:
+Documentação complementar à `policies_test`.
+Testes similares aos dois últimos de lá, com a principal diferença sendo que o perfil que vai
+testar o efeito das políticas é um diferente do da dona do bucket (`s3_clients_list[1]`) nos
+exemplos abaixo:
 
-# + tags=["parameters"]
+
+```python
 config = "../params/br-ne1.yaml"
-# -
+```
 
-# + {"jupyter": {"source_hidden": true}}
+
+```python
 import os
 import pytest
 from botocore.exceptions import ClientError
@@ -38,32 +31,29 @@ policy_dict_template = {
     ]
 }
 
-# -
+```
 
+
+```python
 # Example of the list for actions, tenants, and methods
-actions = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"] * 3
+actions = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
 number_clients = 2
-methods = ["get_object", "put_object", "delete_object"] * 3
-object_keys = [
-    None, None, None,
-    "test_object_get", "test_object_put", "test_object_delete",
-    "ítem_😘_get", "ítem_😘_put", "ítem_😘_delete",
-]
+methods = ["get_object", "put_object", "delete_object"]
+```
 
-denied_testcase_params = zip(actions, methods, object_keys)
 
+```python
 @pytest.mark.parametrize(
     'multiple_s3_clients, bucket_with_one_object_policy, boto3_action',
     [
         (
             {"number_clients": number_clients},
-            {"policy_dict": policy_dict_template, "actions": action, "effect": "Deny", "resource_key": key},
+            {"policy_dict": policy_dict_template, "actions": action, "effect": "Deny"},
             method
         )
-        for action, method, key in denied_testcase_params
+        for action, method in zip(actions, methods)
     ],
     indirect=['bucket_with_one_object_policy', 'multiple_s3_clients'],
-    ids = [f"{action},{method},{key}" for action, method, key in denied_testcase_params ]
 )
 def test_denied_policy_operations(multiple_s3_clients, bucket_with_one_object_policy, boto3_action):
     s3_clients_list = multiple_s3_clients
@@ -88,24 +78,38 @@ def test_denied_policy_operations(multiple_s3_clients, bucket_with_one_object_po
     except ClientError as e:
         assert e.response['Error']['Code'] == 'AccessDeniedByBucketPolicy'
 run_example(__name__, "test_denied_policy_operations", config=config)
+```
+
+    .
+
+    .
+
+    .
+
+                                                                          [100%]
+
+    
 
 
+
+```python
 expected = [200, 200, 204]
+```
 
-allowed_testcase_params = zip(actions, methods, object_keys, expected)
+
+```python
 @pytest.mark.parametrize(
     'bucket_with_one_object_policy, multiple_s3_clients, boto3_action, expected',
     [
         (
-            {"policy_dict": policy_dict_template, "actions": action, "effect": "Allow", "resource_key": "ítem_😘"},
+            {"policy_dict": policy_dict_template, "actions": action, "effect": "Allow"},
             {"number_clients": number_clients},
             method,
             result,
         )
-        for action, method, kry, result in allowed_testcase_params
+        for action, method, result in zip(actions, methods, expected)
     ],
     indirect=['bucket_with_one_object_policy', 'multiple_s3_clients'],
-    ids = [f"{action},{method},{key},{result}" for action, method, key, result in allowed_testcase_params ]
 )
 def test_allowed_policy_operations(multiple_s3_clients, bucket_with_one_object_policy, boto3_action, expected):
     s3_clients_list = multiple_s3_clients
@@ -128,4 +132,15 @@ def test_allowed_policy_operations(multiple_s3_clients, bucket_with_one_object_p
     response = method(**kwargs)
     assert response['ResponseMetadata']['HTTPStatusCode'] == expected
 run_example(__name__, "test_allowed_policy_operations", config=config)
+```
+
+    .
+
+    .
+
+    .
+
+                                                                          [100%]
+
+    
 

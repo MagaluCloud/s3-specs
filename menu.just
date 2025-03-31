@@ -3,7 +3,7 @@ _default:
 
 # TUI for picking multiple choice using fzf
 _menu_picker title:
-  fzf -m --header="{{title}} Tab=select, Enter=OK" --layout=reverse
+  fzf --multi --header="{{title}} Tab=select, Enter=OK" --layout=reverse
 
 # TUI for free text input using fzf
 _text_prompt title default_value:
@@ -12,11 +12,28 @@ _text_prompt title default_value:
   tail -n1
 
 # Interactively pick categories to test
-test config_file="./params.example.yaml":
+test:
   #!/usr/bin/env bash
   test_categories=$(just categories | just menu::_menu_picker \
       "Select the categories to test" | sed ':a;N;$!ba;s/\n/ or /g')
-  just _run_tests {{config_file}} "-m '$test_categories'" 
+  config_file=$(\
+    just menu::_text_prompt "Enter params yaml file path: " "./params.example.yaml" \
+  )
+  just _run_tests "$config_file" -m "$test_categories" 
+
+# Generate doc pages based on a file selecion
+build output_format="markdown":
+  #!/usr/bin/env bash
+  spec_files=$(\
+    find ./src/s3_specs/docs -type f -name '*_test.py' | \
+    just menu::_menu_picker \
+      "Select the specs to render as doc pages")
+  config_file=$(\
+    just menu::_text_prompt "Enter params yaml file path: " "./params.example.yaml" \
+  )
+  echo "$spec_files" | while read -r spec_path; do \
+    [[ -n "$spec_path" ]] && just _build-page "$spec_path" "$config_file" "{{output_format}}";\
+  done
 
 # Interactively pick legacy categories to test on s3-tester (soon to be deprecated)
 legacy-test:

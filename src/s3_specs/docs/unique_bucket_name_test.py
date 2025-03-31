@@ -21,7 +21,7 @@ import pytest
 import botocore
 import logging
 import os
-from s3_helpers import run_example, create_bucket
+from s3_specs.docs.s3_helpers import run_example, create_bucket
 
 pytestmark = pytest.mark.basic
 config = os.getenv("CONFIG", config)
