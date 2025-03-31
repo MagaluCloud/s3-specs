@@ -40,12 +40,13 @@ execution_time_gauge = Gauge(
     ['execution_name', 'execution_type', 'time_metric']  
 )
 
-execution_status_enum = Enum(
-    's3_specs_execution_status',
-    'Status of test executions',
-    labelnames=['name', 'category'],
-    states=['passed', 'failed', 'error']  
+
+execution_status_gauge = Gauge(
+    's3_specs_status_data',  
+    'Test statuses', 
+    ['name', 'category']  
 )
+
 
 def read_csv_and_update_metrics():
     # Limpe as métricas existentes
@@ -142,25 +143,22 @@ def test_metrics_exporter():
         print(f"Arquivo {file_path} não encontrado.")
         return
 
+    status_to_numeric = {
+        'PASSED': 1.0,
+        'FAILED': -1.0,
+        'ERROR': -2.0,
+    }
+
     cleaned_status_df = df.drop(columns=['artifact_name', 'execution_datetime', 'arguments'])
-    
-    # Convert status and filter invalid values
-    cleaned_status_df['status'] = cleaned_status_df['status'].str.lower()
-    cleaned_status_df = cleaned_status_df.dropna(subset=['status'])
-    
+    cleaned_status_df['status'] = cleaned_status_df['status'].map(status_to_numeric).dropna(axis=0)
     dicts_time_metric_df = cleaned_status_df.to_dict(orient='records')
 
+    # Setar valores das métricas
     for record in dicts_time_metric_df:
-        try:
-            execution_status_enum.labels(
-                name=record['name'],
-                category=record['category']
-            ).state(record['status']) 
-        except ValueError as e:
-            print(f"Invalid status value for record {record.get('name')}: {e}")
-            continue
-
-    print('Category metrics exported as Enum...')
+        execution_status_gauge.labels(
+            name=record['name'],
+            category=record['category']
+        ).set(record['status'])
 
 if __name__ == '__main__':
     start_http_server(8000)
