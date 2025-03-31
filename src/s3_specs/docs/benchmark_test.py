@@ -1,17 +1,14 @@
+from datetime import datetime
 import os
 import subprocess
 import pytest
 import tempfile
 
-# Função para medir o tempo de uma operação
-import subprocess
-
-# Função para medir o tempo de uma operação em segundos
+# Função para medir o tempo de uma operação em millisegundos
 def measure_time(command):
-    start = int(subprocess.check_output("date +%s%3N", shell=True))
+    t0 = datetime.now()
     subprocess.run(command, shell=True, stdout=subprocess.DEVNULL)
-    end = int(subprocess.check_output("date +%s%3N", shell=True))
-    return end - start
+    return int(1000 * (datetime.now() - t0).total_seconds())
 
 
 # Lista de comandos a serem parametrizados
