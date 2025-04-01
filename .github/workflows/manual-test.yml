@@ -27,6 +27,7 @@ jobs:
   run-tests:
     uses: ./.github/workflows/run-tests.yml
     with:
+      name: "manual_test"
       tests: ${{ inputs.tests }}
       config: ${{ inputs.config }}
       flags: ${{ inputs.flags }}
