@@ -173,7 +173,6 @@ def test_metrics_exporter():
             status=row['status']
         ).inc(1)
 
-
     print("Test metrics exported...")
 
 if __name__ == '__main__':
