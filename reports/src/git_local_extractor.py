@@ -28,17 +28,18 @@ def download_file(url, filename, save_dir, token):
     else:
         print(f"Erro ao baixar o arquivo {filename}: {response.status_code}")
 
-def process_and_save_artifact(artifact_name: str, artifact_url:str, artifact_zip:str  processed_path: str):
+def process_and_save_artifact(artifact:list[str], token:str, save_dir, processed_path: str):
+    artifact_name = artifact['name']
+    artifact_url = artifact['archive_download_url']
+    artifact_zip = f"{artifact_name}.zip"  # Nome do arquivo zip para o artefato
+
     # Faz o download do artefato
     download_file(artifact_url, artifact_zip, save_dir, token)
     zip_path = os.path.join(save_dir, artifact_zip)
     with zipfile.ZipFile(zip_path, 'r') as zip:
         print(f"Unzipping {zip_path}")
         zip.extractall(save_dir)
-        with open(processed_path, 'ab') as c:
-    writer = csv.writer(c)
-    writer.writerow(artifact_name)
-    print(f"Artifact {artifact_name} saved...")
+
 
 
 
@@ -75,10 +76,11 @@ def get_action_artifacts(repo_owner: str, repo_name: str, n: int, token: str, sa
 
                 # Recuperando todos os artifatos presentes em um workflow
                 for artifact in artifacts:
-                    artifact_name = artifact['name']
-                    artifact_url = artifact['archive_download_url']
-                    artifact_zip = f"{artifact_name}.zip"  # Nome do arquivo zip para o artefato
-                    process_and_save_artifact(artifact_name, artifact_url, artifact_zip, processed_path)
+                    process_and_save_artifact(artifact, token, save_dir, processed_path)
+                    with open(processed_path, 'ab') as c:
+                        writer = csv.writer(c)
+                        writer.writerow(artifact['name'])
+                        print(f"Artifact {artifact['name']} saved...")
 
             else:
                 print(f"Erro ao obter artefatos da execução {run_id}: {artifacts_response.status_code}")

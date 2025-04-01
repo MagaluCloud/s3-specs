@@ -40,12 +40,6 @@ execution_time_gauge = Gauge(
     ['execution_name', 'execution_type', 'category' 'time_metric']  
 )
 
-execution_status_gauge = Gauge(
-    's3_specs_status_data',  
-    'Test statuses', 
-    ['name', 'category']  
-)
-
 execution_status_counter = Counter(
     's3_specs_status_counter',
     'Counter containing the number of status ocurrences on the recurrent testing',
