@@ -1,0 +1,2 @@
+source: src/s3_specs/docs
+destination: docs/_site
