@@ -7,6 +7,8 @@ from logExtractor import PytestArtifactLogExtractor
 import argparse
 import inspect
 import csv
+import itertools  
+
 
 def download_file(url, filename, save_dir, token):
     """
@@ -40,9 +42,6 @@ def process_and_save_artifact(artifact:list[str], token:str, save_dir, processed
         print(f"Unzipping {zip_path}")
         zip.extractall(save_dir)
 
-
-
-
 def get_action_artifacts(repo_owner: str, repo_name: str, n: int, token: str, save_dir: str, processed_path: str, **kwargs):
     """
     Obtém os artefatos de execução dos workflows do GitHub Actions e faz o download dos arquivos.
@@ -59,12 +58,17 @@ def get_action_artifacts(repo_owner: str, repo_name: str, n: int, token: str, sa
     response = requests.get(url, headers=headers, params=params)
 
     if response.status_code == 200:
-        runs = response.json()['workflow_runs']
-        # Extraindo dados e achando os workflows que ainda nao foram processados
-        processed_workflow = list(set(runs).difference(set(csv.DictReader(processed_path))))
+        try:
+            with open(processed_path, 'r') as r:
+                processed = list(itertools.chain.from_iterable(list(csv.reader(r))))
+        except:
+            processed = []
 
-        for workflow in processed_workflow:
-            run_id = workflow['id']
+        runs = list(map(lambda id: str(id['id']), response.json()['workflow_runs']))
+        # Extraindo dados e achando os workflows que ainda nao foram processados
+        processed_workflow = list(set(runs).difference(set(processed)))
+
+        for run_id in processed_workflow:
             print(f"Obtendo artefatos da execução do workflow: {run_id}")
             
             # URL para pegar os artefatos da execução do workflow
@@ -77,13 +81,15 @@ def get_action_artifacts(repo_owner: str, repo_name: str, n: int, token: str, sa
                 # Recuperando todos os artifatos presentes em um workflow
                 for artifact in artifacts:
                     process_and_save_artifact(artifact, token, save_dir, processed_path)
-                    with open(processed_path, 'ab') as c:
-                        writer = csv.writer(c)
-                        writer.writerow(artifact['name'])
-                        print(f"Artifact {artifact['name']} saved...")
-
             else:
                 print(f"Erro ao obter artefatos da execução {run_id}: {artifacts_response.status_code}")
+
+            # Salvando para comparacoes posteriores
+
+            with open(processed_path, 'a+') as c:
+                writer = csv.writer(c)
+                writer.writerow([run_id])
+                print(f"Salvando id dos workflow: {run_id}")
     else:
         print(f"Erro ao acessar a API do GitHub: {response.status_code}")
         print(response.json())
@@ -99,8 +105,8 @@ if __name__ == "__main__":
     parser.add_argument('token', type=str, help='Seu token de autenticação do GitHub')
     args = parser.parse_args()
     
-    args.save_dir = '/path/to/default/save_directory'
-    args.processed_path = '/path/to/default/processed.csv'
+    args.save_dir = './reports/output/downloaded_artifact/'
+    args.processed_path = './output/processed.csv'
 
     # Chama a função para obter os artefatos das execuções dos workflows
     get_action_artifacts(**vars(args))
