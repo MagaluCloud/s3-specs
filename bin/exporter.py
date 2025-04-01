@@ -37,7 +37,7 @@ avg_gauge = Gauge(
 execution_time_gauge = Gauge(
     's3_specs_time_metrics', 
     'Tests time metrics',  
-    ['execution_name', 'execution_type', 'category' 'time_metric']  
+    ['execution_name', 'execution_type', 'category', 'time_metric']  
 )
 
 execution_status_counter = Counter(
