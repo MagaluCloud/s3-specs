@@ -100,9 +100,8 @@ def read_csv_and_update_metrics():
         print("Nenhum arquivo benchmark_results.csv encontrado.")
 
 def execution_time_metrics_exporter():
-    file_path = 'execution_time.parquet'
-    tests_file_path = 'tests.parquet'
-    file_path = os.path.join(args.parquet_path, file_path)
+    file_path = os.path.join(args.parquet_path, 'execution_time.parquet')
+    tests_file_path = os.path.join(args.parquet_path, 'tests.parquet')
     
     try:
         df = pd.read_parquet(file_path)
@@ -147,8 +146,7 @@ def execution_time_metrics_exporter():
     print('Time metrics exported...')
 
 def test_metrics_exporter():
-    file_path = 'tests.parquet'
-    file_path = os.path.join(args.parquet_path, file_path)
+    file_path = os.path.join(args.parquet_path, 'tests.parquet')
 
     try:
         df = pd.read_parquet(file_path)
@@ -199,5 +197,5 @@ if __name__ == '__main__':
         read_csv_and_update_metrics()
         test_metrics_exporter()
         execution_time_metrics_exporter()
-        delete_temp_parquets()
-        time.sleep(3600)  # Atualize a cada 3600 segundos (1 hora)
+        #delete_temp_parquets()
+        time.sleep(60)  # Atualize a cada 3600 segundos (1 hora)

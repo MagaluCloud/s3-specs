@@ -69,6 +69,7 @@ def get_action_artifacts(repo_owner: str, repo_name: str, n: int, token: str, sa
         # Extraindo dados e achando os workflows que ainda nao foram processados
         unprocessed_workflow = list(set(runs).difference(set(processed)))
 
+        # Baixando workflows nao utilizados
         for run_id in unprocessed_workflow:
             print(f"Obtendo artefatos da execução do workflow: {run_id}")
             
@@ -95,6 +96,14 @@ def get_action_artifacts(repo_owner: str, repo_name: str, n: int, token: str, sa
         print(f"Erro ao acessar a API do GitHub: {response.status_code}")
         print(response.json())
 
+def delete_parquets(path: str):
+    # Deleting downloaded artifacts
+    try:
+        shutil.rmtree(path)  # Deletes directory and all its contents
+        print(f"Dir '{path}' deleted successfully")
+    except OSError as e:
+        print(f"Error: {e.filename} - {e.strerror}")
+
 if __name__ == "__main__":
     # Define os argumentos para a linha de comando
     parser = argparse.ArgumentParser(description="Baixar artefatos de workflows do GitHub Actions")
@@ -113,7 +122,7 @@ if __name__ == "__main__":
     get_action_artifacts(**vars(args))
 
     # Everything depends on the files present on the output
-    assert os.path.exists(args.save_dir), f"{args.save_dir} does not exist"
+    os.makedirs(args.save_dir, exist_ok=True)
 
     artifacts_paths = list(filter(lambda log: log.endswith('.log'), os.listdir(args.save_dir)))
 
@@ -128,13 +137,7 @@ if __name__ == "__main__":
 
     test_data = TestData(**test_data)
 
-    # Deleting downloaded artifacts
-    try:
-        shutil.rmtree(args.save_dir)  # Deletes directory and all its contents
-        print(f"Dir '{args.save_dir}' deleted successfully")
-    except OSError as e:
-        print(f"Error: {e.filename} - {e.strerror}")
+    # Deletando parquets para evitar redundancia
+    #delete_parquets(args.save_Dir)  
 
-    # deleting temporary parquets
-    parquets_paths = 'output'
 
