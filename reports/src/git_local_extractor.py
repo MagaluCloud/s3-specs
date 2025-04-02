@@ -140,4 +140,11 @@ if __name__ == "__main__":
     # Deletando parquets para evitar redundancia
     #delete_parquets(args.save_Dir)  
 
+    # Deleting downloaded artifacts
+    import shutil
 
+    try:
+        shutil.rmtree(args.save_dir)  # Deletes directory and all its contents
+        print(f"Dir '{args.save_dir}' deleted successfully")
+    except OSError as e:
+        print(f"Error: {e.filename} - {e.strerror}")
