@@ -37,7 +37,7 @@ avg_gauge = Gauge(
 execution_time_gauge = Gauge(
     's3_specs_time_metrics', 
     'Tests time metrics',  
-    ['execution_name', 'execution_type', 'category','time_metric']  
+    ['name', 'execution_type', 'category','time_metric']  
 )
 
 execution_status_counter = Counter(
@@ -129,18 +129,20 @@ def execution_time_metrics_exporter():
     # Melt o DataFrame
     melted_df = pd.melt(
         cleaned_time_metric_df,
-        id_vars=['execution_name', 'execution_type'],
+        id_vars=['name', 'execution_type', 'category'],
         value_vars=['avg_time', 'min_time', 'total_time'],
         var_name='time_metric',
         value_name='time_values'
     ).reset_index(drop=True)
 
+
     # Set metrics
     for record in melted_df.to_dict('records'):
         execution_time_gauge.labels(
-            execution_name=record['execution_name'],
+            name=record['name'],
             execution_type=record['execution_type'],
-            time_metric=record['time_metric']
+            category=record['category'],
+            time_metric=record['time_metric'],
         ).set(record['time_values'])
 
     print('Time metrics exported...')
