@@ -66,9 +66,9 @@ def get_action_artifacts(repo_owner: str, repo_name: str, n: int, token: str, sa
 
         runs = list(map(lambda id: str(id['id']), response.json()['workflow_runs']))
         # Extraindo dados e achando os workflows que ainda nao foram processados
-        processed_workflow = list(set(runs).difference(set(processed)))
+        unprocessed_workflow = list(set(runs).difference(set(processed)))
 
-        for run_id in processed_workflow:
+        for run_id in unprocessed_workflow:
             print(f"Obtendo artefatos da execução do workflow: {run_id}")
             
             # URL para pegar os artefatos da execução do workflow
