@@ -325,8 +325,8 @@ def test_multipart_upload_versioned_with_cold_storage_class(s3_client, versioned
 
 run_example(__name__, "test_multipart_upload_versioned_with_cold_storage_class", config=config)
 
-def test_delete_bucket_with_objects_cold_storage_class_and_versions(s3_client, versioned_bucket_with_one_object_cold):
-    bucket_name, object_key, _ = versioned_bucket_with_one_object_cold
+def test_delete_bucket_with_objects_cold_storage_class_and_versions(s3_client, versioned_bucket_with_one_object_cold_storage_class):
+    bucket_name, object_key, _ = versioned_bucket_with_one_object_cold_storage_class
 
     s3_client.put_object(
         Bucket = bucket_name,
