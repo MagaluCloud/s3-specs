@@ -175,10 +175,27 @@ def test_metrics_exporter():
 
     print("Test metrics exported...")
 
+def delete_temp_parquets():
+    # deleting temporary parquets
+    parquets_paths = 'output'
+
+    try:
+        print(f"Deleting all parquets...")
+        for filename in os.listdir(parquets_paths):
+            if filename.endswith('.parquet'):
+                file_path = os.path.join(parquets_paths, filename)
+                os.remove(file_path)
+    except Exception as e:
+        print(f"Error occurred while deleting parquets: {e}")
+
 if __name__ == '__main__':
     start_http_server(8000)
     while True:
+        # Retrieving metrics
         read_csv_and_update_metrics()
         test_metrics_exporter()
         execution_time_metrics_exporter()
+        # Deleting local processed parquets
+        delete_temp_parquets()
+
         time.sleep(600)  # Atualize a cada 600 segundos (10 minutos)
