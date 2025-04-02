@@ -260,8 +260,8 @@ def test_multipart_upload_with_cold_storage_class(s3_client, existing_bucket_nam
 run_example(__name__, "test_multipart_upload_with_cold_storage_class", config=config)
 
 
-def test_multipart_upload_versioned_with_cold_storage_class(s3_client, versioned_bucket_with_one_object, create_multipart_object_files):
-    bucket_name, object_key, _ = versioned_bucket_with_one_object
+def test_multipart_upload_versioned_with_cold_storage_class(s3_client, versioned_bucket_with_one_object_cold_storage_class, create_multipart_object_files):
+    bucket_name, object_key, _ = versioned_bucket_with_one_object_cold_storage_class
 
     object_key,_, part_bytes = create_multipart_object_files
 
