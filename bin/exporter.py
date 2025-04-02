@@ -104,7 +104,7 @@ def execution_time_metrics_exporter():
     tests_file_path = os.path.join(args.parquet_path, 'tests.parquet')
     
     try:
-        df = pd.read_parquet(file_path)
+        df_category = pd.read_parquet(file_path)
     except FileNotFoundError:
         print(f"Arquivo {file_path} não encontrado.")
         return
@@ -116,15 +116,15 @@ def execution_time_metrics_exporter():
         return
 
     # Merge to retrieve the categories
-    df_category = df.merge(
+    df_category = df_category.merge(
         df_tests, 
         how='inner',
-        left_on=['execution_name', 'time'], 
+        left_on=['execution_name', 'execution_datetime'], 
         right_on=['name', 'execution_datetime']
     ).drop_duplicates()
 
     # Get useful columns
-    cleaned_time_metric_df = df_category['name', 'category', 'execution_type', 'avg_time', 'min_time', 'total_time']
+    cleaned_time_metric_df = df_category[['name', 'category', 'execution_type', 'avg_time', 'min_time', 'total_time']]
 
     # Melt o DataFrame
     melted_df = pd.melt(
