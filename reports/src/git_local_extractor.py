@@ -8,6 +8,7 @@ import argparse
 import inspect
 import csv
 import itertools  
+import shutil
 
 
 def download_file(url, filename, save_dir, token):
@@ -126,3 +127,14 @@ if __name__ == "__main__":
             list(map(lambda key, log: test_data[key].append(log), test_data_arguments, logs))
 
     test_data = TestData(**test_data)
+
+    # Deleting downloaded artifacts
+    try:
+        shutil.rmtree(args.save_dir)  # Deletes directory and all its contents
+        print(f"Dir '{args.save_dir}' deleted successfully")
+    except OSError as e:
+        print(f"Error: {e.filename} - {e.strerror}")
+
+    # deleting temporary parquets
+    parquets_paths = 'output'
+

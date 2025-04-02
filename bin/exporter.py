@@ -106,9 +106,14 @@ def execution_time_metrics_exporter():
     
     try:
         df = pd.read_parquet(file_path)
-        df_tests = pd.read_parquet(tests_file_path)
     except FileNotFoundError:
         print(f"Arquivo {file_path} não encontrado.")
+        return
+    
+    try:
+        df_tests = pd.read_parquet(tests_file_path)
+    except FileNotFoundError:
+        print(f"Arquivo {tests_file_path} não encontrado.")
         return
 
     # Merge to retrieve the categories
@@ -175,19 +180,8 @@ def test_metrics_exporter():
 
     print("Test metrics exported...")
 
-def delete_downloaded_files():
-    # deleting git artifacts
-    dir_path = 'reports/output/downloaded_artifact'
-    if os.path.exists(dir_path):
-        try:
-            os.rmdir(dir_path)
-            print(f"Directory '{dir_path}' deleted successfully")
-        except OSError as e:
-            print(f"Error: {e.filename} - {e.strerror}")
-
-    # deleting temporary parquets
+def delete_temp_parquets():
     parquets_paths = 'output'
-
     try:
         print(f"Deleting all parquets...")
         for filename in os.listdir(parquets_paths):
@@ -205,7 +199,5 @@ if __name__ == '__main__':
         read_csv_and_update_metrics()
         test_metrics_exporter()
         execution_time_metrics_exporter()
-        # Deleting retrieved artifacts to guarantee they have been processed
-
-
-        time.sleep(600)  # Atualize a cada 600 segundos (10 minutos)
+        delete_temp_parquets()
+        time.sleep(3600)  # Atualize a cada 3600 segundos (1 hora)
