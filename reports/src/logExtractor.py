@@ -130,7 +130,7 @@ class PytestArtifactLogExtractor:
                                 artifact_name=artifact.name,
                                 execution_datetime=execution_entity.execution_datetime,
                                 error=row['error'],
-                                details=row['detalis'],
+                                details=row['details'],
             ) for _, row in failures_df.iterrows()]
         else:
             failures = [Failures(test_name=None,artifact_name=None,execution_datetime=execution_entity.execution_datetime,error=None,details=None)]
@@ -257,7 +257,7 @@ class PytestArtifactLogExtractor:
         return dfs
 
     def __create_failure_df__(self, data):
-        return pd.DataFrame(data, columns=['status', 'category', 'name', 'error', 'error_details']).dropna()
+        return pd.DataFrame(data, columns=['status', 'category', 'test_name', 'error', 'details']).dropna()
 
     def __extract_artifact_info__(self):
         """
