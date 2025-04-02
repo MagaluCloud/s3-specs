@@ -324,7 +324,7 @@ def versioned_bucket_with_one_object(s3_client, lock_mode):
         print(f"Cleanup error {e}")
 
 @pytest.fixture
-def versioned_bucket_with_one_object_cold(s3_client, lock_mode):
+def versioned_bucket_with_one_object_cold_storage_class(s3_client, lock_mode):
     """
     Fixture to create a versioned bucket with one object on cold storage class for testing.
     
