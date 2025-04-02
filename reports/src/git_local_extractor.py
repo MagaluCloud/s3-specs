@@ -66,9 +66,9 @@ def get_action_artifacts(repo_owner: str, repo_name: str, n: int, token: str, sa
 
         runs = list(map(lambda id: str(id['id']), response.json()['workflow_runs']))
         # Extraindo dados e achando os workflows que ainda nao foram processados
-        processed_workflow = list(set(runs).difference(set(processed)))
+        unprocessed_workflow = list(set(runs).difference(set(processed)))
 
-        for run_id in processed_workflow:
+        for run_id in unprocessed_workflow:
             print(f"Obtendo artefatos da execução do workflow: {run_id}")
             
             # URL para pegar os artefatos da execução do workflow
@@ -126,3 +126,13 @@ if __name__ == "__main__":
             list(map(lambda key, log: test_data[key].append(log), test_data_arguments, logs))
 
     test_data = TestData(**test_data)
+
+
+# Deleting downloaded artifacts
+import shutil
+
+try:
+    shutil.rmtree(args.save_dir)  # Deletes directory and all its contents
+    print(f"Dir '{args.save_dir}' deleted successfully")
+except OSError as e:
+    print(f"Error: {e.filename} - {e.strerror}")

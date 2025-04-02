@@ -37,13 +37,13 @@ avg_gauge = Gauge(
 execution_time_gauge = Gauge(
     's3_specs_time_metrics', 
     'Tests time metrics',  
-    ['execution_name', 'execution_type', 'category', 'time_metric']  
+    ['execution_name', 'execution_type', 'category','time_metric']  
 )
 
 execution_status_counter = Counter(
     's3_specs_status_counter',
     'Counter containing the number of status ocurrences on the recurrent testing',
-    ['name', 'status', 'category'],
+    ['name', 'status', 'category']
 )
 
 def read_csv_and_update_metrics():
@@ -164,22 +164,38 @@ def test_metrics_exporter():
     
     # Convert status to more readable labels if needed
     cleaned_status_df['status'] = cleaned_status_df['status'].map(status_mapping)
-    
-    # Group by name, category, and status to count occurrences
-    status_counts = cleaned_status_df.groupby(['name', 'category', 'status']).size().reset_index(name='count')
 
     # Increment the counter for each status occurrence
-    for _, row in status_counts.iterrows():
+    for _, row in cleaned_status_df.iterrows():
         execution_status_counter.labels(
             name=row['name'],
             category=row['category'],
             status=row['status']
-        ).inc(row['count'])
+        ).inc(1)
+
+    print("Test metrics exported...")
+
+def delete_temp_parquets():
+    # deleting temporary parquets
+    parquets_paths = 'output'
+
+    try:
+        print(f"Deleting all parquets...")
+        for filename in os.listdir(parquets_paths):
+            if filename.endswith('.parquet'):
+                file_path = os.path.join(parquets_paths, filename)
+                os.remove(file_path)
+    except Exception as e:
+        print(f"Error occurred while deleting parquets: {e}")
 
 if __name__ == '__main__':
     start_http_server(8000)
     while True:
+        # Retrieving metrics
         read_csv_and_update_metrics()
         test_metrics_exporter()
         execution_time_metrics_exporter()
+        # Deleting local processed parquets
+        delete_temp_parquets()
+
         time.sleep(600)  # Atualize a cada 600 segundos (10 minutos)
