@@ -7,7 +7,7 @@ import tempfile
 # Função para medir o tempo de uma operação em millisegundos
 def measure_time(command):
     t0 = datetime.now()
-    subprocess.run(command, shell=True, stdout=subprocess.DEVNULL)
+    subprocess.run(command, check=True, shell=True, stdout=subprocess.DEVNULL)
     return int(1000 * (datetime.now() - t0).total_seconds())
 
 
