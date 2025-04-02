@@ -9,7 +9,7 @@
 import pytest
 from itertools import product
 from botocore.exceptions import ClientError
-from s3_helpers import update_existing_keys
+from s3_specs.docs.s3_helpers import update_existing_keys
 import logging
 
 pytestmark = pytest.mark.acl

@@ -9,7 +9,7 @@ on:
         config:
           description: 'Digite o caminho da configuração a ser utilizado'
           required: true
-          default: ../params.example.yaml
+          default: ../../../params.example.yaml
         flags:
           description: 'Flags Adicionais'
           required: false
@@ -27,6 +27,7 @@ jobs:
   run-tests:
     uses: ./.github/workflows/run-tests.yml
     with:
+      name: "manual_test"
       tests: ${{ inputs.tests }}
       config: ${{ inputs.config }}
       flags: ${{ inputs.flags }}

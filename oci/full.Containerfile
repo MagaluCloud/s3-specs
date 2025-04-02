@@ -65,7 +65,7 @@ COPY menu.just /app/menu.just
 COPY uv.lock /app/uv.lock
 COPY pyproject.toml /app/pyproject.toml
 COPY README.md /app/README.md
-COPY docs /app/docs/
+COPY src/ /app/src/
 COPY reports /app/reports/
 COPY output /app/output/
 # Download python dependencies to be bundled with the image

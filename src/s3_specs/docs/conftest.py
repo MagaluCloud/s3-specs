@@ -7,7 +7,7 @@ import logging
 import subprocess
 import shutil
 
-from s3_helpers import (
+from s3_specs.docs.s3_helpers import (
     generate_unique_bucket_name,
     delete_bucket_and_wait,
     create_bucket_and_wait,
@@ -469,7 +469,7 @@ def bucket_with_one_object_policy(multiple_s3_clients, policy_wait_time, request
 
 
 
-@pytest.fixture
+@pytest.fixture(params=[{ 'number_clients': 2 }])
 def multiple_s3_clients(request, test_params):
     """
     Creates multiple S3 clients based on the profiles provided in the test parameters.

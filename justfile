@@ -18,7 +18,7 @@ setup-profiles:
 
 # Run the tests
 _run_tests config_file *pytest_params:
-    uv run pytest ./docs/*_test.py --config {{config_file}} {{pytest_params}}
+    uv run pytest ./src/s3_specs/docs/*_test.py --config {{config_file}} {{pytest_params}}
 
 #Execute the tests of s3-specs
 tests *pytest_params: setup-profiles
@@ -27,7 +27,7 @@ tests *pytest_params: setup-profiles
 #Execute the tests of s3-specs and generate a report of the tests after running.
 report category="":
     just setup-profiles
-    reports/run.sh '{{category}}' ./params.example.yaml ./docs/
+    reports/run.sh '{{category}}' ./params.example.yaml ./src/s3_specs/docs/
 
 # List known categories (pytest markers)
 categories:
@@ -35,4 +35,8 @@ categories:
 
 # Start a Jupyter lab server for browsing and executing the specs, right click and "Open as Notebook"
 browse:
-  uv run --with jupyter --with jupytext jupyter lab docs
+  uv run --with jupyter --with jupytext jupyter lab src/s3_specs/docs
+
+# Creates a page based on the execution of a spec and saves it under the docs/runs directory
+_build-page spec_path config_file="./params/br-ne1.yaml" output_format="markdown":
+  ./bin/run-spec.sh "{{spec_path}}" "{{config_file}}" "{{output_format}}"
