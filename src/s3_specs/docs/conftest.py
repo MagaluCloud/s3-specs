@@ -247,7 +247,7 @@ def bucket_with_many_objects(request, s3_client):
         put_object_and_wait(s3_client, bucket_name, f"{object_prefix}{object_key}", content)
 
     # Yield the bucket name and object details to the test
-    yield bucket_name, object_prefix, content
+    yield bucket_name, object_prefix, content, object_key_list
 
     # Teardown: Delete the object and bucket after the test
     for object_key in object_key_list:
@@ -306,6 +306,63 @@ def versioned_bucket_with_one_object(s3_client, lock_mode):
     object_key = "test-object.txt"
     content = b"Sample content for testing versioned object."
     object_version = put_object_and_wait(s3_client, bucket_name, object_key, content)
+    if not object_version:
+        logging.info(f"Bucket ${bucket_name} was not versioned before the object put, insisting with more objects...")
+        object_version, object_key = replace_failed_put_without_version(s3_client, bucket_name, object_key, content)
+
+    end_time = datetime.now()
+    logging.warning(f"[versioned_bucket_with_one_object] Total setup time={end_time - start_time}")
+    assert object_version, "Setup failed, could not get VersionId from put_object in versioned bucket"
+
+    # Yield details to tests
+    yield bucket_name, object_key, object_version
+
+    # Cleanup
+    try:
+        cleanup_old_buckets(s3_client, base_name, lock_mode)
+    except Exception as e:
+        print(f"Cleanup error {e}")
+
+@pytest.fixture
+def versioned_bucket_with_one_object_cold_storage_class(s3_client, lock_mode):
+    """
+    Fixture to create a versioned bucket with one object on cold storage class for testing.
+    
+    :param s3_client: Boto3 S3 client
+    :param lock_mode: Lock mode for the bucket or objects (e.g., 'GOVERNANCE', 'COMPLIANCE')
+    :return: Tuple containing bucket name, object key, and object version ID
+    """
+    start_time = datetime.now()
+    base_name = "versioned-bucket-with-one-object"
+    bucket_name = generate_unique_bucket_name(base_name=base_name)
+
+    # Create bucket and enable versioning
+    create_bucket_and_wait(s3_client, bucket_name)
+
+    # Set bucket versioning to Enabled one time
+    response = s3_client.put_bucket_versioning(
+        Bucket=bucket_name,
+        VersioningConfiguration={"Status": "Enabled"}
+    )
+    response_status = response["ResponseMetadata"]["HTTPStatusCode"]
+    logging.info(f"put_bucket_versioning response status: {response_status}")
+    assert response_status == 200, "Expected HTTPStatusCode 200 for successful put_bucket_versioning."
+
+    # TODO: HACK: #notcool #eventual-consistency
+    # make multiple ge_bucket_versioning requests to assure that the status is known to be Enabled
+    versioning_status = probe_versioning_status(s3_client, bucket_name)
+    assert versioning_status == "Enabled", f"Expected VersionConfiguration for bucket {bucket_name} to be Enabled, got {versioning_status}"
+
+    # Upload a single object and get it's version
+    object_key = "test-object.txt"
+    content = b"v1"
+    # Upload the object with GLACIER_IR storage class
+    object_version = s3_client.put_object(
+        Bucket=bucket_name,
+        Key=object_key,
+        Body=content,
+        StorageClass='GLACIER_IR'  # Specify the storage class as GLACIER_IR 
+        )["VersionId"]
     if not object_version:
         logging.info(f"Bucket ${bucket_name} was not versioned before the object put, insisting with more objects...")
         object_version, object_key = replace_failed_put_without_version(s3_client, bucket_name, object_key, content)
