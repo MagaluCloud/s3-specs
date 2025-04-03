@@ -105,20 +105,26 @@ class TestData:
         """
         for atb in vars(self):
             parquet_file_path = f"./output/{atb}.parquet"
-            if os.path.exists(parquet_file_path):  # Check if the file exists
-                loaded_df = am.read_parquet_file(parquet_file_path)
-                if not loaded_df.empty:  # Check if the loaded DataFrame is not empty
-                    existing_df = getattr(self, atb)  # 
-                    merged_df = pd.concat([existing_df, loaded_df], ignore_index=True)
-                    setattr(self, atb, merged_df)  
-        
+            try:
+                if os.path.exists(parquet_file_path):  # Check if the file exists
+                    loaded_df = am.read_parquet_file(parquet_file_path)
+                    if not loaded_df.empty:  # Check if the loaded DataFrame is not empty
+                        existing_df = getattr(self, atb)  # 
+                        merged_df = pd.concat([existing_df, loaded_df], ignore_index=True)
+                        setattr(self, atb, merged_df)  
+            except Exception as e:
+                 print(f"Failed to open {parquet_file_path}: {e}")
+                 
     def save_loaded(self):
         for atb in vars(self):
-            df = getattr(self, atb)
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                parquet_file_name = f"./output/{atb}.parquet"
-                print(f"Saving {atb} into {parquet_file_name}")
-                am.save_df_to_parquet(df = df, parquet_file_name=parquet_file_name)  
+            parquet_file_name = f"./output/{atb}.parquet"
+            try:
+                df = getattr(self, atb)
+                if isinstance(df, pd.DataFrame) and not df.empty:
+                    print(f"Saving {atb} into {parquet_file_name}")
+                    am.save_df_to_parquet(df = df, parquet_file_name=parquet_file_name)  
+            except Exception as e:
+                print(f"Failed to open {parquet_file_name}: {e}")
 
 
 def get_fields(Dataclass: type) -> list[str]:
