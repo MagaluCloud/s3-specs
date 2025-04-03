@@ -140,7 +140,9 @@ if __name__ == "__main__":
             print(f"Failed to parse {path}")   
     test_data = TestData(**test_data)
 
-    # Deletando parquets para evitar redundancia
-    #delete_parquets(args.save_Dir)  
-
-
+    # Deleting downloaded artifacts
+    try:
+        shutil.rmtree(args.save_dir)  # Deletes directory and all its contents
+        print(f"Dir '{args.save_dir}' deleted successfully")
+    except OSError as e:
+        print(f"Error: {e.filename} - {e.strerror}")
