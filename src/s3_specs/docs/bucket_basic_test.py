@@ -34,7 +34,7 @@ config = os.getenv("CONFIG", config)
 
 # +
 create_bucket_bucket_names = [
-    f"test-create-bucket-{secrets.token_hex(5)}",
+    f"test-create-bucket-{secrets.token_hex(15)}",
     f"test-create-bucket-{secrets.token_hex(22)}", # 62 chars length
 ]
 
