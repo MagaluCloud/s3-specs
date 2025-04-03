@@ -106,12 +106,11 @@ class TestData:
         for atb in vars(self):
             parquet_file_path = f"./output/{atb}.parquet"
             try:
-                if os.path.exists(parquet_file_path):  # Check if the file exists
-                    loaded_df = am.read_parquet_file(parquet_file_path)
-                    if not loaded_df.empty:  # Check if the loaded DataFrame is not empty
-                        existing_df = getattr(self, atb)  # 
-                        merged_df = pd.concat([existing_df, loaded_df], ignore_index=True)
-                        setattr(self, atb, merged_df)  
+                loaded_df = am.read_parquet_file(parquet_file_path)
+                if not loaded_df.empty:  # Check if the loaded DataFrame is not empty
+                    existing_df = getattr(self, atb)  # 
+                    merged_df = pd.concat([existing_df, loaded_df], ignore_index=True)
+                    setattr(self, atb, merged_df)  
             except Exception as e:
                  print(f"Failed to open {parquet_file_path}: {e}")
                  
