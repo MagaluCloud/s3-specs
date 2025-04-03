@@ -31,7 +31,7 @@ objs_consistency_time = Gauge(
 avg_gauge = Gauge(
     'objs_benchmark',
     'Tempo médio de operações',
-    ['region', 'tool', 'size', 'times', 'workers', 'quantity', 'operation', 'time']
+    ['region', 'tool', 'size', 'times', 'workers', 'quantity', 'operation']
 )
 
 execution_time_gauge = Gauge(
@@ -93,7 +93,6 @@ def read_csv_and_update_metrics():
                     'workers': str(row['workers']),
                     'quantity': str(row['quantity']),
                     'operation': row['operation'],
-                    'time': str(row['time'])
                 }
                 avg_gauge.labels(**labels).set(row['time'])
     else:
