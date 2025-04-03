@@ -6,6 +6,10 @@ from logDataclasses import TestData
 from logExtractor import PytestArtifactLogExtractor
 import argparse
 import inspect
+import csv
+import itertools  
+import shutil
+
 
 def download_file(url, filename, save_dir, token):
     """
@@ -27,7 +31,19 @@ def download_file(url, filename, save_dir, token):
     else:
         print(f"Erro ao baixar o arquivo {filename}: {response.status_code}")
 
-def get_action_artifacts(repo_owner, repo_name, n, token, save_dir):
+def process_and_save_artifact(artifact:list[str], token:str, save_dir, processed_path: str):
+    artifact_name = artifact['name']
+    artifact_url = artifact['archive_download_url']
+    artifact_zip = f"{artifact_name}.zip"  # Nome do arquivo zip para o artefato
+
+    # Faz o download do artefato
+    download_file(artifact_url, artifact_zip, save_dir, token)
+    zip_path = os.path.join(save_dir, artifact_zip)
+    with zipfile.ZipFile(zip_path, 'r') as zip:
+        print(f"Unzipping {zip_path}")
+        zip.extractall(save_dir)
+
+def get_action_artifacts(repo_owner: str, repo_name: str, n: int, token: str, save_dir: str, processed_path: str, **kwargs):
     """
     Obtém os artefatos de execução dos workflows do GitHub Actions e faz o download dos arquivos.
     """
@@ -43,10 +59,18 @@ def get_action_artifacts(repo_owner, repo_name, n, token, save_dir):
     response = requests.get(url, headers=headers, params=params)
 
     if response.status_code == 200:
-        runs = response.json()['workflow_runs']
-        
-        for run in runs:
-            run_id = run['id']
+        try:
+            with open(processed_path, 'r') as r:
+                processed = list(itertools.chain.from_iterable(list(csv.reader(r))))
+        except:
+            processed = []
+
+        runs = list(map(lambda id: str(id['id']), response.json()['workflow_runs']))
+        # Extraindo dados e achando os workflows que ainda nao foram processados
+        unprocessed_workflow = list(set(runs).difference(set(processed)))
+
+        # Baixando workflows nao utilizados
+        for run_id in unprocessed_workflow:
             print(f"Obtendo artefatos da execução do workflow: {run_id}")
             
             # URL para pegar os artefatos da execução do workflow
@@ -55,23 +79,30 @@ def get_action_artifacts(repo_owner, repo_name, n, token, save_dir):
             
             if artifacts_response.status_code == 200:
                 artifacts = artifacts_response.json()['artifacts']
-                
+
+                # Recuperando todos os artifatos presentes em um workflow
                 for artifact in artifacts:
-                    artifact_name = artifact['name']
-                    artifact_url = artifact['archive_download_url']
-                    artifact_zip = f"{artifact_name}.zip"  # Nome do arquivo zip para o artefato
-                    
-                    # Faz o download do artefato
-                    download_file(artifact_url, artifact_zip, save_dir, token)
-                    zip_path = os.path.join(save_dir, artifact_zip)
-                    with zipfile.ZipFile(zip_path, 'r') as zip:
-                        print(f"Unzipping {zip_path}")
-                        zip.extractall(save_dir)
+                    process_and_save_artifact(artifact, token, save_dir, processed_path)
             else:
                 print(f"Erro ao obter artefatos da execução {run_id}: {artifacts_response.status_code}")
+
+            # Salvando para comparacoes posteriores
+
+            with open(processed_path, 'a+') as c:
+                writer = csv.writer(c)
+                writer.writerow([run_id])
+                print(f"Salvando id dos workflow: {run_id}")
     else:
         print(f"Erro ao acessar a API do GitHub: {response.status_code}")
         print(response.json())
+
+def delete_parquets(path: str):
+    # Deleting downloaded artifacts
+    try:
+        shutil.rmtree(path)  # Deletes directory and all its contents
+        print(f"Dir '{path}' deleted successfully")
+    except OSError as e:
+        print(f"Error: {e.filename} - {e.strerror}")
 
 if __name__ == "__main__":
     # Define os argumentos para a linha de comando
@@ -82,28 +113,36 @@ if __name__ == "__main__":
     parser.add_argument('repo_name', type=str, help='Nome do repositório no GitHub')
     parser.add_argument('n', type=int, help='Número de execuções de workflows que você quer pegar')
     parser.add_argument('token', type=str, help='Seu token de autenticação do GitHub')
-    
-    # Diretório onde os artefatos serão salvos
-    save_dir ='./reports/output/downloaded_artifact/'
-
-    # Faz o parsing dos argumentos passados
     args = parser.parse_args()
     
+    args.save_dir = './reports/output/downloaded_artifact/'
+    args.processed_path = './output/processed.csv'
+
     # Chama a função para obter os artefatos das execuções dos workflows
-    get_action_artifacts(args.repo_owner, args.repo_name, args.n, args.token, save_dir)
+    get_action_artifacts(**vars(args))
 
     # Everything depends on the files present on the output
-    assert os.path.exists(save_dir), f"{save_dir} does not exist"
+    os.makedirs(args.save_dir, exist_ok=True)
 
-    artifacts_paths = list(filter(lambda log: log.endswith('.log'), os.listdir(save_dir)))
+    artifacts_paths = list(filter(lambda log: log.endswith('.log'), os.listdir(args.save_dir)))
 
     test_data_arguments = list(inspect.signature(TestData).parameters.keys())
     test_data = {args: [] for args in test_data_arguments}
 
     for path in artifacts_paths:
-        logs = PytestArtifactLogExtractor(save_dir + path).log_to_df()
-        # Adding the new tuple to the dict
-        if test_data:
-            list(map(lambda key, log: test_data[key].append(log), test_data_arguments, logs))
-
+        try:
+            logs = PytestArtifactLogExtractor(args.save_dir + path).log_to_df()
+            print(f"Successed on parsing: {path}")
+            # Adding the new tuple to the dict
+            if test_data:
+                list(map(lambda key, log: test_data[key].append(log), test_data_arguments, logs))
+        except:
+            print(f"Failed to parse {path}")   
     test_data = TestData(**test_data)
+
+    # Deleting downloaded artifacts
+    try:
+        shutil.rmtree(args.save_dir)  # Deletes directory and all its contents
+        print(f"Dir '{args.save_dir}' deleted successfully")
+    except OSError as e:
+        print(f"Error: {e.filename} - {e.strerror}")

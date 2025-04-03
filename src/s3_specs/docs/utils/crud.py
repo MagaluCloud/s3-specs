@@ -2,6 +2,7 @@ import logging
 import pytest
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from s3_specs.docs.utils.utils import generate_valid_bucket_name, convert_unit
+from s3_specs.docs.s3_helpers import generate_unique_bucket_name
 from boto3.s3.transfer import TransferConfig
 import os
 from tqdm import tqdm
@@ -326,3 +327,18 @@ def fixture_upload_multipart_file(s3_client, fixture_bucket_with_name, request) 
         )
 
     return object_size, response, elapsed  # return int of size in bytes
+
+@pytest.fixture(params=[{"prefix": "test-multiple-buckets-", "names": ["1", "2", "3"]}])
+def fixture_multiple_buckets(request, s3_client):
+    prefix = request.param.get("prefix")
+    names = request.param.get("names")
+    bucket_names = []
+    for name in names:
+        bucket_name = generate_unique_bucket_name(base_name=f"{prefix}{name}")
+        create_bucket(s3_client, bucket_name)
+        bucket_names.append(bucket_name)
+
+    yield bucket_names
+
+    for bucket_name in bucket_names:
+        delete_bucket(s3_client, bucket_name)

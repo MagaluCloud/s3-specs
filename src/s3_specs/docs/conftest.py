@@ -247,7 +247,7 @@ def bucket_with_many_objects(request, s3_client):
         put_object_and_wait(s3_client, bucket_name, f"{object_prefix}{object_key}", content)
 
     # Yield the bucket name and object details to the test
-    yield bucket_name, object_prefix, content
+    yield bucket_name, object_prefix, content, object_key_list
 
     # Teardown: Delete the object and bucket after the test
     for object_key in object_key_list:
@@ -469,7 +469,7 @@ def bucket_with_one_object_policy(multiple_s3_clients, policy_wait_time, request
 
 
 
-@pytest.fixture
+@pytest.fixture(params=[{ 'number_clients': 2 }])
 def multiple_s3_clients(request, test_params):
     """
     Creates multiple S3 clients based on the profiles provided in the test parameters.

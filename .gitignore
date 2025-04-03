@@ -4,6 +4,7 @@ params.yaml
 
 # Ignore any output folder created on run time
 **output/*.parquet
+output/processed.csv
 
 # Ignore all .ipynb_checkpoints folders anywhere in the project
 **/.ipynb_checkpoints/
