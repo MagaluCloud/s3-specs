@@ -44,6 +44,7 @@ import logging
 import pytest
 from s3_specs.docs.s3_helpers import run_example
 from botocore.exceptions import ClientError
+import hashlib
 
 pytestmark = pytest.mark.cold_storage
 # -
@@ -342,4 +343,70 @@ def test_delete_bucket_with_objects_cold_storage_class_and_versions(s3_client, v
 
     error_code = exc_info.value.response["Error"]["Code"]
     assert error_code == "BucketNotEmpty"
+
 run_example(__name__, "test_delete_bucket_with_objects_cold_storage_class_and_versions", config=config)
+
+def test_multipart_upload_checksum_validation(s3_client, versioned_bucket_with_one_object_cold_storage_class, create_multipart_object_files):
+    bucket_name, object_key, _ = versioned_bucket_with_one_object_cold_storage_class
+    object_key, _, part_bytes = create_multipart_object_files
+
+    response = s3_client.create_multipart_upload(
+        Bucket=bucket_name,
+        Key=object_key,
+        StorageClass="GLACIER_IR",
+    )
+
+    assert "UploadId" in list(response.keys())
+    upload_id = response.get("UploadId")
+    logging.info("Upload Id: %s", upload_id)
+
+    parts = []
+    for i, part_content in enumerate(part_bytes, start=1):
+        response_part = s3_client.upload_part(
+            Body=part_content,
+            Bucket=bucket_name,
+            Key=object_key,
+            PartNumber=i,
+            UploadId=upload_id,
+        )
+        parts.append({'ETag': response_part['ETag'], 'PartNumber': i})
+        logging.info("Response Upload Part %s: %s", i, response_part)
+        assert response_part["ResponseMetadata"]["HTTPStatusCode"] == 200, (
+            f"Expected HTTPStatusCode 200 for part {i} upload."
+        )
+
+    response = s3_client.complete_multipart_upload(
+        Bucket=bucket_name,
+        Key=object_key,
+        MultipartUpload={'Parts': parts},
+        UploadId=upload_id,
+    )
+    
+    logging.info("Complete Multipart Upload Response: %s", response)
+    assert response["ResponseMetadata"]["HTTPStatusCode"] == 200, (
+                f"Expected HTTPStatusCode 200 for multipart upload completion."
+            )
+
+    upload_checksum = calculate_checksum(b"".join(part_bytes))
+    logging.info(f"Calculated upload checksum: {upload_checksum}")
+
+    response_get = s3_client.get_object(
+        Bucket=bucket_name,
+        Key=object_key
+    )
+
+    downloaded_checksum = calculate_checksum(response_get['Body'].read())
+    logging.info(f"Calculated downloaded checksum: {downloaded_checksum}")
+
+    assert upload_checksum == downloaded_checksum, (
+        f"Checksum mismatch: {upload_checksum} (uploaded) vs {downloaded_checksum} (downloaded)"
+    )
+
+    logging.info("Checksum validation passed: The uploaded and downloaded content match.")
+
+
+def calculate_checksum(file_content):
+    """Calcula o MD5 do conteúdo do arquivo."""
+    hash_md5 = hashlib.md5()
+    hash_md5.update(file_content)
+    return hash_md5.hexdigest()

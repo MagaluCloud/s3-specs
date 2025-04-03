@@ -355,7 +355,7 @@ def versioned_bucket_with_one_object_cold_storage_class(s3_client, lock_mode):
 
     # Upload a single object and get it's version
     object_key = "test-object.txt"
-    content = b"Sample content for testing versioned object."
+    content = b"v1"
     # Upload the object with GLACIER_IR storage class
     object_version = s3_client.put_object(
         Bucket=bucket_name,

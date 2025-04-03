@@ -184,3 +184,99 @@ def test_multipart_upload_versioned(s3_client, versioned_bucket_with_one_object,
     assert head.get("StorageClass") == "STANDARD"
 
 run_example(__name__, "test_multipart_upload_versioned_with_cold_storage_class", config=config)
+
+def test_delete_object_version1_cold_storage_class(s3_client, versioned_bucket_with_one_object_cold_storage_class):
+    bucket_name, object_key, version_v1 = versioned_bucket_with_one_object_cold_storage_class
+
+    response_v2 = s3_client.put_object(
+        Bucket=bucket_name,
+        Key=object_key,
+        Body=b"v2",
+        StorageClass='GLACIER_IR'
+    )
+    version_v2 = response_v2["VersionId"]
+    logging.info(f"Version v2 uploaded with VersionId: {version_v2}")
+
+    s3_client.delete_object(
+        Bucket=bucket_name,
+        Key=object_key,
+        VersionId=version_v1
+    )
+    logging.info(f"Version v1 deleted, VersionId: {version_v1}")
+
+    response_versions = s3_client.list_object_versions(
+        Bucket=bucket_name,
+        Prefix=object_key
+    )
+
+    deleted_version_v1 = any(version["VersionId"] == version_v1 for version in response_versions.get("Versions", []))
+    assert not deleted_version_v1, f"Version v1 with VersionId {version_v1} should not be present after deletion"
+
+    logging.info(f"Version v1 successfully deleted from the list of versions.")
+
+    with pytest.raises(ClientError) as exc_info:
+        s3_client.get_object(
+            Bucket=bucket_name,
+            Key=object_key,
+            VersionId=version_v1
+        )
+    error_code = exc_info.value.response["Error"]["Code"]
+    assert error_code == "NoSuchVersion" or "NoSuchKey", f"Expected 'NoSuchVersion', got {error_code}" ## NoSuchKey is a valid error code for MGC
+
+    response_v2_get = s3_client.get_object(
+        Bucket=bucket_name,
+        Key=object_key,
+        VersionId=version_v2
+    )
+    assert response_v2_get["Body"].read() == b"v2", "Expected content for v2 to be 'v2'"
+    logging.info(f"Version v2 is still available with VersionId: {version_v2}")
+
+run_example(__name__, "test_delete_object_version1_cold_storage_class", config=config)
+
+def test_delete_object_version2_cold_storage_class(s3_client, versioned_bucket_with_one_object_cold_storage_class):
+    bucket_name, object_key, version_v1 = versioned_bucket_with_one_object_cold_storage_class
+
+    response_v2 = s3_client.put_object(
+        Bucket=bucket_name,
+        Key=object_key,
+        Body=b"v2",
+        StorageClass='GLACIER_IR'
+    )
+    version_v2 = response_v2["VersionId"]
+    logging.info(f"Version v2 uploaded with VersionId: {version_v2}")
+
+    s3_client.delete_object(
+        Bucket=bucket_name,
+        Key=object_key,
+        VersionId=version_v2
+    )
+    logging.info(f"Version v2 deleted, VersionId: {version_v2}")
+
+    response_versions = s3_client.list_object_versions(
+            Bucket=bucket_name,
+            Prefix=object_key
+        )
+
+    deleted_version_v2 = any(version["VersionId"] == version_v2 for version in response_versions.get("Versions", []))
+    assert not deleted_version_v2, f"Version v2 with VersionId {version_v2} should not be present after deletion"
+
+    logging.info(f"Version v2 successfully deleted from the list of versions.")
+
+    with pytest.raises(ClientError) as exc_info:
+        s3_client.get_object(
+            Bucket=bucket_name,
+            Key=object_key,
+            VersionId=version_v2
+        )
+    error_code = exc_info.value.response["Error"]["Code"]
+    assert error_code == "NoSuchVersion" or "NoSuchKey", f"Expected 'NoSuchVersion', got {error_code}" ## NoSuchKey is a valid error code for MGC
+
+    response_v1_get = s3_client.get_object(
+        Bucket=bucket_name,
+        Key=object_key,
+        VersionId=version_v1
+    )
+    assert response_v1_get["Body"].read() == b"v1", "Expected content for v1 to be 'v1'"
+    logging.info(f"Version v1 is still available with VersionId: {version_v1}")
+
+run_example(__name__, "test_delete_object_version2_cold_storage_class", config=config)
