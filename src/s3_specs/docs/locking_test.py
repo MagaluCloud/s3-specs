@@ -62,6 +62,7 @@ pytestmark = pytest.mark.locking
 # `ObjectLockEnabledForBucket` deve ser passado, como mostra o exemplo a seguir.
 
 # +
+@pytest.mark.bucket_versioning
 def test_create_bucket_with_lock_enabled(bucket_name, s3_client):
     # create bucket with lock enabled
     create_bucket_response = s3_client.create_bucket(Bucket=bucket_name, ObjectLockEnabledForBucket=True)

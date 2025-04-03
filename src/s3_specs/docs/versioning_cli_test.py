@@ -5,6 +5,9 @@ from s3_specs.docs.s3_helpers import run_example
 from botocore.exceptions import ClientError
 from shlex import split, quote
 import subprocess
+from utils.crud import fixture_bucket_with_name
+import uuid
+
 
 config = "../params/br-se1.yaml"
 
@@ -13,8 +16,36 @@ config = "../params/br-se1.yaml"
 pytestmark = [pytest.mark.bucket_versioning, pytest.mark.cli]
 
 
+
 commands = [
-    ("mgc object-storage objects delete {bucket_name}/{object_key} --no-confirm", ""),
+    ("mgc object-storage buckets versioning {bucket_name} --no-confirm --raw", "Enabled"),
+    #("aws --profile {profile_name} s3 rm s3://{bucket_name}/{object_key}", "delete: s3://{bucket_name}/{object_key}\n"),
+    #("rclone delete {profile_name}:{bucket_name}/{object_key}", "")
+]
+ 
+
+@pytest.parametrize("cmd_template, expected", commands)
+def test_set_version_on_bucket_with_acl(s3_client, fixture_bucket_with_name, cmd_template, expected, profile_name):
+    # Acl indirectly sent to fixture
+    bucket_name = fixture_bucket_with_name
+
+    #Enabling versioning through CLI    
+    cmd = split(cmd_template.format(bucket_name=bucket_name, profile_name=profile_name))
+    result = subprocess.run(cmd, capture_output=True, text=True)
+
+    # Checking if process was successful
+    assert result.returncode == 0, f"Command failed with error: {result.stderr}"
+    logging.info(f"Output from {cmd_template}: {result.stdout}")
+    
+    versioning_status = s3_client.get_bucket_versioning(Bucket=bucket_name).get('status')
+
+    # The output must contain the string
+    assert expected == versioning_status, f"Output: {versioning_status} does not match {expected}"
+
+
+
+commands = [
+    ("mgc object-storage objects delete {bucket_name}/{object_key} --no-confirm --raw", ""),
     ("aws --profile {profile_name} s3 rm s3://{bucket_name}/{object_key}", "delete: s3://{bucket_name}/{object_key}\n"),
     ("rclone delete {profile_name}:{bucket_name}/{object_key}", "")
 ]

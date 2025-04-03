@@ -10,7 +10,7 @@ from tqdm import tqdm
 ### Functions
 
 
-def create_bucket(s3_client, bucket_name):
+def create_bucket(s3_client, bucket_name, acl ='private'):
     """
     Create a new bucket on S3 ensuring that the location is set correctly.
     :param s3_client: boto3 s3 client
@@ -23,6 +23,7 @@ def create_bucket(s3_client, bucket_name):
         region = s3_client.meta.region_name
         if region != "us-east-1":
             return s3_client.create_bucket(
+                ACL= acl,
                 Bucket=bucket_name,
                 CreateBucketConfiguration={"LocationConstraint": region},
             )
@@ -243,18 +244,24 @@ def delete_objects_multithreaded(s3_client, bucket_name):
 @pytest.fixture
 def fixture_bucket_with_name(s3_client, request):
     """
-    Creates a bucekt with a random name and then tear it down
+    This fixtures automatically creates a bucket based on the name of the test that called it and then returns its name
+    Lastly, teardown the bucket by deleting it and its objects
+    
+    Creates a bucket with a random name and then tear it down
     :param s3_client: boto s3 cliet
-    :param request: dict: contains the name of the current test
-    :yield: str: generated bucket name
+    :param request: dict: contains the name of the current test and [optional] acl name
+    :yield: str: generated bucket name    
     """
 
-    # This fixtures automatically creates a bucket based on the name of the test that called it and then returns its name
-    # Lastly, teardown the bucket by deleting it and its objects
+    # Setting up possible acl argument
+    try:
+        acl = request.param.get('acl')
+    except:
+        acl = 'private'
 
     # request.node get the name of the test currently running
     bucket_name = generate_valid_bucket_name(request.node.name.replace("_", "-"))
-    create_bucket(s3_client, bucket_name)
+    create_bucket(s3_client, bucket_name, acl)
 
     yield bucket_name
 
@@ -263,9 +270,7 @@ def fixture_bucket_with_name(s3_client, request):
 
 
 @pytest.fixture
-def fixture_upload_multiple_objects(
-    s3_client, fixture_bucket_with_name, request
-) -> int:
+def fixture_upload_multiple_objects(s3_client, fixture_bucket_with_name, request) -> int:
     """
     Utilizing multithreading Fixture uploads multiple objects while changing their names
     :param s3_client: boto3 s3 client
