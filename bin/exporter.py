@@ -200,7 +200,6 @@ if __name__ == '__main__':
         read_csv_and_update_metrics()
         test_metrics_exporter()
         execution_time_metrics_exporter()
-        # Deleting local processed parquets
         delete_temp_parquets()
 
         time.sleep(600)  # Atualize a cada 600 segundos (10 minutos)

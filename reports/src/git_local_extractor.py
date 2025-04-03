@@ -130,19 +130,17 @@ if __name__ == "__main__":
     test_data = {args: [] for args in test_data_arguments}
 
     for path in artifacts_paths:
-        logs = PytestArtifactLogExtractor(args.save_dir + path).log_to_df()
-        # Adding the new tuple to the dict
-        if test_data:
-            list(map(lambda key, log: test_data[key].append(log), test_data_arguments, logs))
-
+        try:
+            logs = PytestArtifactLogExtractor(args.save_dir + path).log_to_df()
+            print(f"Successed on parsing: {path}")
+            # Adding the new tuple to the dict
+            if test_data:
+                list(map(lambda key, log: test_data[key].append(log), test_data_arguments, logs))
+        except:
+            print(f"Failed to parse {path}")   
     test_data = TestData(**test_data)
 
-    # Deletando parquets para evitar redundancia
-    #delete_parquets(args.save_Dir)  
-
     # Deleting downloaded artifacts
-    import shutil
-
     try:
         shutil.rmtree(args.save_dir)  # Deletes directory and all its contents
         print(f"Dir '{args.save_dir}' deleted successfully")
