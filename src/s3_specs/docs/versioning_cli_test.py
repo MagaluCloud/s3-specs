@@ -15,16 +15,17 @@ config = "../params/br-se1.yaml"
 # + {"jupyter": {"source_hidden": true}}
 pytestmark = [pytest.mark.bucket_versioning, pytest.mark.cli]
 
-
-
 commands = [
-    ("mgc object-storage buckets versioning {bucket_name} --no-confirm --raw", "Enabled"),
-    #("aws --profile {profile_name} s3 rm s3://{bucket_name}/{object_key}", "delete: s3://{bucket_name}/{object_key}\n"),
-    #("rclone delete {profile_name}:{bucket_name}/{object_key}", "")
+    ("mgc object-storage buckets versioning enable {bucket_name} --no-confirm --raw", "Enabled"),
+    ("aws --profile {profile_name} s3api put-bucket-versioning --bucket {bucket_name} --versioning-configuration Status=Enabled"," "),
+    ("rclone backend versioning enable {profile_name}:{bucket_name}"," ")
 ]
+acl_list = ['private', 'public-read','public-read-write','authenticated-read',]
  
-
-@pytest.parametrize("cmd_template, expected", commands)
+@pytest.mark.parametrize("cmd_template, expected, fixture_bucket_with_name", 
+                        [(cmd, expected, acl) for acl in acl_list for cmd, expected in commands],
+                        indirect=['fixture_bucket_with_name']
+)
 def test_set_version_on_bucket_with_acl(s3_client, fixture_bucket_with_name, cmd_template, expected, profile_name):
     # Acl indirectly sent to fixture
     bucket_name = fixture_bucket_with_name
@@ -37,10 +38,9 @@ def test_set_version_on_bucket_with_acl(s3_client, fixture_bucket_with_name, cmd
     assert result.returncode == 0, f"Command failed with error: {result.stderr}"
     logging.info(f"Output from {cmd_template}: {result.stdout}")
     
-    versioning_status = s3_client.get_bucket_versioning(Bucket=bucket_name).get('status')
-
-    # The output must contain the string
-    assert expected == versioning_status, f"Output: {versioning_status} does not match {expected}"
+    # Retrieving versioning value
+    versioning_status = s3_client.get_bucket_versioning(Bucket=bucket_name)
+    assert expected == versioning_status.get('Status'), f"Output: {versioning_status.get('Status')} does not match {expected}"
 
 
 

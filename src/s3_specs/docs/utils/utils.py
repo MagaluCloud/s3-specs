@@ -16,7 +16,7 @@ def generate_valid_bucket_name(base_name="my-unique-bucket"):
 
     # assuring base name is a string
     try:
-        base_name = ("test-" + str(base_name.replace("_", "-")) + unique_id).lower()
+        base_name = (str(base_name.replace("_", "-")[:20]) + unique_id).lower()
     except Exception as e:
         raise Exception(f"Error converting base_name to string: {e}")
 
