@@ -247,7 +247,7 @@ def bucket_with_many_objects(request, s3_client):
         put_object_and_wait(s3_client, bucket_name, f"{object_prefix}{object_key}", content)
 
     # Yield the bucket name and object details to the test
-    yield bucket_name, object_prefix, content
+    yield bucket_name, object_prefix, content, object_key_list
 
     # Teardown: Delete the object and bucket after the test
     for object_key in object_key_list:
