@@ -4,6 +4,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from s3_specs.docs.utils.utils import generate_valid_bucket_name, convert_unit
 from s3_specs.docs.s3_helpers import generate_unique_bucket_name
 from boto3.s3.transfer import TransferConfig
+from botocore.exceptions import BotoCoreError, ClientError
+
 import os
 from tqdm import tqdm
 
@@ -268,9 +270,49 @@ def fixture_bucket_with_name(s3_client, request):
     delete_objects_multithreaded(s3_client, bucket_name)
     delete_bucket(s3_client, bucket_name)
 
+@pytest.fixture(params=['Enabled', 'Suspended'])
+def fixture_versioned_bucket(s3_client,request):
+    """
+    Pytest fixture that creates an S3 bucket with versioning configuration.
+    s3_client: Authenticated boto3 S3 client
+    request: Pytest request object for parameter handling
+    
+    Yields: str: Name of the created bucket
+    """
+    try:
+        # Get ACL from parameter or default to 'private'
+        acl = getattr(request.param, 'acl', 'private')
+        
+        # Determine versioning status from parameter
+        version_status = request.param if isinstance(request.param, str) else 'Enabled'
+        if version_status not in ['Enabled', 'Suspended']:
+            raise ValueError(f"Invalid version status: {version_status}")
+        
+        # Generate unique bucket name from test name
+        bucket_name = generate_valid_bucket_name(request.node.name.replace("_", "-"))
+        
+        # Create bucket and configure versioning
+        create_bucket(s3_client, bucket_name, acl)
+        s3_client.put_bucket_versioning(
+            Bucket=bucket_name,
+            VersioningConfiguration={'Status': version_status}
+        )
+        
+        yield bucket_name
+        
+    except Exception as e:
+        pytest.fail(f"Fixture setup failed: {str(e)}")
+        
+    finally:
+        # Cleanup - runs whether test passes or fails
+        try:
+            delete_objects_multithreaded(s3_client, bucket_name)
+            delete_bucket(s3_client, bucket_name)
+        except Exception as cleanup_error:
+            pytest.fail(f"Fixture cleanup failed: {str(cleanup_error)}")
 
 @pytest.fixture
-def fixture_upload_multiple_objects(s3_client, fixture_bucket_with_name, request) -> int:
+def fixture_upload_multiple_objects(s3_client, fixture_bucket_with_name, request):
     """
     Utilizing multithreading Fixture uploads multiple objects while changing their names
     :param s3_client: boto3 s3 client

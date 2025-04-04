@@ -5,8 +5,9 @@ from s3_specs.docs.s3_helpers import run_example
 from botocore.exceptions import ClientError
 from shlex import split, quote
 import subprocess
-from utils.crud import fixture_bucket_with_name
+from utils.crud import fixture_bucket_with_name, fixture_versioned_bucket
 import uuid
+
 
 
 config = "../params/br-se1.yaml"
@@ -16,22 +17,36 @@ config = "../params/br-se1.yaml"
 pytestmark = [pytest.mark.bucket_versioning, pytest.mark.cli]
 
 commands = [
-    ("mgc object-storage buckets versioning enable {bucket_name} --no-confirm --raw", "Enabled"),
-    ("aws --profile {profile_name} s3api put-bucket-versioning --bucket {bucket_name} --versioning-configuration Status=Enabled"," "),
-    ("rclone backend versioning enable {profile_name}:{bucket_name}"," ")
+    pytest.param(
+        "mgc object-storage buckets versioning enable {bucket_name} --no-confirm --raw", 
+        "Enabled",
+        marks=pytest.mark.mgc
+    ),
+    pytest.param(
+        "aws --profile {profile_name} s3api put-bucket-versioning --bucket {bucket_name} --versioning-configuration Status=Enabled", 
+        "Enabled",
+        marks=pytest.mark.aws
+    ),
+    pytest.param(
+        "rclone backend versioning enable {profile_name}:{bucket_name}", 
+        "Enabled",
+        marks=pytest.mark.rclone
+    )
 ]
-acl_list = ['private', 'public-read','public-read-write','authenticated-read',]
- 
-@pytest.mark.parametrize("cmd_template, expected, fixture_bucket_with_name", 
-                        [(cmd, expected, acl) for acl in acl_list for cmd, expected in commands],
-                        indirect=['fixture_bucket_with_name']
-)
-def test_set_version_on_bucket_with_acl(s3_client, fixture_bucket_with_name, cmd_template, expected, profile_name):
-    # Acl indirectly sent to fixture
+
+acl_list = ['private', 'public-read', 'public-read-write', 'authenticated-read']
+
+@pytest.mark.parametrize("cmd_template, expected", commands)
+@pytest.mark.parametrize("acl", acl_list, indirect=True)
+def test_set_version_on_bucket_with_acl(s3_client,   fixture_bucket_with_name, cmd_template, expected, profile_name):
+    """Test versioning enablement through different CLI tools with various ACL settings."""
     bucket_name = fixture_bucket_with_name
 
-    #Enabling versioning through CLI    
-    cmd = split(cmd_template.format(bucket_name=bucket_name, profile_name=profile_name))
+    # Enabling versioning through CLI
+    cmd = split(cmd_template.format(
+        bucket_name=bucket_name, 
+        profile_name=profile_name
+    ))
     result = subprocess.run(cmd, capture_output=True, text=True)
 
     # Checking if process was successful
@@ -40,8 +55,9 @@ def test_set_version_on_bucket_with_acl(s3_client, fixture_bucket_with_name, cmd
     
     # Retrieving versioning value
     versioning_status = s3_client.get_bucket_versioning(Bucket=bucket_name)
-    assert expected == versioning_status.get('Status'), f"Output: {versioning_status.get('Status')} does not match {expected}"
-
+    assert expected == versioning_status.get('Status'), (
+        f"Expected versioning status {expected}, got {versioning_status.get('Status')}"
+    )
 
 
 commands = [
