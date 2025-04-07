@@ -22,6 +22,7 @@ from s3_specs.docs.s3_helpers import run_example
 from s3_specs.docs.utils.crud import fixture_multiple_buckets
 import os
 import secrets
+import uuid
 import botocore
 
 pytestmark = pytest.mark.basic
@@ -34,8 +35,8 @@ config = os.getenv("CONFIG", config)
 
 # +
 create_bucket_bucket_names = [
-    f"test-create-bucket-{secrets.token_hex(15)}",
-    f"test-create-bucket-{secrets.token_hex(22)}", # 62 chars length
+    f"test-create-bucket-{uuid.uuid4().hex[:15]}",
+    f"test-create-bucket-{uuid.uuid4().hex[:22]}", # 62 chars length
 ]
 
 @pytest.mark.parametrize(
@@ -44,14 +45,19 @@ create_bucket_bucket_names = [
     ids=range(len(create_bucket_bucket_names)) # workaround for -n auto bug with long names
 )
 def test_create_bucket(s3_client, bucket_name):
-    logging.info(bucket_name)
-    response = s3_client.create_bucket(Bucket=bucket_name)
+    try:
+        logging.info(bucket_name)
+        response = s3_client.create_bucket(Bucket=bucket_name)
 
-    response_status = response["ResponseMetadata"]["HTTPStatusCode"]
-    assert response_status == 200, "Expected HTTPStatusCode 200 for successful bucket create."
-    response_location = response["Location"]
-    assert bucket_name in response_location, "Expected bucket name is not on the response."
-    assert response_location == f"/{bucket_name}"
+        response_status = response["ResponseMetadata"]["HTTPStatusCode"]
+        assert response_status == 200, "Expected HTTPStatusCode 200 for successful bucket create."
+        response_location = response["Location"]
+        assert bucket_name in response_location, "Expected bucket name is not on the response."
+        assert response_location == f"/{bucket_name}"
+    finally:
+        logging.info(f"Deleting bucket {bucket_name}")
+        s3_client.delete_bucket(Bucket=bucket_name)
+        logging.info(f"Bucket {bucket_name} deleted sucessfully")
 
 run_example(__name__, "test_create_bucket", config=config)
 # -
