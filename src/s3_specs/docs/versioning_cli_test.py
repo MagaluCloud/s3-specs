@@ -2,13 +2,10 @@
 import logging
 import pytest
 from s3_specs.docs.s3_helpers import run_example
-from botocore.exceptions import ClientError
-from shlex import split, quote
+from shlex import split
 import subprocess
-from utils.crud import fixture_bucket_with_name, fixture_versioned_bucket
-import uuid
-
-
+from .tools.crud import fixture_versioned_bucket
+from .tools.utils import fixture_create_small_file
 
 config = "../params/br-se1.yaml"
 
@@ -37,8 +34,8 @@ commands = [
 acl_list = ['private', 'public-read', 'public-read-write', 'authenticated-read']
 
 @pytest.mark.parametrize("cmd_template, expected", commands)
-@pytest.mark.parametrize("acl", acl_list, indirect=True)
-def test_set_version_on_bucket_with_acl(s3_client,   fixture_bucket_with_name, cmd_template, expected, profile_name):
+@pytest.mark.parametrize("fixture_bucket_with_name", acl_list, indirect=True)
+def test_set_version_on_bucket_with_acl(s3_client, fixture_bucket_with_name, cmd_template, expected, profile_name):
     """Test versioning enablement through different CLI tools with various ACL settings."""
     bucket_name = fixture_bucket_with_name
 
@@ -58,6 +55,81 @@ def test_set_version_on_bucket_with_acl(s3_client,   fixture_bucket_with_name, c
     assert expected == versioning_status.get('Status'), (
         f"Expected versioning status {expected}, got {versioning_status.get('Status')}"
     )
+
+
+
+
+# Define test commands with appropriate markers
+commands = [
+    pytest.param(
+        "mgc object-storage objects upload {file_path} {bucket_name}/{object_key} --no-confirm --raw",
+        marks=pytest.mark.mgc
+    ),
+    pytest.param(
+        "aws --profile {profile_name} s3api put-object --bucket {bucket_name} --key {object_key} --body {file_path}",
+        marks=pytest.mark.aws
+    ),
+    pytest.param(
+        "rclone copy {file_path} {profile_name}:{bucket_name}/{object_key}",
+        marks=pytest.mark.rclone
+    )
+]
+
+acl_list = ['private', 'public-read', 'public-read-write', 'authenticated-read']
+
+@pytest.mark.parametrize("cmd_template", commands)
+@pytest.mark.parametrize("fixture_versioned_bucket", acl_list, indirect=True)
+def test_upload_version_on_bucket_with_acl( s3_client,
+                                            fixture_versioned_bucket, 
+                                            fixture_create_small_file, 
+                                            cmd_template,
+                                            profile_name ):
+    """
+    Test that object version uploads work correctly with different ACL settings.
+    
+    Steps:
+    1. Upload a test file to a versioned S3 bucket using a CLI command.
+    2. Verify that:
+       - The object is uploaded successfully.
+       - Versioning is enabled on the bucket.
+       - The ACL permissions are applied correctly.
+    
+    Args:
+        s3_client: Boto3 S3 client (fixture).
+        fixture_versioned_bucket: S3 bucket with versioning enabled (fixture).
+        fixture_create_small_file: Temporary test file (fixture).
+        cmd_template: CLI command template for uploads (fixture).
+        profile_name: AWS CLI profile name (fixture).
+    """
+    bucket_name = fixture_versioned_bucket
+    object_name = bucket_name[:20]
+
+    try:
+        # Upload object through CLI
+        cmd = split(cmd_template.format(
+            bucket_name=bucket_name,
+            profile_name=profile_name,
+            object_key=object_name,
+            file_path=str(fixture_create_small_file)
+        ))
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        # Verify command success
+        assert result.returncode == 0, f"Command failed: {result.stderr}"
+        logging.info(f"Upload output: {result.stdout}")
+        
+        # Verify version was created
+        versions = s3_client.list_object_versions(
+            Bucket=bucket_name,
+            Prefix=object_name
+        ).get('Versions', [])
+        
+        # Checking the existence of versions
+        assert len(versions) >= 1, "No versions created"
+        
+    except Exception as e:
+        pytest.fail(f"Test failed: {str(e)}")
+
 
 
 commands = [
