@@ -1,6 +1,6 @@
 import pytest
 import logging
-from s3_specs.docs.utils.crud import (fixture_bucket_with_name,
+from s3_specs.docs.tools.crud import (fixture_bucket_with_name,
                         fixture_upload_multiple_objects,
                         upload_multiple_objects,
                         download_objects_multithreaded,

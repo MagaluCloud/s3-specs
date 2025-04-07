@@ -48,8 +48,8 @@ from s3_specs.docs.s3_helpers import (
     get_object_retention_with_determination,
     change_policies_json,
 )
-from s3_specs.docs.utils.crud import fixture_bucket_with_name
-from s3_specs.docs.utils.locking import bucket_with_lock_enabled
+from s3_specs.docs.tools.crud import fixture_bucket_with_name
+from s3_specs.docs.tools.locking import bucket_with_lock_enabled
 
 config = os.getenv("CONFIG", config)
 pytestmark = pytest.mark.locking

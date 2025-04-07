@@ -19,7 +19,7 @@ config = "../../../params/br-ne1.yaml"
 import pytest
 import logging
 from s3_specs.docs.s3_helpers import run_example
-from s3_specs.docs.utils.crud import fixture_multiple_buckets
+from s3_specs.docs.tools.crud import fixture_multiple_buckets
 import os
 import secrets
 import uuid
