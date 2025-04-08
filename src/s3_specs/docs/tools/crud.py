@@ -41,7 +41,7 @@ def create_bucket(s3_client, bucket_name, acl ='private'):
 
 def upload_object(s3_client, bucket_name, object_key, body_file):
     """
-    Create a new object on S3
+    Create a new object on S3, assuring there is no error
     :param s3_client: boto3 s3 client
     :param bucket_name: str: name of bucket to upload the object
     :param object_key: str: key of the object
@@ -54,8 +54,13 @@ def upload_object(s3_client, bucket_name, object_key, body_file):
         Key=object_key,
         Body=body_file,
     )
+
+    # Asserting if upload was successful
+    response_https = response["ResponseMetadata"]["HTTPStatusCode"]
+    assert response_https, f"Failed to upload {object_key} to {bucket_name}"
+
     logging.info(f"Object {object_key} uploaded to bucket {bucket_name}")
-    return response["ResponseMetadata"]["HTTPStatusCode"]
+    return response_https
 
 
 def upload_multiple_objects(
