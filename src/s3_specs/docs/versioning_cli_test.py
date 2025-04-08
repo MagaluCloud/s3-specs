@@ -5,7 +5,7 @@ from s3_specs.docs.s3_helpers import run_example
 from shlex import split
 import subprocess
 from s3_specs.docs.tools.crud import fixture_versioned_bucket, upload_object
-from s3_specs.docs.tools.utils import fixture_create_small_file
+from s3_specs.docs.tools.utils import fixture_create_small_file, execute_subprocess
 import os
 from itertools import product 
 
@@ -45,11 +45,16 @@ def test_set_version_on_bucket_with_acl(s3_client, fixture_bucket_with_name, cmd
         bucket_name=bucket_name, 
         profile_name=profile_name
     ))
-    result = subprocess.run(cmd, capture_output=True, text=True)
 
-    # Checking if process was successful
-    assert result.returncode == 0, f"Command failed with error: {result.stderr}"
-    logging.info(f"Output from {cmd_template}: {result.stdout}")
+    # Executing command
+    result = execute_subprocess(cmd)
+
+    # Verify command success
+    assert result.returncode == 0, (
+        f"Command failed with exit code {result.returncode}\n"
+        f"Command: {cmd}\n"
+        f"Error: {result.stderr}"
+    )
     
     # Retrieving versioning value
     versioning_status = s3_client.get_bucket_versioning(Bucket=bucket_name)
@@ -102,22 +107,22 @@ def test_upload_version_on_bucket_with_acl( s3_client,
     """
     bucket_name = fixture_versioned_bucket
     object_name = bucket_name[:20]
-    c = cmd_template
 
     try:
-        # Upload object through CLI
-        cmd = split(cmd_template.format(
+        # Formatting upload command
+        formatted_cmd = split(cmd_template.format(
             bucket_name=bucket_name,
             profile_name=profile_name,
             object_key=object_name,
             file_path=str(fixture_create_small_file)
         ))
-        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        result = execute_subprocess(formatted_cmd)
 
         # Verify command success
         assert result.returncode == 0, (
             f"Command failed with exit code {result.returncode}\n"
-            f"Command: {cmd}\n"
+            f"Command: {formatted_cmd}\n"
             f"Error: {result.stderr}"
         )
         
@@ -128,7 +133,7 @@ def test_upload_version_on_bucket_with_acl( s3_client,
         ).get('Versions', [])
         
         # Checking the existence of versions
-        assert len(versions) >= 2131, "No versions created"
+        assert len(versions) >= 1, "No versions created"
         
     except Exception as e:
         pytest.fail(f"Test failed: {str(e)}")
@@ -211,25 +216,7 @@ def test_download_version_on_bucket_with_acl(
     )
     
     # Executing subprocess and capturing possible errors
-    try:
-        result = subprocess.run(
-            formatted_cmd.split(),
-            capture_output=True,
-            text=True,
-            check=True
-        )
-    except subprocess.CalledProcessError as e:
-        pytest.fail(
-            f"Command failed with exit code {e.returncode}\n"
-            f"Command: {formatted_cmd}\n"
-            f"Error: {e.stderr}"
-        )
-    except Exception as e:
-        pytest.fail(
-            f"Command failed with exit code {e.returncode}\n"
-            f"Command: {formatted_cmd}\n"
-            f"Error: {type(e)}: {e}"
-        )
+    result = execute_subprocess(formatted_cmd)
     
     # Verify downloaded content
     try:

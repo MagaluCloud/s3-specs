@@ -1,7 +1,7 @@
 import uuid
 import os
 import pytest
-import pathlib
+import subprocess
 
 # Function is responsible to check and format bucket names into valid ones
 
@@ -92,3 +92,28 @@ def fixture_create_small_file(tmp_path_factory: pytest.TempdirFactory):
 
     assert os.path.exists(tmp_path), "Temporary object not created"
     return tmp_path
+
+
+def execute_subprocess(cmd_command: str):
+    try:
+        result = subprocess.run(
+            cmd_command.split(),
+            capture_output=True,
+            text=True,
+            check=True
+        )
+    except subprocess.CalledProcessError as e:
+        pytest.fail(
+            f"Command failed with exit code {e.returncode}\n"
+            f"Command: {cmd_command}\n"
+            f"Error: {e.stderr}"
+        )
+    except Exception as e:
+        pytest.fail(
+            f"Command failed with exit code {e.returncode}\n"
+            f"Command: {cmd_command}\n"
+            f"Error: {type(e)}: {e}"
+        )
+
+
+    return result
