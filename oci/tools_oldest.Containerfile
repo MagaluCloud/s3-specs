@@ -10,7 +10,7 @@ ARG MGC_VERSION="0.34.1"
 ARG JUST_VERSION="1.40.0"
 
 # aws-cli
-FROM public.ecr.aws/aws-cli/aws-cli:${AWS_CLI_VERSION} as awscli
+FROM public.ecr.aws/aws-cli/aws-cli:${AWS_CLI_VERSION} AS awscli
 
 # Main image
 FROM ubuntu:latest

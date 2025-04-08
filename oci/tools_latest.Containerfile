@@ -5,12 +5,10 @@
 #   - Python dependencies to run boto3 based tests.
 
 ARG AWS_CLI_VERSION="latest"
-ARG RCLONE_VERSION="1.66.0"
-ARG MGC_VERSION="0.34.1"
 ARG JUST_VERSION="1.40.0"
 
 # aws-cli
-FROM public.ecr.aws/aws-cli/aws-cli:${AWS_CLI_VERSION} as awscli
+FROM public.ecr.aws/aws-cli/aws-cli:${AWS_CLI_VERSION} AS awscli
 
 # Main image
 FROM ubuntu:latest
@@ -75,8 +73,10 @@ RUN uv sync
 
 RUN bash -c "cd reports && uv sync"
 
-# Update boto to latest version
-RUN uv add -U boto3
+# Remove pinned boto3 from pyproject.toml
+RUN uv remove boto3
+# Add latest version of boto3
+RUN uv add boto3
 
 # Definir o script como ponto de entrada
 ENTRYPOINT ["just"]
