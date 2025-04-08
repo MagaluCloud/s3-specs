@@ -1,7 +1,7 @@
 import logging
 import pytest
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from .utils import generate_valid_bucket_name, convert_unit
+from s3_specs.docs.tools.utils import generate_valid_bucket_name, convert_unit
 from s3_specs.docs.s3_helpers import generate_unique_bucket_name
 from boto3.s3.transfer import TransferConfig
 from botocore.exceptions import BotoCoreError, ClientError

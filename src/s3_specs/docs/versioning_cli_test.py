@@ -4,13 +4,12 @@ import pytest
 from s3_specs.docs.s3_helpers import run_example
 from shlex import split
 import subprocess
-from .tools.crud import fixture_versioned_bucket, upload_object
-from .tools.utils import fixture_create_small_file
+from s3_specs.docs.tools.crud import fixture_versioned_bucket, upload_object
+from s3_specs.docs.tools.utils import fixture_create_small_file
 import os
-from itertools import product, chain 
+from itertools import product 
 
 config = "../params/br-se1.yaml"
-
 
 # + {"jupyter": {"source_hidden": true}}
 pytestmark = [pytest.mark.bucket_versioning, pytest.mark.cli]
@@ -194,6 +193,7 @@ def test_download_version_on_bucket_with_acl(
     download_path = str(fixture_create_small_file)
     dir_path = os.path.dirname(download_path)
 
+    # Test Setup
     upload_response = upload_object(
         s3_client,
         bucket_name=bucket_name,
@@ -210,6 +210,7 @@ def test_download_version_on_bucket_with_acl(
         profile_name = profile_name        
     )
     
+    # Executing subprocess and capturing possible errors
     try:
         result = subprocess.run(
             formatted_cmd.split(),
@@ -222,6 +223,12 @@ def test_download_version_on_bucket_with_acl(
             f"Command failed with exit code {e.returncode}\n"
             f"Command: {formatted_cmd}\n"
             f"Error: {e.stderr}"
+        )
+    except Exception as e:
+        pytest.fail(
+            f"Command failed with exit code {e.returncode}\n"
+            f"Command: {formatted_cmd}\n"
+            f"Error: {type(e)}: {e}"
         )
     
     # Verify downloaded content
