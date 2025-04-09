@@ -2,6 +2,7 @@ import uuid
 import os
 import pytest
 import subprocess
+from shlex import quote
 
 # Function is responsible to check and format bucket names into valid ones
 
@@ -111,9 +112,13 @@ def execute_subprocess(cmd_command: str):
         pytest.fail: If the command fails or any other exception occurs
     """
     try:
+        command = cmd_command.split('{')
+        json = "".join(['{' + x for x in command[1:]])
+
         # Run the command and capture output
         result = subprocess.run(
-            cmd_command.split(),  # Split command into arguments
+            f"{command[0]} '{json}'",
+            shell=True,
             capture_output=True,  # Capture stdout and stderr
             text=True,           # Return output as strings (not bytes)
             check=True           # Raise CalledProcessError if returncode != 0
