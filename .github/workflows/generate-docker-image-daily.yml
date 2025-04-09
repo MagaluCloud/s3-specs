@@ -1,0 +1,23 @@
+name: Build test OCI Image Daily
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Executa todo dia às 00:00 UTC
+
+jobs:
+  build:
+    permissions:
+      packages: write  
+      contents: read   
+    strategy:
+      matrix:
+        include:
+          - image: tools_oldest
+            name: tools_oldest
+          - image: tools_latest
+            name: tools_latest
+          - image: tools_nightly
+            name: tools_nightly
+    uses: ./.github/workflows/generate-docker-image.yml
+    with:
+      name: ${{ matrix.name }}  
