@@ -14,28 +14,44 @@ config = "../params/br-se1.yaml"
 # + {"jupyter": {"source_hidden": true}}
 pytestmark = [pytest.mark.bucket_versioning, pytest.mark.cli]
 
+
+# Acl related tests
+
+# Global Variables used by the acl rel tests
+acl_list = [
+    pytest.param('private', id='acl-private', marks=pytest.mark.acl),
+    pytest.param('public-read', id='acl-public-read', marks=pytest.mark.acl),
+    pytest.param('public-read-write', id='acl-public-read-write', marks=pytest.mark.acl),
+    pytest.param('authenticated-read', id='acl-authenticated-read', marks=pytest.mark.acl)
+]
+
+# Define test commands with appropriate markers
 commands = [
     pytest.param(
-        "mgc object-storage buckets versioning enable {bucket_name} --no-confirm --raw", 
-        "Enabled",
-        marks=pytest.mark.mgc
+        "mgc object-storage objects upload {file_path} {bucket_name}/{object_key} --no-confirm --raw",
+        marks=pytest.mark.mgc,
+        id="mgc-upload"
     ),
     pytest.param(
-        "aws --profile {profile_name} s3api put-bucket-versioning --bucket {bucket_name} --versioning-configuration Status=Enabled", 
-        "Enabled",
-        marks=pytest.mark.aws
+        "aws --profile {profile_name} s3api put-object --bucket {bucket_name} --key {object_key} --body {file_path}",
+        marks=pytest.mark.aws,
+        id="aws-upload"
     ),
     pytest.param(
-        "rclone backend versioning enable {profile_name}:{bucket_name}", 
-        "Enabled",
-        marks=pytest.mark.rclone
+        "rclone copy {file_path} {profile_name}:{bucket_name}/{object_key}",
+        marks=pytest.mark.rclone,
+        id="rclone-upload"
     )
 ]
 
-acl_list = ['private', 'public-read', 'public-read-write', 'authenticated-read']
-
-@pytest.mark.parametrize("cmd_template, expected", commands)
-@pytest.mark.parametrize("fixture_bucket_with_name", acl_list, indirect=True)
+@pytest.mark.parametrize(
+    "fixture_versioned_bucket, cmd_template",
+    [
+        pytest.param(acl.values, ''.join(cmd.values), id=f"{cmd.id}-{acl.id}")
+        for acl, cmd in product(acl_list, commands)
+    ],
+    indirect=['fixture_versioned_bucket']
+)
 def test_set_version_on_bucket_with_acl(s3_client, fixture_bucket_with_name, cmd_template, expected, profile_name):
     """Test versioning enablement through different CLI tools with various ACL settings."""
     bucket_name = fixture_bucket_with_name
@@ -64,25 +80,33 @@ def test_set_version_on_bucket_with_acl(s3_client, fixture_bucket_with_name, cmd
 
 
 # Define test commands with appropriate markers
+# Define test commands with appropriate markers
 commands = [
     pytest.param(
         "mgc object-storage objects upload {file_path} {bucket_name}/{object_key} --no-confirm --raw",
-        marks=pytest.mark.mgc
+        marks=pytest.mark.mgc,
+        id="mgc-upload"
     ),
     pytest.param(
         "aws --profile {profile_name} s3api put-object --bucket {bucket_name} --key {object_key} --body {file_path}",
-        marks=pytest.mark.aws
+        marks=pytest.mark.aws,
+        id="aws-upload"
     ),
     pytest.param(
         "rclone copy {file_path} {profile_name}:{bucket_name}/{object_key}",
-        marks=pytest.mark.rclone
+        marks=pytest.mark.rclone,
+        id="rclone-upload"
     )
 ]
 
-acl_list = ['private', 'public-read', 'public-read-write', 'authenticated-read']
-
-@pytest.mark.parametrize("cmd_template", commands)
-@pytest.mark.parametrize("fixture_versioned_bucket", acl_list, indirect=True)
+@pytest.mark.parametrize(
+    "fixture_versioned_bucket, cmd_template",
+    [
+        pytest.param(acl.values, ''.join(cmd.values), id=f"{cmd.id}-{acl.id}")
+        for acl, cmd in product(acl_list, commands)
+    ],
+    indirect=['fixture_versioned_bucket']
+)
 def test_upload_version_on_bucket_with_acl( s3_client,
                                             fixture_versioned_bucket, 
                                             fixture_create_small_file, 
@@ -157,12 +181,7 @@ commands = [
     )
 ]
 
-acl_list = [
-    pytest.param('private', id='acl-private'),
-    pytest.param('public-read', id='acl-public-read'),
-    pytest.param('public-read-write', id='acl-public-read-write'),
-    pytest.param('authenticated-read', id='acl-authenticated-read')
-]
+
 
 
 @pytest.mark.parametrize(
