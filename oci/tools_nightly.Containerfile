@@ -10,7 +10,7 @@ ARG MGC_VERSION="0.34.1"
 ARG JUST_VERSION="1.40.0"
 
 # aws-cli
-FROM public.ecr.aws/aws-cli/aws-cli:${AWS_CLI_VERSION} as awscli
+FROM public.ecr.aws/aws-cli/aws-cli:${AWS_CLI_VERSION} AS awscli
 
 # Main image
 FROM ubuntu:latest
@@ -69,6 +69,8 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
 ARG JUST_VERSION
 RUN curl -LsSf https://just.systems/install.sh | bash -s -- --tag ${JUST_VERSION} --to /usr/local/bin
 
+RUN git clone https://github.com/boto/boto3.git boto3
+
 # Set the final working directory
 WORKDIR /app
 
@@ -90,8 +92,15 @@ RUN uv sync
 
 RUN bash -c "cd reports && uv sync"
 
-# Update boto to the latest version
-RUN uv add -U boto3
+# Instale as dependências diretamente do Git
+
+RUN uv remove boto3
+RUN uv add git+https://github.com/boto/botocore.git@develop
+RUN uv add git+https://github.com/boto/jmespath.git@develop
+RUN uv add git+https://github.com/boto/s3transfer.git@develop
+
+# Instale boto3 como editável
+RUN uv add git+https://github.com/boto/boto3.git@develop
 
 # Define the script as the entry point
 ENTRYPOINT ["just"]
