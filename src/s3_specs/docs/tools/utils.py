@@ -82,7 +82,7 @@ def fixture_create_small_file(tmp_path_factory: pytest.TempdirFactory):
     """
     Fixture that creates a temporary file
 
-    Return: str: path to the file
+    Return: Pathlib path: path to the file
     """
     obj_name = 'object_' + uuid.uuid4().hex[:10]
     tmp_path = tmp_path_factory.mktemp("temp")/obj_name
@@ -95,25 +95,43 @@ def fixture_create_small_file(tmp_path_factory: pytest.TempdirFactory):
 
 
 def execute_subprocess(cmd_command: str):
+    """
+    Execute a shell command as a subprocess and handle errors gracefully.
+    
+    Args:
+        cmd_command (str): The command to execute as a string
+        
+    Returns:
+        subprocess.CompletedProcess: The result object containing:
+            - returncode
+            - stdout
+            - stderr
+            
+    Raises:
+        pytest.fail: If the command fails or any other exception occurs
+    """
     try:
+        # Run the command and capture output
         result = subprocess.run(
-            cmd_command.split(),
-            capture_output=True,
-            text=True,
-            check=True
+            cmd_command.split(),  # Split command into arguments
+            capture_output=True,  # Capture stdout and stderr
+            text=True,           # Return output as strings (not bytes)
+            check=True           # Raise CalledProcessError if returncode != 0
         )
     except subprocess.CalledProcessError as e:
+        # Handle command execution failures
         pytest.fail(
             f"Command failed with exit code {e.returncode}\n"
             f"Command: {cmd_command}\n"
             f"Error: {e.stderr}"
         )
     except Exception as e:
+        # Handle any other unexpected errors
         pytest.fail(
-            f"Command failed with exit code {e.returncode}\n"
+            f"Unexpected error: {type(e)}: {e}\n"
             f"Command: {cmd_command}\n"
-            f"Error: {type(e)}: {e}"
         )
 
-
     return result
+
+
