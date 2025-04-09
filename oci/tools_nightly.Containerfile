@@ -3,15 +3,7 @@
 # This Container has:
 #   - all 3 CLIs (rclone, aws, mgc)
 #   - Python dependencies to run boto3 based tests.
-
-ARG AWS_CLI_VERSION="latest"
-ARG RCLONE_VERSION="1.66.0"
-ARG MGC_VERSION="0.34.1"
 ARG JUST_VERSION="1.40.0"
-
-# aws-cli
-FROM public.ecr.aws/aws-cli/aws-cli:${AWS_CLI_VERSION} AS awscli
-
 # Main image
 FROM ubuntu:latest
 RUN apt-get update && \
