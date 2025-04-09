@@ -55,7 +55,10 @@ markers = [
     "benchmark: Tests for benchmark",
     "rapid: quick expected execution magnitude",
     "regular: regular time expected execution magnitude",
-    "slow: slow expected execution magnitude"
+    "slow: slow expected execution magnitude",
+    "mgc: mgc cli",
+    "aws: aws cli",
+    "rclone: rclone cli",
 ]
 
 [tool.s3-tester]

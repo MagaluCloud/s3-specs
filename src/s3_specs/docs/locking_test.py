@@ -48,8 +48,8 @@ from s3_specs.docs.s3_helpers import (
     get_object_retention_with_determination,
     change_policies_json,
 )
-from s3_specs.docs.utils.crud import fixture_bucket_with_name
-from s3_specs.docs.utils.locking import bucket_with_lock_enabled
+from s3_specs.docs.tools.crud import fixture_bucket_with_name
+from s3_specs.docs.tools.locking import bucket_with_lock_enabled
 
 config = os.getenv("CONFIG", config)
 pytestmark = pytest.mark.locking
@@ -62,6 +62,7 @@ pytestmark = pytest.mark.locking
 # `ObjectLockEnabledForBucket` deve ser passado, como mostra o exemplo a seguir.
 
 # +
+@pytest.mark.bucket_versioning
 def test_create_bucket_with_lock_enabled(bucket_name, s3_client):
     # create bucket with lock enabled
     create_bucket_response = s3_client.create_bucket(Bucket=bucket_name, ObjectLockEnabledForBucket=True)
