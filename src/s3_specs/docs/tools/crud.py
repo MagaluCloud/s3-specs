@@ -1,16 +1,18 @@
 import logging
 import pytest
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from s3_specs.docs.utils.utils import generate_valid_bucket_name, convert_unit
+from s3_specs.docs.tools.utils import generate_valid_bucket_name, convert_unit
 from s3_specs.docs.s3_helpers import generate_unique_bucket_name
 from boto3.s3.transfer import TransferConfig
+from botocore.exceptions import BotoCoreError, ClientError
+
 import os
 from tqdm import tqdm
 
 ### Functions
 
 
-def create_bucket(s3_client, bucket_name):
+def create_bucket(s3_client, bucket_name, acl ='private'):
     """
     Create a new bucket on S3 ensuring that the location is set correctly.
     :param s3_client: boto3 s3 client
@@ -23,6 +25,7 @@ def create_bucket(s3_client, bucket_name):
         region = s3_client.meta.region_name
         if region != "us-east-1":
             return s3_client.create_bucket(
+                ACL= acl,
                 Bucket=bucket_name,
                 CreateBucketConfiguration={"LocationConstraint": region},
             )
@@ -38,11 +41,12 @@ def create_bucket(s3_client, bucket_name):
 
 def upload_object(s3_client, bucket_name, object_key, body_file):
     """
-    Create a new object on S3
+    Create a new object on S3, assuring there is no error
     :param s3_client: boto3 s3 client
     :param bucket_name: str: name of bucket to upload the object
     :param object_key: str: key of the object
     :param body_file: file: file to be uploaded
+    
     :return: HTTPStatusCode from boto3 put_object
     """
 
@@ -51,8 +55,13 @@ def upload_object(s3_client, bucket_name, object_key, body_file):
         Key=object_key,
         Body=body_file,
     )
+
+    # Asserting if upload was successful
+    response_https = response["ResponseMetadata"]["HTTPStatusCode"]
+    assert response_https, f"Failed to upload {object_key} to {bucket_name}"
+
     logging.info(f"Object {object_key} uploaded to bucket {bucket_name}")
-    return response["ResponseMetadata"]["HTTPStatusCode"]
+    return response_https
 
 
 def upload_multiple_objects(
@@ -153,9 +162,7 @@ def delete_bucket(s3_client, bucket_name):
 
     return response
 
-
 # ## Multi-threading
-
 
 def upload_objects_multithreaded(s3_client, bucket_name, objects_paths):
     """
@@ -243,29 +250,32 @@ def delete_objects_multithreaded(s3_client, bucket_name):
 @pytest.fixture
 def fixture_bucket_with_name(s3_client, request):
     """
-    Creates a bucekt with a random name and then tear it down
+    This fixtures automatically creates a bucket based on the name of the test that called it and then returns its name
+    Lastly, teardown the bucket by deleting it and its objects
+    
+    Creates a bucket with a random name and then tear it down
     :param s3_client: boto s3 cliet
-    :param request: dict: contains the name of the current test
-    :yield: str: generated bucket name
+    :param request: dict: contains the name of the current test and [optional] acl name
+    :yield: str: generated bucket name    
     """
 
-    # This fixtures automatically creates a bucket based on the name of the test that called it and then returns its name
-    # Lastly, teardown the bucket by deleting it and its objects
+    # Setting up possible acl argument
+    try:
+        acl = request.param.get('acl')
+    except:
+        acl = 'private'
 
     # request.node get the name of the test currently running
     bucket_name = generate_valid_bucket_name(request.node.name.replace("_", "-"))
-    create_bucket(s3_client, bucket_name)
+    create_bucket(s3_client, bucket_name, acl)
 
     yield bucket_name
 
     delete_objects_multithreaded(s3_client, bucket_name)
     delete_bucket(s3_client, bucket_name)
 
-
 @pytest.fixture
-def fixture_upload_multiple_objects(
-    s3_client, fixture_bucket_with_name, request
-) -> int:
+def fixture_upload_multiple_objects(s3_client, fixture_bucket_with_name, request):
     """
     Utilizing multithreading Fixture uploads multiple objects while changing their names
     :param s3_client: boto3 s3 client
@@ -283,7 +293,6 @@ def fixture_upload_multiple_objects(
     return upload_objects_multithreaded(
         s3_client, fixture_bucket_with_name, objects_names
     )
-
 
 @pytest.fixture
 def fixture_upload_multipart_file(s3_client, fixture_bucket_with_name, request) -> int:
