@@ -9,13 +9,14 @@ on:
         flags: { required: true, type: string }
         runner: { required: false, type: string, default: "ubuntu-24.04" }
         mgc_version: { required: false, type: string, default: "0.34.0" }
+        container: { required: false, type: string, default: "ghcr.io/magalucloud/s3-specs:tools_oldest" }
       secrets:
         PROFILES: { required: true }
 jobs:
     build:
         runs-on: ${{ inputs.runner }}
         container:
-          image: ghcr.io/marmotitude/s3-tester:tests
+          image: ${{ inputs.container }}
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
@@ -23,27 +24,12 @@ jobs:
                   ref: ${{ github.head_ref }}
                   fetch-depth: 0
 
-            - name: Install uv
-              uses: astral-sh/setup-uv@v4
-              with:
-                version: "0.5.9"
-              
-            - name: Set up Python
-              uses: actions/setup-python@v5
-              with:
-                python-version-file: "pyproject.toml"
-
-            - name: Install the project
-              run: uv sync --no-dev
-
-            - name: Install MGC
+            - name: Format input name
+              id: format_name
               run: |
-                MGC_VERSION="${{ inputs.mgc_version }}"
-                curl -Lo mgc.tar.gz "https://github.com/MagaluCloud/mgccli/releases/download/v${MGC_VERSION}/mgccli_${MGC_VERSION}_linux_amd64.tar.gz"
-                tar xzvf mgc.tar.gz 
-                rm mgc.tar.gz
-                cp "./mgc" /usr/local/bin/mgc
-
+                  FORMATTED_NAME="$(echo "${{ inputs.name }}" | sed 's/[^a-zA-Z0-9.]/_/g')"
+                  echo "formatted_name=$FORMATTED_NAME.${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+                  echo "formatted_log_name=$FORMATTED_NAME.$(date +'%Y%m%dT%H%M%S')" >> "$GITHUB_OUTPUT"
             - name: Configure Profiles
               run: |
                 echo "${{ secrets.PROFILES }}" > profiles.yaml
@@ -51,14 +37,7 @@ jobs:
                 sha256sum ./bin/configure_profiles.py
                 echo "Configuring Profiles..."
                 uv run python ./bin/configure_profiles.py ./profiles.yaml
-
-            - name: Format input name
-              id: format_name
-              run: |
-                  FORMATTED_NAME="$(echo "${{ inputs.name }}" | sed 's/[^a-zA-Z0-9.]/_/g')"
-                  echo "formatted_name=$FORMATTED_NAME.${{ github.run_id }}" >> "$GITHUB_OUTPUT"
-                  echo "formatted_log_name=$FORMATTED_NAME.$(date +'%Y%m%dT%H%M%S')" >> "$GITHUB_OUTPUT"
-
+      
             - name: Run tests ${{ inputs.name }}
               run: |
                 cd src/s3_specs/docs
