@@ -1,6 +1,5 @@
 import pytest
-import logging
-from s3_specs.docs.utils.utils import generate_valid_bucket_name
+from s3_specs.docs.tools.utils import generate_valid_bucket_name
 from s3_specs.docs.s3_helpers import cleanup_old_buckets
 
 @pytest.fixture
