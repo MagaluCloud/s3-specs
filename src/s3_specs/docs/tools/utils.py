@@ -131,9 +131,14 @@ def execute_subprocess(cmd_command: str):
         command = cmd_command.split('{')
         json = "".join(['{' + x for x in command[1:]])
 
+        if json == "":
+            final = command
+        else:
+            final = command + json
+
         # Run the command and capture output
         result = subprocess.run(
-            f"{command[0]} '{json}'",
+            final,
             shell=True,
             capture_output=True,  # Capture stdout and stderr
             text=True,           # Return output as strings (not bytes)

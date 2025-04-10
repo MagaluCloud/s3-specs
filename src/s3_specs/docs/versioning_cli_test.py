@@ -1,9 +1,7 @@
 # + {"jupyter": {"source_hidden": true}}
 import pytest
 import logging
-import subprocess
 import os
-from shlex import split
 from itertools import product 
 from s3_specs.docs.s3_helpers import run_example
 from s3_specs.docs.tools.utils import fixture_create_small_file, execute_subprocess
@@ -393,7 +391,6 @@ def test_delete_object_with_versions(
         bucket_name = bucket_name,
         object_key=object_key
     )
-
 
     assert result.returncode == 0, f"Command failed with error: {result.stderr}"  
     assert result.stdout == formatted_expected
