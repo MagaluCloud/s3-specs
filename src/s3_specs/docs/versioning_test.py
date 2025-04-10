@@ -40,6 +40,7 @@ import logging
 import pytest
 from s3_specs.docs.s3_helpers import run_example
 from botocore.exceptions import ClientError
+from s3_specs.docs.utils.versioning import fixture_multipart_upload
 
 # + {"tags": ["parameters"]}
 config = "../params/br-se1.yaml"
@@ -96,7 +97,7 @@ def test_delete_object_with_versions(s3_client, versioned_bucket_with_one_object
 
 run_example(__name__, "test_delete_object_with_versions", config=config)
 
-# ## Deletar uma bucket com versionamento com um objeto
+# ## Deletar um bucket com versionamento com um objeto
 # Este teste tem como objetivo verificar que um bucket versionado contendo objetos (com versões) 
 # não pode ser excluído diretamente. 
 # O teste tenta excluir o bucket e espera que seja levantada uma exceção do tipo `ClientError` 
@@ -120,71 +121,41 @@ def test_delete_bucket_with_objects_with_versions(s3_client, versioned_bucket_wi
     error_code = exc_info.value.response["Error"]["Code"]
     assert error_code == "BucketNotEmpty"
 run_example(__name__, "test_delete_bucket_with_objects_with_versions", config=config)
+# -
 
-def test_multipart_upload_versioned(s3_client, versioned_bucket_with_one_object, create_multipart_object_files):
-    bucket_name, object_key, _ = versioned_bucket_with_one_object
+# ### Upload Multipart Versionado
 
-    object_key,_, part_bytes = create_multipart_object_files
+# Este teste valida o processo de upload multipart em um bucket com versionamento habilitado. O
+# teste simula o envio de várias partes de um objeto para o S3 e, em seguida, completa o upload
+# multipart. Ele verifica se todas as partes foram enviadas corretamente e se o objeto finalizado
+# possui a classe de armazenamento esperada, além de garantir que o versionamento do objeto
+# seja mantido após a conclusão do upload.
 
-    response = s3_client.create_multipart_upload(
+# +
+def test_multipart_upload_versioned(s3_client, fixture_multipart_upload):
+    # Recebe as variáveis retornadas pela fixture
+    bucket_name, object_key, upload_id, part_bytes = fixture_multipart_upload
+
+    # Verifica a classe de armazenamento do objeto
+    head = s3_client.head_object(
         Bucket=bucket_name,
         Key=object_key
-    )
-
-    assert "UploadId" in list(response.keys())
-    upload_id = response.get("UploadId")
-    logging.info("Upload Id: %s", upload_id)
-    logging.info("Create Multipart Upload Response: %s", response)
-
-    parts = []
-    for i, part_content in enumerate(part_bytes, start=1):
-        response_part = s3_client.upload_part(
-            Body=part_content,
-            Bucket=bucket_name,
-            Key=object_key,
-            PartNumber=i,
-            UploadId=upload_id,
-        )
-        parts.append({'ETag': response_part['ETag'], 'PartNumber': i})
-        logging.info("Response Upload Part %s: %s", i, response_part)
-        assert response_part["ResponseMetadata"]["HTTPStatusCode"] == 200, (
-            f"Expected HTTPStatusCode 200 for part {i} upload."
-        )
-
-    list_parts_response = s3_client.list_parts(
-        Bucket=bucket_name,
-        Key=object_key,
-        UploadId=upload_id,
-    ).get("Parts")
-
-    logging.info("List parts: %s", list_parts_response)
-    assert len(list_parts_response) == 2, "Expected list part return has the same size of interaction index"
-
-    list_parts_etag = [part.get("ETag") for part in list_parts_response]
-    assert response_part.get("ETag") in list_parts_etag, "Expected ETag being equal"
-
-
-    response = s3_client.complete_multipart_upload(
-        Bucket=bucket_name,
-        Key=object_key,
-        MultipartUpload={'Parts': parts},
-        UploadId=upload_id,
-    )
-    
-    logging.info("Complete Multipart Upload Response: %s", response)
-    assert response["ResponseMetadata"]["HTTPStatusCode"] == 200, (
-                f"Expected HTTPStatusCode 200 for part {i} upload."
-            )
-    
-    head = s3_client.head_object(
-        Bucket= bucket_name,
-        Key = object_key
     )
     logging.info("Storage Class: %s", head.get("StorageClass"))
     assert head.get("StorageClass") == "STANDARD"
 
 run_example(__name__, "test_multipart_upload_versioned_with_cold_storage_class", config=config)
+# -
 
+# ### Excluir Versão 1 de Objeto com Classe de Armazenamento Cold
+
+# Este teste valida o processo de exclusão de uma versão específica de um objeto que está armazenado
+# em uma classe de armazenamento "GLACIER_IR". O teste simula o envio de uma nova versão de um objeto
+# (versão 2), seguido pela exclusão da versão 1. Em seguida, ele verifica se a versão 1 foi realmente
+# excluída e se não pode ser acessada, enquanto a versão 2 permanece intacta e acessível. Isso assegura
+# que o gerenciamento de versões e o comportamento da classe de armazenamento "Cold" estão funcionando corretamente.
+
+# +
 def test_delete_object_version1_cold_storage_class(s3_client, versioned_bucket_with_one_object_cold_storage_class):
     bucket_name, object_key, version_v1 = versioned_bucket_with_one_object_cold_storage_class
 
@@ -232,7 +203,17 @@ def test_delete_object_version1_cold_storage_class(s3_client, versioned_bucket_w
     logging.info(f"Version v2 is still available with VersionId: {version_v2}")
 
 run_example(__name__, "test_delete_object_version1_cold_storage_class", config=config)
+# +
 
+# ### Excluir Versão 2 de Objeto com Classe de Armazenamento Cold
+
+# Este teste valida a exclusão de uma versão específica de um objeto armazenado em uma classe de armazenamento
+# "GLACIER_IR". O teste simula o envio de uma nova versão de um objeto (versão 2), seguida pela exclusão dessa
+# versão (versão 2). Em seguida, o teste verifica que a versão 2 foi excluída com sucesso e não pode ser acessada,
+# enquanto a versão anterior (versão 1) permanece intacta e acessível. Isso assegura que o gerenciamento de versões
+# e o comportamento da classe de armazenamento "Cold" funcionam corretamente.
+
+# +
 def test_delete_object_version2_cold_storage_class(s3_client, versioned_bucket_with_one_object_cold_storage_class):
     bucket_name, object_key, version_v1 = versioned_bucket_with_one_object_cold_storage_class
 
