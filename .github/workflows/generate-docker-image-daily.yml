@@ -12,12 +12,14 @@ jobs:
     strategy:
       matrix:
         include:
-          - image: tools_oldest
-            name: tools_oldest
           - image: tools_latest
             name: tools_latest
           - image: tools_nightly
             name: tools_nightly
+          - image: tests_latest
+            name: tests_latest
+          - image: tests_nightly
+            name: tests_nightly
     uses: ./.github/workflows/generate-docker-image.yml
     with:
       name: ${{ matrix.name }}  

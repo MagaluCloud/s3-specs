@@ -20,6 +20,12 @@ jobs:
             name: tools_latest
           - image: tools_nightly
             name: tools_nightly
+          - image: tests_oldest
+            name: tests_oldest
+          - image: tests_latest
+            name: tests_latest
+          - image: tests_nightly
+            name: tests_nightly
     uses: ./.github/workflows/generate-docker-image.yml
     with:
       name: ${{ matrix.name }}  
