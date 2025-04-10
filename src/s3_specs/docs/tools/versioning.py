@@ -5,7 +5,7 @@ from uuid import uuid4
 
 
 @pytest.fixture
-def fixture_versioned_bucket(s3_client,request):
+def fixture_versioned_bucket(s3_client, request):
     """
     Pytest fixture that creates an S3 bucket with versioning configuration.
     s3_client: Authenticated boto3 S3 client
@@ -63,3 +63,7 @@ def fixture_versioned_bucket_with_one_object(s3_client, fixture_versioned_bucket
         yield bucket_name, object_key, source_path
     except Exception as e:
         pytest.fail(f"Fixture setup failed: {e}")
+
+
+    
+
