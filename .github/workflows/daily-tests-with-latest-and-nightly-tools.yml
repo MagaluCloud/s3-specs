@@ -1,4 +1,4 @@
-name: Recurrent tests
+name: Nightly and Latest Tools Daily Tests
 
 on:
   schedule:
