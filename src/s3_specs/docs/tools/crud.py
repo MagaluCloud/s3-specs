@@ -302,16 +302,8 @@ def delete_objects_multithreaded(s3_client, bucket_name, lock_mode=None, retenti
                 executor.submit(delete_object, s3_client, bucket_name, key)
                 for key in objects_keys
             ]
-            for future in as_completed(futures):
-                future.result()
-
-        # Delete the bucket itself
-        s3_client.delete_bucket(Bucket=bucket_name)
-        logging.info(f"Bucket '{bucket_name}' and its contents have been deleted successfully.")
-    except ClientError as e:
-        logging.warning(f"Could not delete bucket '{bucket_name}': {e}")
     except Exception as e:
-        logging.error(f"An unexpected error occurred while deleting bucket '{bucket_name}': {e}")
+        raise f"An unexpected error occurred while deleting object '{bucket_name}': {e}"
 
 def delete_version(s3_client, bucket_name, version, lock_mode):
     """
