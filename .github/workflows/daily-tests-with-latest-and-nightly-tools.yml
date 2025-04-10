@@ -1,4 +1,4 @@
-name: Recurrent tests
+name: Nightly and Latest Tools Daily Tests
 
 on:
   schedule:
@@ -74,6 +74,7 @@ jobs:
       config: ${{ matrix.config.path }}
       flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
       container: "ghcr.io/magalucloud/s3-specs:tools_nightly"
+      runner: "self-hosted"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
