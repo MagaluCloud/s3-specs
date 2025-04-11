@@ -44,7 +44,7 @@ import logging
 import pytest
 from s3_specs.docs.s3_helpers import run_example
 from botocore.exceptions import ClientError
-import hashlib
+from s3_specs.docs.utils.cold_storage import fixture_multipart_upload_cold, calculate_checksum_fixture
 
 pytestmark = pytest.mark.cold_storage
 # -
@@ -259,39 +259,18 @@ def test_multipart_upload_with_cold_storage_class(s3_client, existing_bucket_nam
     assert head.get("StorageClass") == "GLACIER_IR" or head.get("StorageClass") == "COLD_INSTANT", "Expected StorageClass GLACIER_IR or COLD_INSTANT"
 
 run_example(__name__, "test_multipart_upload_with_cold_storage_class", config=config)
+# -
+# ### Multipart Upload Versionado com a Classe Fria
 
+# Este teste valida a funcionalidade de multipart upload para objetos versionados,
+# usando a classe fria GLACIER_IR. Ele verifica se as partes do upload estão corretamente
+# listadas, se os ETags correspondem, e se o objeto finalizado possui a classe de armazenamento correta.
 
-def test_multipart_upload_versioned_with_cold_storage_class(s3_client, versioned_bucket_with_one_object_cold_storage_class, create_multipart_object_files):
-    bucket_name, object_key, _ = versioned_bucket_with_one_object_cold_storage_class
+# +
+def test_multipart_upload_versioned_with_cold_storage_class(s3_client, fixture_multipart_upload_cold):
+    bucket_name, object_key, upload_id, part_bytes = fixture_multipart_upload_cold
 
-    object_key,_, part_bytes = create_multipart_object_files
-
-    response = s3_client.create_multipart_upload(
-        Bucket=bucket_name,
-        Key=object_key,
-        StorageClass="GLACIER_IR",
-    )
-
-    assert "UploadId" in list(response.keys())
-    upload_id = response.get("UploadId")
-    logging.info("Upload Id: %s", upload_id)
-    logging.info("Create Multipart Upload Response: %s", response)
-
-    parts = []
-    for i, part_content in enumerate(part_bytes, start=1):
-        response_part = s3_client.upload_part(
-            Body=part_content,
-            Bucket=bucket_name,
-            Key=object_key,
-            PartNumber=i,
-            UploadId=upload_id,
-        )
-        parts.append({'ETag': response_part['ETag'], 'PartNumber': i})
-        logging.info("Response Upload Part %s: %s", i, response_part)
-        assert response_part["ResponseMetadata"]["HTTPStatusCode"] == 200, (
-            f"Expected HTTPStatusCode 200 for part {i} upload."
-        )
-
+    # Recupera as partes do upload
     list_parts_response = s3_client.list_parts(
         Bucket=bucket_name,
         Key=object_key,
@@ -302,39 +281,31 @@ def test_multipart_upload_versioned_with_cold_storage_class(s3_client, versioned
     assert len(list_parts_response) == 2, "Expected list part return has the same size of interaction index"
 
     list_parts_etag = [part.get("ETag") for part in list_parts_response]
-    assert response_part.get("ETag") in list_parts_etag, "Expected ETag being equal"
+    assert list_parts_etag, "Expected list of parts to have ETags"
 
+    # Verifique a correspondência dos ETags
+    assert all(part['ETag'] in list_parts_etag for part in list_parts_response), "Expected ETag being equal"
 
-    response = s3_client.complete_multipart_upload(
-        Bucket=bucket_name,
-        Key=object_key,
-        MultipartUpload={'Parts': parts},
-        UploadId=upload_id,
-    )
-    
-    logging.info("Complete Multipart Upload Response: %s", response)
-    assert response["ResponseMetadata"]["HTTPStatusCode"] == 200, (
-                f"Expected HTTPStatusCode 200 for part {i} upload."
-            )
-    
+    # Verifique o objeto finalizado e sua classe de armazenamento
     head = s3_client.head_object(
-        Bucket= bucket_name,
-        Key = object_key
+        Bucket=bucket_name,
+        Key=object_key
     )
     logging.info("Storage Class: %s", head.get("StorageClass"))
     assert head.get("StorageClass") == "GLACIER_IR" or head.get("StorageClass") == "COLD_INSTANT", "Expected StorageClass GLACIER_IR or COLD_INSTANT"
 
 run_example(__name__, "test_multipart_upload_versioned_with_cold_storage_class", config=config)
+# -
 
+# ### Exclusão de Bucket com Objetos na Classe Fria e Versões
+
+# No S3, não é possível excluir um bucket que contenha objetos versionados.
+# Este teste valida essa restrição, tentando excluir um bucket com objetos armazenados
+# na classe fria e verificando que o erro BucketNotEmpty é retornado.
+
+# +
 def test_delete_bucket_with_objects_cold_storage_class_and_versions(s3_client, versioned_bucket_with_one_object_cold_storage_class):
     bucket_name, object_key, _ = versioned_bucket_with_one_object_cold_storage_class
-
-    s3_client.put_object(
-        Bucket = bucket_name,
-        Key = object_key,
-        Body = b"v2",
-        StorageClass='GLACIER_IR'
-    )
 
     with pytest.raises(ClientError, match="BucketNotEmpty") as exc_info:
         s3_client.delete_bucket(
@@ -345,68 +316,34 @@ def test_delete_bucket_with_objects_cold_storage_class_and_versions(s3_client, v
     assert error_code == "BucketNotEmpty"
 
 run_example(__name__, "test_delete_bucket_with_objects_cold_storage_class_and_versions", config=config)
+#  -
 
-def test_multipart_upload_checksum_validation(s3_client, versioned_bucket_with_one_object_cold_storage_class, create_multipart_object_files):
-    bucket_name, object_key, _ = versioned_bucket_with_one_object_cold_storage_class
-    object_key, _, part_bytes = create_multipart_object_files
+# ### Validação de Checksum após Multipart Upload
+# Após um multipart upload, é importante garantir que o conteúdo carregado não tenha sido corrompido.
+# Este teste calcula e valida o checksum do arquivo antes e depois do upload, garantindo que o conteúdo
+# não tenha sido alterado durante o processo de envio e download.
 
-    response = s3_client.create_multipart_upload(
-        Bucket=bucket_name,
-        Key=object_key,
-        StorageClass="GLACIER_IR",
-    )
+# +
+def test_multipart_upload_checksum_validation(s3_client, fixture_multipart_upload_cold, calculate_checksum_fixture):
+    bucket_name, object_key, upload_id, part_bytes = fixture_multipart_upload_cold
 
-    assert "UploadId" in list(response.keys())
-    upload_id = response.get("UploadId")
-    logging.info("Upload Id: %s", upload_id)
-
-    parts = []
-    for i, part_content in enumerate(part_bytes, start=1):
-        response_part = s3_client.upload_part(
-            Body=part_content,
-            Bucket=bucket_name,
-            Key=object_key,
-            PartNumber=i,
-            UploadId=upload_id,
-        )
-        parts.append({'ETag': response_part['ETag'], 'PartNumber': i})
-        logging.info("Response Upload Part %s: %s", i, response_part)
-        assert response_part["ResponseMetadata"]["HTTPStatusCode"] == 200, (
-            f"Expected HTTPStatusCode 200 for part {i} upload."
-        )
-
-    response = s3_client.complete_multipart_upload(
-        Bucket=bucket_name,
-        Key=object_key,
-        MultipartUpload={'Parts': parts},
-        UploadId=upload_id,
-    )
-    
-    logging.info("Complete Multipart Upload Response: %s", response)
-    assert response["ResponseMetadata"]["HTTPStatusCode"] == 200, (
-                f"Expected HTTPStatusCode 200 for multipart upload completion."
-            )
-
-    upload_checksum = calculate_checksum(b"".join(part_bytes))
+    # Calcula o checksum do conteúdo carregado usando a fixture
+    upload_checksum = calculate_checksum_fixture(b"".join(part_bytes))
     logging.info(f"Calculated upload checksum: {upload_checksum}")
 
+    # Faz o GET do objeto carregado
     response_get = s3_client.get_object(
         Bucket=bucket_name,
         Key=object_key
     )
 
-    downloaded_checksum = calculate_checksum(response_get['Body'].read())
+    # Calcula o checksum do conteúdo baixado usando a fixture
+    downloaded_checksum = calculate_checksum_fixture(response_get['Body'].read())
     logging.info(f"Calculated downloaded checksum: {downloaded_checksum}")
 
+    # Valida se os checksums correspondem
     assert upload_checksum == downloaded_checksum, (
         f"Checksum mismatch: {upload_checksum} (uploaded) vs {downloaded_checksum} (downloaded)"
     )
 
     logging.info("Checksum validation passed: The uploaded and downloaded content match.")
-
-
-def calculate_checksum(file_content):
-    """Calcula o MD5 do conteúdo do arquivo."""
-    hash_md5 = hashlib.md5()
-    hash_md5.update(file_content)
-    return hash_md5.hexdigest()

@@ -279,8 +279,11 @@ def get_tenants(multiple_s3_clients):
     bucket_list = []
 
     for i, client in enumerate(multiple_s3_clients):        
-        id = client.list_buckets()
+        bucket_name = f"test-bucket-{uuid.uuid4().hex[:15]}"
+        create_bucket(client, bucket_name)
+        id = client.get_bucket_acl(Bucket=bucket_name)
         bucket_list.append(id['Owner']['ID'])
+        delete_bucket_and_wait(client, bucket_name)
         
     return bucket_list
     

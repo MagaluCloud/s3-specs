@@ -45,6 +45,8 @@ commands = [
         ([1, 5000, 9000], 90, 4, 10),
     ]
 )
+
+@pytest.mark.slow
 @pytest.mark.benchmark
 def test_benchmark(
     session_bucket_with_one_object,
