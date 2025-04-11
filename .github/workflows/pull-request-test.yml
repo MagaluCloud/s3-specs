@@ -8,7 +8,7 @@ name: Pull Request Essential Tests
 
 on:
     pull_request:
-      types: [opened, synchronize, reopened]
+      types: [ready_for_review]
 
 jobs:
   run_tests:

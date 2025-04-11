@@ -13,7 +13,7 @@ name: Pull Request Extra Tests
 
 on:
     pull_request:
-      types: [opened, synchronize, reopened]
+      types: [ready_for_review]
 
 jobs:
   # tests that we are not debugging at the moment,
