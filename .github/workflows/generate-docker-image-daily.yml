@@ -3,9 +3,6 @@ name: Build test OCI Image Daily
 on:
   schedule:
     - cron: '0 0 * * *' # Executa todo dia às 00:00 UTC
-  push:
-    branches:
-      - feat-add-nightely-latest-old-cli
 
 jobs:
   build:
