@@ -18,7 +18,8 @@ pytestdebug.log
 **/output/
 
 /reports
-.pdf
-.html
-
+reportspdfs/*.pdf
+reports_html/*.html
+reports_html/*_report.json
+!reports_html/index.html
 report.json
