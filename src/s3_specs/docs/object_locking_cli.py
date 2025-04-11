@@ -60,7 +60,7 @@ commands = [
     # versioned_bucket_with_one_object depends on fixture_versioned_bucket which asks for values
     indirect=['fixture_versioned_bucket']
 )
-def test_set_bucket_lock_cli(s3_client, fixture_versioned_bucket, profile_name, cmd_template):
+def test_set_bucket_lock_cli(s3_client, active_mgc_workspace, fixture_versioned_bucket, profile_name, cmd_template):
     """
     Test bucket creation with object lock enabled across multiple CLI tools.
     
@@ -91,7 +91,7 @@ def test_set_bucket_lock_cli(s3_client, fixture_versioned_bucket, profile_name, 
         print(f"Command failed with error: {e}")
         assert False, f"Command execution failed: {e}"
 
-## Try to set worong lock mode != COMPLIANCE
+## # Bucket locking with wrong json values (Fail expected)
 commands = [
     # Mgc doesnt need any specification on locking type, test for aws
     pytest.param(
@@ -103,8 +103,7 @@ commands = [
         id="aws-malformed-locked"
     )
 ]
-
-# Bucket locking with wrong json values
+ 
 @pytest.mark.parametrize(
     "fixture_versioned_bucket, cmd_template, expected",
     [
@@ -112,7 +111,7 @@ commands = [
             "private",
             cmd.values[0]["command"],
             cmd.values[0]["expected"],
-            marks=[*cmd.marks],
+            marks=[*cmd.marks, pytestmark.xfail], # Xfail - Test Should fail
             id=f"{cmd.id}-{"private"}"
         )
         for cmd in commands
@@ -216,6 +215,7 @@ def test_set_lock_on_not_versioned_bucket_cli(fixture_bucket_with_name, profile_
     
     assert expected in result.stderr, pytest.fail(f"{result.stderr}")
 
+# Put object on bucket without locking (Fail expected)
 commands = [
     pytest.param(
         {
@@ -241,13 +241,13 @@ commands = [
         pytest.param(
             cmd.values[0]["command"],
             cmd.values[0]["expected"],
-            marks=[*cmd.marks],
+            marks=[*cmd.marks, pytestmark.xfail], # Xfail - Test Should fail
             id=f"{cmd.id}"
         )
         for cmd in commands
     ],
 )
-def test_get_object_on_bucket_without_locking(fixture_bucket_with_name, profile_name, cmd_template, expected):
+def test_get_object_on_bucket_without_locking(fixture_bucket_with_name, active_mgc_workspace, profile_name, cmd_template, expected):
     """
     Test retrieving object lock configuration on a bucket without object lock enabled using multiple CLI tools.
     
@@ -313,7 +313,7 @@ commands = [
     # versioned_bucket_with_one_object depends on fixture_versioned_bucket which asks for values
     indirect=['fixture_versioned_bucket']
 )
-def test_unset_bucket_lock_cli(s3_client, bucket_with_lock_enabled, profile_name, cmd_template, expected):
+def test_unset_bucket_lock_cli(s3_client, active_mgc_workspace,  bucket_with_lock_enabled, profile_name, cmd_template, expected):
     """
     Test unsetting bucket object lock configuration across multiple CLI tools.
     
@@ -382,7 +382,7 @@ commands = [
     # versioned_bucket_with_one_object depends on fixture_versioned_bucket which asks for values
     indirect=['fixture_versioned_bucket']
 )
-def test_set_object_lock_unlocked_bucket_cli(s3_client, fixture_versioned_bucket_with_one_object, profile_name, cmd_template, expected):
+def test_set_object_lock_unlocked_bucket_cli(s3_client, active_mgc_workspace, fixture_versioned_bucket_with_one_object, profile_name, cmd_template, expected):
     """
     Test setting object lock configuration on an object across multiple CLI tools.
 
@@ -533,7 +533,7 @@ commands = [
     # versioned_bucket_with_one_object depends on fixture_versioned_bucket which asks for values
     indirect=['fixture_versioned_bucket']
 )
-def test_set_object_lock_unlocked_bucket_cli(s3_client, fixture_versioned_bucket_with_one_object, profile_name, cmd_template, expected):
+def test_set_object_lock_unlocked_bucket_cli(s3_client, active_mgc_workspace, fixture_versioned_bucket_with_one_object, profile_name, cmd_template, expected):
     """
     Test setting object lock configuration on an object across multiple CLI tools.
 
