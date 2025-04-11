@@ -506,7 +506,8 @@ def bucket_with_one_object_policy(multiple_s3_clients, policy_wait_time, request
         
     # Generate a unique name and create a versioned bucket
     base_name = "policy-bucket"
-    object_key = request.param.get("resource_key", "PolicyObject.txt")
+    #object_key = request.param.get("resource_key", "PolicyObject.txt")
+    object_key = "qualquer_coisa.txt"
     bucket_name = generate_unique_bucket_name(base_name=base_name)
     
     create_bucket_and_wait(client, bucket_name)
