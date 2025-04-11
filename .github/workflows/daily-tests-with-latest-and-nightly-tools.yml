@@ -1,13 +1,8 @@
 name: Nightly and Latest Tools Daily Tests
 
 on:
-  push:
-    branches:
-      - feat-add-nightely-latest-old-cli
-
   schedule:
-    - cron: "0 * * * *"        # Every hour at 00 min
-    - cron: "*/10 * * * *"
+    - cron: "0 1 * * *"
 jobs:
   latest_tools_tests:
     strategy:
@@ -15,22 +10,22 @@ jobs:
         marker:
           - test: basic
             name: basic
-          # - test: cold_storage
-          #   name: cold_storage
-          # - test: presign
-          #   name: presign
-          # - test: acl
-          #   name: acl
-          # - test: locking
-          #   name: locking
-          # - test: policy
-          #   name: policy
-          # - test: bucket_versioning
-          #   name: bucket_versioning
-          # - test: multiple_objects
-          #   name: multiple_objects
-          # - test: big_objects
-          #   name: big_objects
+          - test: cold_storage
+            name: cold_storage
+          - test: presign
+            name: presign
+          - test: acl
+            name: acl
+          - test: locking
+            name: locking
+          - test: policy
+            name: policy
+          - test: bucket_versioning
+            name: bucket_versioning
+          - test: multiple_objects
+            name: multiple_objects
+          - test: big_objects
+            name: big_objects
         config:
           - path: "../../../params.example.yaml"
             name: "example"
@@ -49,22 +44,22 @@ jobs:
         marker:
           - test: basic
             name: basic
-          # - test: cold_storage
-          #   name: cold_storage
-          # - test: presign
-          #   name: presign
-          # - test: acl
-          #   name: acl
-          # - test: locking
-          #   name: locking
-          # - test: policy
-          #   name: policy
-          # - test: bucket_versioning
-          #   name: bucket_versioning
-          # - test: multiple_objects
-          #   name: multiple_objects
-          # - test: big_objects
-          #   name: big_objects
+          - test: cold_storage
+            name: cold_storage
+          - test: presign
+            name: presign
+          - test: acl
+            name: acl
+          - test: locking
+            name: locking
+          - test: policy
+            name: policy
+          - test: bucket_versioning
+            name: bucket_versioning
+          - test: multiple_objects
+            name: multiple_objects
+          - test: big_objects
+            name: big_objects
         config:
           - path: "../../../params.example.yaml"
             name: "example"
@@ -74,7 +69,6 @@ jobs:
       config: ${{ matrix.config.path }}
       flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
       container: "ghcr.io/magalucloud/s3-specs:tools_nightly"
-      runner: "self-hosted"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
