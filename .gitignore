@@ -16,3 +16,9 @@ output/processed.csv
 pytestdebug.log
 
 **/output/
+
+/reports
+.pdf
+.html
+
+report.json

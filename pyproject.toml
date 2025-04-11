@@ -17,21 +17,31 @@ dependencies = [
     "prometheus-client>=0.21.1",
     "pyyaml>=6.0.2",
     "pytest-env>=1.1.0",
+    # Novas dependências para relatórios
+    "fpdf2>=2.7.0",
+    "pytest-html>=4.1.0",
+    "pytest-json-report>=1.5.0",
+    "uv>=0.1.0"
 ]
 name = "s3-specs"
 version = "0.1.0"
-description = ""
+description = "S3 Specifications Test Suite with Advanced Reporting"
 readme = "README.md"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[project.scripts]
+s3-test = "s3_specs.cli:main"
+s3-report = "s3_specs.reports:generate_reports"
+
 [dependency-groups]
 dev = [
     "ipykernel>=6.29.5",
     "jupytext>=1.16.5",
     "nbconvert>=7.16.4",
+    "uv>=0.1.0"
 ]
 
 [tool.jupytext]
@@ -40,6 +50,7 @@ formats = "ipynb,py:light"
 [tool.pytest.ini_options]
 filterwarnings = "ignore::DeprecationWarning:botocore.auth"
 env = ["JUPYTER_PLATFORM_DIRS=1"]
+addopts = "--json-report --json-report-file=reports/report.json --html=reports/report.html --self-contained-html"
 markers = [
     "acl: Canned ACL (access control list)",
     "locking: Bucket Lock configuration and Object lock retention",
@@ -63,7 +74,7 @@ markers = [
 
 [tool.s3-tester]
 markers = [
-  #"Benchmark",
+  "Benchmark",
   "BigBuckets",
   "BucketManagement",
   "BucketPermission",
@@ -76,6 +87,3 @@ markers = [
   "ColdStorage",
   "ServiceAccounts",
 ]
-
-[tool.uv.workspace]
-members = ["reports"]
