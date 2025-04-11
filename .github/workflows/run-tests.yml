@@ -9,7 +9,7 @@ on:
         flags: { required: true, type: string }
         runner: { required: false, type: string, default: "ubuntu-24.04" }
         mgc_version: { required: false, type: string, default: "0.34.0" }
-        container: { required: false, type: string, default: "ghcr.io/magalucloud/s3-specs:tools_oldest" }
+        container: { required: false, type: string, default: "ghcr.io/magalucloud/s3-specs:tests_oldest" }
       secrets:
         PROFILES: { required: true }
 jobs:
@@ -23,13 +23,17 @@ jobs:
               with:
                   ref: ${{ github.head_ref }}
                   fetch-depth: 0
+
+            - name: Copy pyproject.toml from app
+              run: cp /app/pyproject.toml .
+
             - name: Show tools version
               run: |
                 uv run python -c "import boto3; print(f'boto3 version: {boto3.__version__}')"
                 echo "aws version: $(aws --version)"
                 echo "mgc version: $(mgc --version)"
                 echo "rclone version: $(rclone --version)"
-                
+
             - name: Format input name
               id: format_name
               run: |
