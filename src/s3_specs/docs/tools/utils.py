@@ -2,8 +2,28 @@ import uuid
 import os
 import pytest
 import subprocess
-
+import boto3
 # Function is responsible to check and format bucket names into valid ones
+
+@pytest.fixture(scope="session")
+def get_clients(session_test_params):
+    clients = [p for p in session_test_params["profiles"][:2]]
+
+    sessions = []
+    
+    for client in clients:
+        if "profile_name" in client:
+            session = boto3.Session(profile_name=client["profile_name"])
+        else:
+            session = boto3.Session(
+                region_name=client["region_name"],
+                aws_access_key_id=client["aws_access_key_id"],
+                aws_secret_access_key=client["aws_secret_access_key"],
+            )
+        sessions.append(session.client("s3", endpoint_url=client.get("endpoint_url")))
+        
+    return sessions
+
 
 def generate_valid_bucket_name(base_name="my-unique-bucket"):
     """
