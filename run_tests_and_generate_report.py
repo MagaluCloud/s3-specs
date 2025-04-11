@@ -82,15 +82,14 @@ class PDFReport(FPDF):
     def add_test_entry(self, name, duration, message=None, status="passed"):
         # Cores para diferentes status
         status_colors = {
-            "passed": (220, 255, 220),  # Verde claro
-            "failed": (255, 220, 220),  # Vermelho claro
-            "skipped": (240, 240, 255),  # Azul claro
-            "error": (255, 200, 200)  # Vermelho mais escuro
+            "passed": (220, 255, 220),  
+            "failed": (255, 220, 220),  
+            "skipped": (240, 240, 255),  
+            "error": (255, 200, 200)  
         }
         
         self.set_fill_color(*status_colors.get(status, (255, 255, 255)))
         
-        # Nome do teste (limitado e com quebra de linha)
         self.set_font("Helvetica", 'B', 10)
         
         # Formato: [nome do teste]
@@ -106,7 +105,7 @@ class PDFReport(FPDF):
             self.set_font("Helvetica", '', 9)
             self.cell(self.content_width, 7, f"Caso: {test_case}", 1, 1, 'L', fill=True)
         
-        # Mensagem (se existir)
+        # Mensagem de erro ou razão de falha
         if message:
             self.set_font("Helvetica", '', 9)
             
@@ -114,11 +113,10 @@ class PDFReport(FPDF):
             max_chars_per_line = 100
             formatted_message = ""
             
-            # Quebrar mensagem em partes mais gerenciáveis
+            # Formatar mensagem de retorno
             lines = message.split('\n')
             for line in lines:
                 if len(line) > max_chars_per_line:
-                    # Quebrar linhas longas
                     for i in range(0, len(line), max_chars_per_line):
                         formatted_message += line[i:i+max_chars_per_line] + "\n"
                 else:
@@ -132,11 +130,9 @@ class PDFReport(FPDF):
         self.ln(5)
         self.set_font("Helvetica", 'B', 11)
         
-        # Adicionar resumo em forma de tabela
         self.set_fill_color(240, 240, 240)
         self.cell(self.content_width/4, 8, f"Passaram: {passed}", 1, 0, 'C', fill=True)
         
-        # Cor vermelha se tiver falhas
         fill_color = (255, 200, 200) if failed > 0 else (240, 240, 240)
         self.set_fill_color(*fill_color)
         self.cell(self.content_width/4, 8, f"Falharam: {failed}", 1, 0, 'C', fill=True)
@@ -168,7 +164,7 @@ def generate_pdf():
     passed_tests = []
     failed_tests = []
     skipped_tests = []
-    error_tests = []  # Nova categoria para erros
+    error_tests = []
 
     # Processar resultados dos testes
     for test in data.get("tests", []):
@@ -186,7 +182,7 @@ def generate_pdf():
             if "Skipped: " in skip_reason:
                 skip_reason = skip_reason.split("Skipped: ", 1)[1].strip()
             skipped_tests.append((name, duration, skip_reason))
-        else:  # Capturar erros (geralmente outcome será "error")
+        else: 
             # Erros podem estar na fase de setup, call ou teardown
             for phase in ["setup", "call", "teardown"]:
                 if phase in test and "longrepr" in test[phase]:
@@ -194,10 +190,9 @@ def generate_pdf():
                     error_tests.append((name, duration, error))
                     break
             else:
-                # Se não encontrar a mensagem de erro, adiciona com informação genérica
                 error_tests.append((name, duration, "Erro não especificado"))
 
-    # Gerar o PDF
+    # Criar PDF
     pdf = PDFReport()
     pdf.add_page()
     
