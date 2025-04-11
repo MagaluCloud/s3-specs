@@ -23,7 +23,13 @@ jobs:
               with:
                   ref: ${{ github.head_ref }}
                   fetch-depth: 0
-
+            - name: Show tools version
+              run: |
+                uv run python -c "import boto3; print(f'boto3 version: {boto3.__version__}')"
+                echo "aws version: $(aws --version)"
+                echo "mgc version: $(mgc --version)"
+                echo "rclone version: $(rclone --version)"
+                
             - name: Format input name
               id: format_name
               run: |
