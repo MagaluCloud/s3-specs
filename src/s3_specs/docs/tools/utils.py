@@ -2,6 +2,7 @@ import uuid
 import os
 import pytest
 import subprocess
+from shlex import quote
 
 # Function is responsible to check and format bucket names into valid ones
 
@@ -94,7 +95,7 @@ def fixture_create_small_file(tmp_path_factory: pytest.TempdirFactory):
     return tmp_path
 
 
-def execute_subprocess(cmd_command: str):
+def execute_subprocess(cmd_command: str, expected_failure:bool = False):
     """
     Execute a shell command as a subprocess and handle errors gracefully.
     
@@ -111,14 +112,26 @@ def execute_subprocess(cmd_command: str):
         pytest.fail: If the command fails or any other exception occurs
     """
     try:
+        command = cmd_command.split('{')
+        json = "".join(['{' + x for x in command[1:]])
+        if json == "": # Case there is no json string
+            final = command
+        else: # Json present
+            final = command[0] + f"'{json}'"
+
         # Run the command and capture output
         result = subprocess.run(
-            cmd_command.split(),  # Split command into arguments
+            final,
+            shell=True,
             capture_output=True,  # Capture stdout and stderr
             text=True,           # Return output as strings (not bytes)
             check=True           # Raise CalledProcessError if returncode != 0
         )
     except subprocess.CalledProcessError as e:
+        # Propagate the error to the query 
+        if expected_failure == True:
+            return e
+        
         # Handle command execution failures
         pytest.fail(
             f"Command failed with exit code {e.returncode}\n"
@@ -132,6 +145,7 @@ def execute_subprocess(cmd_command: str):
             f"Command: {cmd_command}\n"
         )
 
+    # Validate true postives
     return result
 
 
