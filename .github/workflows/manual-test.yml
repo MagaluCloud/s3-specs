@@ -22,7 +22,14 @@ on:
           description: 'Version of the MGC CLI'
           default: '0.34.0'
           required: false
-
+        container:
+          description: 'Container to run the tests'
+          type: choice
+          default: 'ghcr.io/magalucloud/s3-specs:tools_oldest'
+          options:
+            - 'ghcr.io/magalucloud/s3-specs:tests_latest'
+            - 'ghcr.io/magalucloud/s3-specs:tests_nightly'
+            - 'ghcr.io/magalucloud/s3-specs:tests_oldest'
 jobs:
   run-tests:
     uses: ./.github/workflows/run-tests.yml
@@ -33,5 +40,6 @@ jobs:
       flags: ${{ inputs.flags }}
       runner: ${{ inputs.runner }}
       mgc_version: ${{ inputs.mgc_version }}
+      container: ${{ inputs.container }}
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
