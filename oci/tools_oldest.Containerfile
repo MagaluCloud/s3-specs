@@ -10,7 +10,7 @@ ARG MGC_VERSION="0.34.1"
 ARG JUST_VERSION="1.40.0"
 
 # aws-cli
-FROM public.ecr.aws/aws-cli/aws-cli:${AWS_CLI_VERSION} as awscli
+FROM public.ecr.aws/aws-cli/aws-cli:${AWS_CLI_VERSION} AS awscli
 
 # Main image
 FROM ubuntu:latest
@@ -52,26 +52,3 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
 # just (task runner, justfile)
 ARG JUST_VERSION
 RUN curl -LsSf https://just.systems/install.sh | bash -s -- --tag ${JUST_VERSION} --to /usr/local/bin;
-
-# container workdir
-WORKDIR /app
-
-# Required files to execute the tests
-COPY bin /app/bin/
-COPY params.example.yaml /app/params.example.yaml
-COPY justfile /app/justfile
-COPY utils.just /app/utils.just
-COPY menu.just /app/menu.just
-COPY uv.lock /app/uv.lock
-COPY pyproject.toml /app/pyproject.toml
-COPY README.md /app/README.md
-COPY src/ /app/src/
-COPY reports /app/reports/
-COPY output /app/output/
-# Download python dependencies to be bundled with the image
-RUN uv sync
-
-RUN bash -c "cd reports && uv sync"
-
-# Definir o script como ponto de entrada
-ENTRYPOINT ["just"]
