@@ -10,9 +10,7 @@ on:
     - cron: "*/10 * * * *"
 jobs:
   latest_tools_tests:
-    if: github.event.schedule == '0 * * * *'  
     strategy:
-      fail-fast: false
       matrix:
         marker:
           - test: basic
@@ -46,9 +44,7 @@ jobs:
       PROFILES: ${{ secrets.PROFILES }}
 
   nightly_tools_tests:
-    if: github.event.schedule == '*/10 * * * *'
     strategy:
-      fail-fast: false
       matrix:
         marker:
           - test: basic
