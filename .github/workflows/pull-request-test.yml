@@ -13,6 +13,7 @@ on:
 jobs:
   run_tests:
     strategy:
+      max-parallel: 2
       fail-fast: true
       matrix:
         marker:

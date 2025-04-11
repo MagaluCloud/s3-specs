@@ -21,6 +21,7 @@ jobs:
   # it's ok to run only on br-ne1
   extra_tests_dist:
     strategy:
+      max-parallel: 2
       fail-fast: false
       matrix:
         marker:
