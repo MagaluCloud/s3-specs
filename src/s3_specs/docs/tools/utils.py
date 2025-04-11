@@ -50,8 +50,6 @@ def generate_valid_bucket_name(base_name="my-unique-bucket"):
     # assuming max bucket name size is 63
     return "".join(new_name)[:63]
 
-
-
 def convert_unit(size = {'size': 100, 'unit': 'mb'}) -> int:
     """
     Converts a dict containing a int and a str into a int representing the size in bytes
@@ -73,29 +71,28 @@ def convert_unit(size = {'size': 100, 'unit': 'mb'}) -> int:
 
     return size['size'] * units_dict.get(unit)
 
-
-
-def create_big_file(file_path: str, size={'size': 100, 'unit': 'mb'}) -> int:
+@pytest.fixture(scope="module")
+def fixture_create_big_file(request, tmp_path_factory: pytest.TempdirFactory):
     """
-    Create a big file with the specified size using a temporary file.
-    
-    :param size: dict: A dictionary containing an int 'size' and a str 'unit'.
-    :yield: str: Path to the temporary file created.
-    """
+    Fixture that creates a temporary file with a big size
 
+    Return: Pathlib path: path to the file
+    Return: total_size: int: size of the file in bytes
+    """
+    # Populating file
+    size = getattr(request.param, 'size', {'size': 10, 'unit': 'mb'}) # extract size or default value if it doesnt
     total_size = convert_unit(size)
 
-    if not os.path.exists('/tmp'):
-        os.mkdir('/tmp')
+    obj_name = f"test-big-{size['size']}{size['unit']}-{uuid.uuid4().hex[:10]}"
+    tmp_path = tmp_path_factory.mktemp("temp")/obj_name
 
+    
+    with open(tmp_path, "wb") as f:
+        f.write(os.urandom(total_size))
 
-    if not os.path.exists(file_path):
-        # Create a file
-        with open(file_path, 'wb') as f:
-            f.write(os.urandom(total_size))
-        f.close()
-
-    return total_size         
+    assert os.path.exists(tmp_path), "Temporary object not created"
+    return tmp_path, total_size
+        
 
 @pytest.fixture(scope="module")
 def fixture_create_small_file(tmp_path_factory: pytest.TempdirFactory):
@@ -104,7 +101,7 @@ def fixture_create_small_file(tmp_path_factory: pytest.TempdirFactory):
 
     Return: Pathlib path: path to the file
     """
-    obj_name = 'object_' + uuid.uuid4().hex[:10]
+    obj_name = 'test-small-' + uuid.uuid4().hex[:10]
     tmp_path = tmp_path_factory.mktemp("temp")/obj_name
     # Populating file
     with open(tmp_path, "wb") as f:
@@ -112,7 +109,6 @@ def fixture_create_small_file(tmp_path_factory: pytest.TempdirFactory):
 
     assert os.path.exists(tmp_path), "Temporary object not created"
     return tmp_path
-
 
 def execute_subprocess(cmd_command: str):
     """
@@ -153,5 +149,3 @@ def execute_subprocess(cmd_command: str):
         )
 
     return result
-
-
