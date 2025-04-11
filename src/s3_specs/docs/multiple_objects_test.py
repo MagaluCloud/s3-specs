@@ -39,10 +39,11 @@ def test_upload_multiple_objects(s3_client, fixture_bucket_with_name, file_path:
     """
 
     object_prefix = "test-multiple-small"
+    bucket_name = fixture_bucket_with_name
    
-    successful_uploads = upload_multiple_objects(s3_client, fixture_bucket_with_name, file_path, object_prefix, object_quantity)
+    successful_uploads = upload_multiple_objects(s3_client, bucket_name, file_path, object_prefix, object_quantity)
     # Checking if all the objects were uploaded
-    objects_in_bucket = len(list_all_objects(s3_client, fixture_bucket_with_name))
+    objects_in_bucket = len(list_all_objects(s3_client, bucket_name))
 
     logging.info(f"Uploaded expected: {object_quantity}, made:{successful_uploads}, bucket: {objects_in_bucket}")
     assert successful_uploads == objects_in_bucket , f"Expects uploads {successful_uploads} to be equal to objects in the bucket {objects_in_bucket} "

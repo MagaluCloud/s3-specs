@@ -67,7 +67,6 @@ def test_multipart_download(s3_client, fixture_bucket_with_name, fixture_upload_
     # Uploading the big file
     uploaded_file_size, _, _ = fixture_upload_multipart_file
 
-
     # Test download file from s3 bucket
     try:
         # Graphing the download progress
