@@ -6,7 +6,7 @@ import yaml
 import logging
 import subprocess
 import shutil
-
+from s3_specs.docs.tools.utils import get_clients
 from s3_specs.docs.s3_helpers import (
     generate_unique_bucket_name,
     delete_bucket_and_wait,
@@ -31,9 +31,9 @@ from botocore.exceptions import ClientError
 def pytest_addoption(parser):
     parser.addoption("--config", action="store", help="Path to the YAML config file")
 
-@pytest.fixture(autouse=True)
-def verify_credentials(multiple_s3_clients):
-    tenants = get_tenants(multiple_s3_clients)
+@pytest.fixture(scope="session", autouse=True)
+def verify_credentials(get_clients):
+    tenants = get_tenants(get_clients)
 
     if not len(tenants) == len(set(tenants)) or len(tenants) < 2:
         pytest.exit("Perfis estão configurados de forma incorreta. É necessário que tenha dois perfis configurados para diferentes owners")
