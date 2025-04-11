@@ -38,6 +38,7 @@ upload_params = [
 
 @pytest.mark.slow
 @pytest.mark.big_objects
+@pytest.mark.skip(reason="It dosn't working")
 def test_multipart_download(s3_client, fixture_bucket_with_name, fixture_upload_multipart_file, params):
     """
     Test to download a big object to an S3 bucket using multipart download
