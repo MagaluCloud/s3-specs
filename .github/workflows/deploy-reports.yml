@@ -4,23 +4,25 @@ on:
   push:
     branches: [temp-action-test]
 
+permissions:
+  contents: write  # Permite push no branch gh-pages
+  pages: write
+  id-token: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
+      
       - name: Build Reports
         run: |
-          mkdir -p public
-          cp -r reports_html/* public/
-          echo "Conteúdo atual:" && ls -R public/  # Debug
-
+          mkdir -p ./public
+          cp -r reports_html/* ./public/
+      
       - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v3  # Alternativa mais simples
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}  # Token automático do GitHub
           publish_dir: ./public
           publish_branch: gh-pages
-          force_orphan: true
-          keep_files: false
