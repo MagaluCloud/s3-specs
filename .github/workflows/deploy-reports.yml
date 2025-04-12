@@ -2,8 +2,7 @@ name: Deploy Reports
 
 on:
   push:
-    branches: [refactor-reportv2]
-  workflow_dispatch:
+    branches: [temp-action-test]
 
 permissions:
   pages: write
@@ -13,27 +12,23 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: https://${{ github.repository_owner }}.github.io/${{ github.repository_name }}
-
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
         with:
-          ref: refactor-reportv2
+          ref: temp-action-test
       
       - name: Setup Pages
-        uses: actions/configure-pages@v3
+        uses: actions/configure-pages@v2
       
       - name: Copy reports
         run: |
-          mkdir -p ./_site
-          cp -r reports_html/* ./_site/
+          mkdir -p ./public
+          cp -r reports_html/* ./public/
       
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v1
         with:
-          path: '_site'
+          path: 'public'
       
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v2
+      - name: Deploy
+        uses: actions/deploy-pages@v1
