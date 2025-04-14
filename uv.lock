@@ -1848,7 +1848,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "boto3", specifier = "==1.35.99" },
+    { name = "boto3", specifier = ">=1.35.99" },
     { name = "ipynbname", specifier = ">=2024.1.0.0,<2025.0.0.0" },
     { name = "prometheus-client", specifier = ">=0.21.1" },
     { name = "pytest", specifier = "==7.4.2" },
