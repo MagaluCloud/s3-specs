@@ -12,6 +12,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        region:
+          - br-se1
+          - br-ne1
         marker:
           # 1h tests
           - test: basic
@@ -27,6 +30,7 @@ jobs:
     with:
       name: "${{ matrix.marker.name }}_1hours.${{ matrix.config.name }}"
       config: ${{ matrix.config.path }}
+      region: ${{ matrix.region }}
       flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
@@ -36,6 +40,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        region:
+          - br-se1
+          - br-ne1
         marker:
             # 6h tests
           - test: acl
@@ -53,6 +60,7 @@ jobs:
     with:
       name: "${{ matrix.marker.name }}_6hours.${{ matrix.config.name }}"
       config: ${{ matrix.config.path }}
+      region: ${{ matrix.region }}
       flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
@@ -62,6 +70,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        region:
+          - br-se1
+          - br-ne1
         marker:
            # 12h tests
           - test: multiple_objects
@@ -75,6 +86,7 @@ jobs:
     with:
       name: "${{ matrix.marker.name }}_12hours.${{ matrix.config.name }}"
       config: ${{ matrix.config.path }}
+      region: ${{ matrix.region }}
       flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
