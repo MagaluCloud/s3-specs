@@ -3,11 +3,21 @@ import concurrent.futures
 import datetime
 import sys
 from botocore.exceptions import BotoCoreError, ClientError
+from botocore.config import Config
 
-def list_old_test_buckets(profile_name):
-    """List 'test-' prefixed buckets older than 2 hours."""
+def list_old_test_buckets(profile_name, connect_timeout_sec=60, read_timeout_sec=300):
+    """List 'test-' prefixed buckets older than 6 hours."""
+    # Crie um objeto de configuração com os timeouts desejados
+    s3_config = Config(
+        connect_timeout=connect_timeout_sec,
+        read_timeout=read_timeout_sec,
+        retries = {
+            'max_attempts': 5,  # Exemplo: tentar até 5 vezes
+            'mode': 'standard'
+        }
+    )
     session = boto3.Session(profile_name=profile_name)
-    s3 = session.client('s3')
+    s3 = session.client('s3', config=s3_config)
     try:
         response = s3.list_buckets()
         six_hours_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=6)
@@ -15,7 +25,7 @@ def list_old_test_buckets(profile_name):
         return [
             bucket['Name']
             for bucket in response['Buckets']
-            if bucket['Name'].startswith('test-') and bucket['CreationDate'] < six_hours_ago
+            if (bucket['Name'].startswith('test-') or bucket['Name'].startswith('versioned-')) and bucket['CreationDate'] < six_hours_ago
         ]
     except (BotoCoreError, ClientError) as e:
         print(f"Error listing buckets: {e}")
