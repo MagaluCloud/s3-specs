@@ -63,6 +63,7 @@ jobs:
               run: |
                 cd src/s3_specs/docs
                 mkdir -p /s3-specs/artifact/
+                set -o pipefail
                 uv run pytest --config ${{ inputs.config }} ${{inputs.tests}} ${{ inputs.flags }} | tee /s3-specs/artifact/actions_pytest_output_${{ steps.format_name.outputs.formatted_log_name }}.log
       
             - name: Upload Artifact
