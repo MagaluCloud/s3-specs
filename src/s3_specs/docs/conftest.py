@@ -30,6 +30,8 @@ from botocore.exceptions import ClientError
 
 def pytest_addoption(parser):
     parser.addoption("--config", action="store", help="Path to the YAML config file")
+    parser.addoption("--profile", action="store", help="profile to use for the tests")
+
 
 @pytest.fixture(scope="session", autouse=True)
 def verify_credentials(get_clients):
@@ -44,8 +46,21 @@ def test_params(request):
     Loads test parameters from a config file or environment variable.
     """
     config_path = request.config.getoption("--config") or os.environ.get("CONFIG_PATH", "../params.example.yaml")
+    
+    profile = request.config.getoption("--profile") or os.environ.get("PROFILE", None)
+    logging.info(f"Region: {profile}")
     with open(config_path, "r") as f:
-        return yaml.safe_load(f)
+        config = yaml.safe_load(f)
+        if not profile:
+            return config
+        sufix = ["", "-second", "-third"]
+        for index, profile_index in enumerate(config["profiles"]):
+            if "profile_name" in profile_index and index < 3:
+                profile_index["profile_name"] = f"{profile}{sufix[index]}"
+        
+        logging.info(f"Config: {config}")
+        return config
+
 
 @pytest.fixture
 def default_profile(test_params):
