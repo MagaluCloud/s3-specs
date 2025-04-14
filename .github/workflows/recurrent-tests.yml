@@ -92,9 +92,9 @@ jobs:
       PROFILES: ${{ secrets.PROFILES }}
 
 
-  cleanup-tests:
-    needs: [run_1h_tests]
-    if: always() 
-    uses: ./.github/workflows/cleanup-tests.yml
-    secrets:
-      PROFILES: ${{ secrets.PROFILES }}
+  # cleanup-tests:
+  #   needs: [run_1h_tests]
+  #   if: always() 
+  #   uses: ./.github/workflows/cleanup-tests.yml
+  #   secrets:
+  #     PROFILES: ${{ secrets.PROFILES }}
