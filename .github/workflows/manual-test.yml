@@ -22,7 +22,7 @@ on:
           description: 'Version of the MGC CLI'
           default: '0.34.0'
           required: false
-        region:
+        profile:
           description: 'Region to use for the tests'
           default: 'br-se1'
           required: false
@@ -36,6 +36,6 @@ jobs:
       flags: ${{ inputs.flags }}
       runner: ${{ inputs.runner }}
       mgc_version: ${{ inputs.mgc_version }}
-      region: ${{ inputs.region }}
+      profile: ${{ inputs.profile }}
     secrets:
       PROFILES: ${{ secrets.PROFILES }}

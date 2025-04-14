@@ -30,7 +30,7 @@ from botocore.exceptions import ClientError
 
 def pytest_addoption(parser):
     parser.addoption("--config", action="store", help="Path to the YAML config file")
-    parser.addoption("--region", action="store", help="Region to use for the tests")
+    parser.addoption("--profile", action="store", help="profile to use for the tests")
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -47,18 +47,16 @@ def test_params(request):
     """
     config_path = request.config.getoption("--config") or os.environ.get("CONFIG_PATH", "../params.example.yaml")
     
-    region = request.config.getoption("--region") or os.environ.get("REGION", None)
-    logging.info(f"Region: {region}")
+    profile = request.config.getoption("--profile") or os.environ.get("PROFILE", None)
+    logging.info(f"Region: {profile}")
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
-        if not region:
+        if not profile:
             return config
-        sufix = ["", "second", "third"]
-        for index, profile in enumerate(config["profiles"]):
-            if "profile_name" in profile:
-                profile["profile_name"] = f"{region}-{sufix[index]}"
-            profile["region_name"] = region
-            profile["endpoint_url"] = f"https://{region}.magaluobjects.com/"
+        sufix = ["", "-second", "-third"]
+        for index, profile_index in enumerate(config["profiles"]):
+            if "profile_name" in profile_index and index < 3:
+                profile_index["profile_name"] = f"{profile}{sufix[index]}"
         
         logging.info(f"Config: {config}")
         return config
