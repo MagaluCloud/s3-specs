@@ -61,9 +61,11 @@ jobs:
                   echo "formatted_log_name=$FORMATTED_NAME.$(date +'%Y%m%dT%H%M%S')" >> "$GITHUB_OUTPUT"
 
             - name: Run tests ${{ inputs.name }}
+              shell: bash
               run: |
                 cd src/s3_specs/docs
                 mkdir -p /s3-specs/artifact/
+                set -o pipefail
                 uv run pytest ${{inputs.tests}}  --config ${{ inputs.config }} --profile ${{ inputs.profile }} ${{ inputs.flags }} | tee /s3-specs/artifact/actions_pytest_output_${{ steps.format_name.outputs.formatted_log_name }}.log
       
             - name: Upload Artifact
