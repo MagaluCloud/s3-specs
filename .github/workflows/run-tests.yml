@@ -26,7 +26,10 @@ jobs:
                   fetch-depth: 0
 
             - name: Copy pyproject.toml from app
-              run: cp /app/pyproject.toml .
+              run: |
+                echo "${{inputs.container}}""
+                ls -l /
+                cp /app/pyproject.toml .
 
             - name: Show tools version
               run: |

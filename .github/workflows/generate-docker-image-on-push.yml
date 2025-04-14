@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-      - feat-add-nightely-latest-old-cli
-
 jobs:
   build:
     permissions:

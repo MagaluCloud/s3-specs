@@ -1,6 +1,10 @@
 name: Nightly and Latest Tools Daily Tests
 
 on:
+  push:
+    branches:
+      - feat-add-nightely-latest-old-cli
+      
   schedule:
     - cron: "0 1 * * *"
 jobs:
