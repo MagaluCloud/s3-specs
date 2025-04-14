@@ -42,9 +42,9 @@ jobs:
         run:
           exit 0
 
-  cleanup-tests:
-    needs: [tests-success]
-    if: always() 
-    uses: ./.github/workflows/cleanup-tests.yml
-    secrets:
-      PROFILES: ${{ secrets.PROFILES }}
+  # cleanup-tests:
+  #   needs: [tests-success]
+  #   if: always() 
+  #   uses: ./.github/workflows/cleanup-tests.yml
+  #   secrets:
+  #     PROFILES: ${{ secrets.PROFILES }}

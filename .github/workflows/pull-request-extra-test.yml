@@ -61,11 +61,11 @@ jobs:
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
-  cleanup_tests:
-    needs: [extra_tests_debug, extra_tests_dist]
-    if: always()
-    uses: ./.github/workflows/cleanup-tests.yml
-    secrets:
-      PROFILES: ${{ secrets.PROFILES }}
+  # cleanup_tests:
+  #   needs: [extra_tests_debug, extra_tests_dist]
+  #   if: always()
+  #   uses: ./.github/workflows/cleanup-tests.yml
+  #   secrets:
+  #     PROFILES: ${{ secrets.PROFILES }}
 
 
