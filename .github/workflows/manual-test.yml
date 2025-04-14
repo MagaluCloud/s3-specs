@@ -18,10 +18,6 @@ on:
           description: 'Machine to run the tests'
           default: 'ubuntu-24.04'
           required: false
-        mgc_version:
-          description: 'Version of the MGC CLI'
-          default: '0.34.0'
-          required: false
         container:
           description: 'Container to run the tests'
           type: choice
@@ -30,6 +26,7 @@ on:
             - 'ghcr.io/magalucloud/s3-specs:tests_latest'
             - 'ghcr.io/magalucloud/s3-specs:tests_nightly'
             - 'ghcr.io/magalucloud/s3-specs:tests_oldest'
+
         profile:
           description: 'Region to use for the tests'
           default: 'br-se1'
@@ -43,7 +40,6 @@ jobs:
       config: ${{ inputs.config }}
       flags: ${{ inputs.flags }}
       runner: ${{ inputs.runner }}
-      mgc_version: ${{ inputs.mgc_version }}
       container: ${{ inputs.container }}
       profile: ${{ inputs.profile }}
     secrets:
