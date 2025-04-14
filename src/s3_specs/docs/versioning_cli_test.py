@@ -113,6 +113,7 @@ commands = [
     indirect=['fixture_versioned_bucket']
 )
 def test_upload_version_on_bucket_with_acl( s3_client,
+                                            active_mgc_workspace,
                                             fixture_versioned_bucket, 
                                             fixture_create_small_file, 
                                             cmd_template,
@@ -198,6 +199,7 @@ commands = [
 )
 def test_download_version_on_bucket_with_acl(
     fixture_versioned_bucket_with_one_object,
+    active_mgc_workspace,
     fixture_create_small_file,
     cmd_template,
     profile_name,
@@ -281,6 +283,7 @@ commands = [
 )
 def test_delete_object_with_versions(
     s3_client, 
+    active_mgc_workspace,
     fixture_versioned_bucket_with_one_object, 
     cmd_template, 
     expected,
@@ -359,6 +362,7 @@ commands = [
 )
 def test_delete_object_with_versions(
     fixture_versioned_bucket_with_one_object,
+    active_mgc_workspace,
     cmd_template,
     expected,
     profile_name
