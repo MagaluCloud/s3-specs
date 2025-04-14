@@ -8,9 +8,16 @@ on:
   schedule:
     - cron: "0 1 * * *"
 jobs:
-  latest_tools_tests:
+  run-tests:
     strategy:
+      fail-fast: false
       matrix:
+        tools:
+          - name: nightly
+            value: nightly
+          - name: latest
+            value: latest
+
         marker:
           - test: basic
             name: basic
@@ -38,46 +45,12 @@ jobs:
       name: "${{ matrix.marker.name }}_1hours.${{ matrix.config.name }}"
       config: ${{ matrix.config.path }}
       flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
-      container: "ghcr.io/magalucloud/s3-specs:tools_latest"
-    secrets:
-      PROFILES: ${{ secrets.PROFILES }}
-
-  nightly_tools_tests:
-    strategy:
-      matrix:
-        marker:
-          - test: basic
-            name: basic
-          - test: cold_storage
-            name: cold_storage
-          - test: presign
-            name: presign
-          - test: acl
-            name: acl
-          - test: locking
-            name: locking
-          - test: policy
-            name: policy
-          - test: bucket_versioning
-            name: bucket_versioning
-          - test: multiple_objects
-            name: multiple_objects
-          - test: big_objects
-            name: big_objects
-        config:
-          - path: "../../../params.example.yaml"
-            name: "example"
-    uses: ./.github/workflows/run-tests.yml
-    with:
-      name: "${{ matrix.marker.name }}_6hours.${{ matrix.config.name }}"
-      config: ${{ matrix.config.path }}
-      flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
-      container: "ghcr.io/magalucloud/s3-specs:tools_nightly"
+      container: "ghcr.io/magalucloud/s3-specs:tests_${{matrix.tools.value}}"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
   cleanup-tests:
-    needs: [latest_tools_tests, nightly_tools_tests]
+    needs: [run-tests]
     if: always() 
     uses: ./.github/workflows/cleanup-tests.yml
     secrets:
