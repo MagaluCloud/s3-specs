@@ -13,7 +13,7 @@ name: Pull Request Extra Tests
 
 on:
     pull_request:
-      types: [opened, synchronize, reopened]
+      types: [ready_for_review]
 
 jobs:
   # tests that we are not debugging at the moment,
@@ -21,6 +21,7 @@ jobs:
   # it's ok to run only on br-ne1
   extra_tests_dist:
     strategy:
+      max-parallel: 2
       fail-fast: false
       matrix:
         marker:
