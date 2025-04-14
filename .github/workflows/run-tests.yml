@@ -60,6 +60,7 @@ jobs:
                   echo "formatted_log_name=$FORMATTED_NAME.$(date +'%Y%m%dT%H%M%S')" >> "$GITHUB_OUTPUT"
 
             - name: Run tests ${{ inputs.name }}
+              shell: bash
               run: |
                 cd src/s3_specs/docs
                 mkdir -p /s3-specs/artifact/
