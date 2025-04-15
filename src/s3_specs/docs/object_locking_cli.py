@@ -25,7 +25,7 @@ object_lock_json = json.dumps({
         }
     }
 })
-## Set Basic Lock
+## Set Basic Lock - PASS
 commands = [
     pytest.param(
         {
@@ -111,7 +111,7 @@ commands = [
             "private",
             cmd.values[0]["command"],
             cmd.values[0]["expected"],
-            marks=[*cmd.marks, pytest.mark.xfail], # Xfail - Test Should fail
+            marks=[*cmd.marks], # Xfail - Test Should fail
             id=f"{cmd.id}-{"private"}"
         )
         for cmd in commands
@@ -153,13 +153,13 @@ def test_set_bucket_lock_wrong_mode_cli(fixture_versioned_bucket, profile_name, 
 
         # Assert that the command fails and outputs an error
         assert expected in result.stderr, \
-            f"Expected 'InvalidArgument' error, but got: {result.stderr}"
+            pytest.fail(f"Expected 'InvalidArgument' error, but got: {result.stderr}")
     except subprocess.CalledProcessError as e:
         # Handle command execution error
         print(f"Command failed with error: {e}")
-        assert False, f"Command execution failed: {e}"
+        assert False, pytest.fail(f"Command execution failed: {e}")
 
-## Set lock on bucket without version
+## Set lock on bucket without version - (Fail expected)
 commands = [
     pytest.param(
         {
@@ -185,7 +185,7 @@ commands = [
         pytest.param(
             cmd.values[0]["command"],
             cmd.values[0]["expected"],
-            marks=[*cmd.marks],
+            marks=[*cmd.marks], 
             id=f"{cmd.id}"
         )
         for cmd in commands
@@ -241,7 +241,7 @@ commands = [
         pytest.param(
             cmd.values[0]["command"],
             cmd.values[0]["expected"],
-            marks=[*cmd.marks, pytest.mark.xfail], # Xfail - Test Should fail
+            marks=[*cmd.marks], 
             id=f"{cmd.id}"
         )
         for cmd in commands
@@ -273,12 +273,12 @@ def test_get_object_on_bucket_without_locking(fixture_bucket_with_name, active_m
 
         # Assert that the expected error is in the result
         assert expected in result.stderr, \
-            f"Expected '{expected}', {result.stderr}"
+            pytest.fail(f"Expected '{expected}', {result.stderr}")
     except subprocess.CalledProcessError as e:
         # Handle command execution error
         print(f"Command failed with error: {e}")
-        assert False, f"Command execution failed: {e}"
-# Unset active bucket locking
+        assert False, pytest.fail(f"Command execution failed: {e}")
+# Unset active bucket locking (PASS)
 commands = [
     pytest.param(
         {
@@ -290,7 +290,7 @@ commands = [
     ),
     pytest.param(
         {
-            'command': "aws s3api --profile {profile_name} put-object-lock-configuration  --bucket {bucket_name} --object-lock-configuration '{}'" ,
+            'command': "aws s3api --profile {profile_name} put-object-lock-configuration  --bucket {bucket_name} --object-lock-configuration '{object_lock_json}'" ,
             'expected': ""
         },
         marks=pytest.mark.aws,
@@ -333,101 +333,20 @@ def test_unset_bucket_lock_cli(s3_client, active_mgc_workspace,  bucket_with_loc
         formatted_cmd = cmd_template.format(
             bucket_name=bucket_name,
             profile_name=profile_name,
-            object_lock_json=object_lock_json
+            object_lock_json='{}' # Empty for aws means disabled
         )
         result = execute_subprocess(formatted_cmd)
 
         # Verify the object lock configuration is removed
         bucket_lock = s3_client.get_object_lock_configuration(Bucket=bucket_name)
         assert bucket_lock['ObjectLockConfiguration']['ObjectLockEnabled'] not in expected, \
-            "Bucket lock configuration was not removed successfully"
+            pytest.fail("Bucket lock configuration was not removed successfully")
     except subprocess.CalledProcessError as e:
         # Handle command execution error
         print(f"Command failed with error: {e}")
-        assert False, f"Command execution failed: {e}"
+        assert False, pytest.fail(f"Command execution failed: {e}")
 
 ## # Object Locking
-
-
-# Set object locking
-commands = [
-    pytest.param(
-        {
-            'command':  'mgc object-storage objects object-lock set --dst={bucket_name}/{object_key} --retain-until-date="{time}" --no-confirm --raw',
-            'expected': ""
-         },  # Expected output
-        marks=pytest.mark.mgc,
-        id="mgc-unset-locked"
-    ),
-    pytest.param(
-        {
-            'command': "aws s3api put-object-retention  --profile {profile_name} --bucket {bucket_name} --key {object_key}  --retention {retention_json}" ,
-            'expected': ""
-        },
-        marks=pytest.mark.aws,
-        id="aws-unset-locked"
-    )
-]
-@pytest.mark.parametrize(
-    "fixture_versioned_bucket, cmd_template, expected",
-    [
-        pytest.param(
-            "private",
-            cmd.values[0]["command"],
-            cmd.values[0]["expected"],
-            marks=[*cmd.marks], 
-            id=f"{cmd.id}-private"
-        )
-        for cmd in commands
-    ],
-    # versioned_bucket_with_one_object depends on fixture_versioned_bucket which asks for values
-    indirect=['fixture_versioned_bucket']
-)
-def test_set_object_lock_unlocked_bucket_cli(s3_client, active_mgc_workspace, fixture_versioned_bucket_with_one_object, profile_name, cmd_template, expected):
-    """
-    Test setting object lock configuration on an object across multiple CLI tools.
-
-    Args:
-        s3_client: Boto3 S3 client fixture
-        bucket_with_lock_enabled: Fixture providing a bucket with lock enabled
-        profile_name: AWS profile name fixture
-        cmd_template: CLI command template
-        expected: Expected output or error
-    """
-    # Generate unique bucket and object names
-    bucket_name, object_key, _ = fixture_versioned_bucket_with_one_object
-    time = datetime.isoformat(datetime.now().replace(microsecond=0) + timedelta(seconds=10))
-
-    # Format and execute the set object lock command
-    retention_json = json.dumps({
-        "Mode": "COMPLIANCE",
-        "RetainUntilDate": time
-    })
-
-    try:
-        # Format and execute the set object lock command
-        formatted_cmd = cmd_template.format(
-            bucket_name=bucket_name,
-            object_key=object_key,
-            profile_name=profile_name,
-            retention_json=retention_json,
-            time=time
-        )
-        result = execute_subprocess(formatted_cmd)
-
-        # Verify the object lock configuration
-        object_lock = s3_client.get_object_retention(
-            Bucket=bucket_name,
-            Key=object_key
-        )
-        assert object_lock['Retention']['Mode'] == 'COMPLIANCE', \
-            "Object lock mode was not set to COMPLIANCE"
-        assert object_lock['Retention']['RetainUntilDate'] == "2023-12-31T23:59:59Z", \
-            "Object lock retain until date was not set correctly"
-    except subprocess.CalledProcessError as e:
-        # Handle command execution error
-        print(f"Command failed with error: {e}")
-        assert False, f"Command execution failed: {e}"
 
 # Set object wrong lock date (Should Fail) (aws)
 commands = [
@@ -460,7 +379,7 @@ invalid_retention_json = [
             cmd.values[0]["command"],
             json,
             cmd.values[0]["expected"],
-            marks=[*cmd.marks, pytest.mark.xfail], # Xfail - Test Should fail
+            marks=[*cmd.marks], 
             id=f"{cmd.id}-private"
         )
         for cmd, json in product(commands, invalid_retention_json)
@@ -493,7 +412,7 @@ def test_set_wrong_object_lock_date_cli(fixture_versioned_bucket_with_one_object
         result = execute_subprocess(formatted_cmd, expected_failure=True)
 
         # Assert that the expected error is in the result
-        assert expected in result.stderr, pytest.xfail(f"Expected '{expected}' in stderr, but got: {result.stderr}")
+        assert expected in result.stderr, pytest.fail(f"Expected '{expected}' in stderr, but got: {result.stderr}")
 
     except subprocess.CalledProcessError as e:
         # Errors besides expected
@@ -526,7 +445,7 @@ commands = [
             "private",
             cmd.values[0]["command"],
             cmd.values[0]["expected"],
-            marks=[*cmd.marks], 
+            marks=[*cmd.marks],
             id=f"{cmd.id}-private"
         )
         for cmd in commands
@@ -565,10 +484,10 @@ def test_set_object_lock_unlocked_bucket_cli(s3_client, active_mgc_workspace, fi
             time=time
         )
         result = execute_subprocess(formatted_cmd, True)
-
-        assert expected in result, pytest.mark.xfail("")
+        assert expected in result.stderr, \
+            pytest.fail(f"Expected '{expected}' in stdout, but got: {result.stderr}")
 
     except subprocess.CalledProcessError as e:
         # Handle command execution error
         print(f"Command failed with error: {e}")
-        assert False, f"Command execution failed: {e}"
+        assert False, pytest.fail(f"Command execution failed: {e}")
