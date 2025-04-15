@@ -2,38 +2,27 @@ name: Deploy Reports
 
 on:
   push:
-    branches: [refactor-reportv2]
-  workflow_dispatch:
+    branches: [temp-action-test]
 
 permissions:
+  contents: write
   pages: write
   id-token: write
-  contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: https://${{ github.repository_owner }}.github.io/${{ github.repository_name }}
-
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: refactor-reportv2
+      - uses: actions/checkout@v3
       
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
-      
-      - name: Copy reports
+      - name: Build Reports
         run: |
-          mkdir -p ./_site
-          cp -r reports_html/* ./_site/
+          mkdir -p ./public
+          cp -r reports_html/* ./public/
       
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          path: '_site'
-      
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v2
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          publish_branch: gh-pages
