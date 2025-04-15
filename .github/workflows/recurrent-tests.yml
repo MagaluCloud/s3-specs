@@ -11,6 +11,7 @@ jobs:
     if: github.event.schedule == '0 */2 * * *'  
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         profile:
           - br-se1
@@ -34,7 +35,9 @@ jobs:
   run_6h_tests:
     if: github.event.schedule == '15 */6 * * *'
     strategy:
+      max-parallel: 2
       fail-fast: false
+
       matrix:
         profile:
           - br-se1
@@ -61,6 +64,7 @@ jobs:
     if: github.event.schedule == '30 */12 * * *'  
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         profile:
           - br-se1

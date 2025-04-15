@@ -51,8 +51,6 @@ jobs:
           - locking
         config:
           - path: "../../../params.example.yaml"
-            name: "br_ne1"
-          - path: "../../../params.example.yaml"
             name: "br_se1"
     uses: ./.github/workflows/run-tests.yml
     with:
