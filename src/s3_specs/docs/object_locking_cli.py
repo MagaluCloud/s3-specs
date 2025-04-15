@@ -360,7 +360,7 @@ commands = [
     ),
     pytest.param(
         {
-            'command': "aws s3api put-object-retention --bucket {bucket_name} --key {object_key}  --retention {retention_json}" ,
+            'command': "aws s3api put-object-retention  --profile {profile_name} --bucket {bucket_name} --key {object_key}  --retention {retention_json}" ,
             'expected': ""
         },
         marks=pytest.mark.aws,
