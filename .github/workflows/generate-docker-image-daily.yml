@@ -10,6 +10,7 @@ jobs:
       packages: write  
       contents: read   
     strategy:
+      max-parallel: 1
       matrix:
         include:
           - image: tools_latest
