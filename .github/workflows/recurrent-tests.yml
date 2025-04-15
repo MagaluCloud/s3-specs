@@ -17,12 +17,8 @@ jobs:
           - br-ne1
         marker:
           # 1h tests
-          - test: basic
-            name: basic
-          - test: cold_storage
-            name: cold_storage
-          - test: presign
-            name: presign
+          - test: "basic or cold_storage or presign"
+            name: "basic or cold_storage or presign"
         config:
           - path: "../../../params.example.yaml"
             name: "example"
@@ -45,14 +41,10 @@ jobs:
           - br-ne1
         marker:
             # 6h tests
-          - test: acl
-            name: acl
-          - test: locking
-            name: locking
-          - test: policy
-            name: policy
-          - test: bucket_versioning
-            name: bucket_versioning
+          - test: "acl or locking"
+            name: "acl or locking"
+          - test: "policy or bucket_versioning"
+            name: "policy or bucket_versioning"
         config:
           - path: "../../../params.example.yaml"
             name: "example"
@@ -75,10 +67,8 @@ jobs:
           - br-ne1
         marker:
            # 12h tests
-          - test: multiple_objects
-            name: multiple_objects
-          - test: big_objects
-            name: big_objects
+          - test: "multiple_objects or big_objects"
+            name: "multiple_objects or big_objects"
         config:
           - path: "../../../params.example.yaml"
             name: "example"
