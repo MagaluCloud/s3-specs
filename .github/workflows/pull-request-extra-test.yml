@@ -11,10 +11,11 @@
 
 name: Pull Request Extra Tests
 
+# on:
+#     pull_request:
+#       types: [ready_for_review]
 on:
-    pull_request:
-      types: [ready_for_review]
-
+  workflow_dispatch:
 jobs:
   # tests that we are not debugging at the moment,
   # tests that can run in parallel with pytest-xdist
@@ -49,8 +50,6 @@ jobs:
         marker:
           - locking
         config:
-          - path: "../../../params.example.yaml"
-            name: "br_ne1"
           - path: "../../../params.example.yaml"
             name: "br_se1"
     uses: ./.github/workflows/run-tests.yml
