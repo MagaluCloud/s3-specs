@@ -25,22 +25,22 @@ size_list = [
 commands = [
     pytest.param(
         {"command": "mgc object-storage objects upload {src_path} --dst {bucket_name}/{object_key} --no-confirm --raw",
-         "expected": "Upload successful"},
+         "expected": "uri:"},
         marks=pytest.mark.mgc,
         id="mgc-upload-big"
     ),
     pytest.param(
         {"command": "aws --profile {profile_name} s3 cp {src_path} s3://{bucket_name}/{object_key} --no-progress",
-         "expected": "Upload successful"},
+         "expected": "upload:"},
         marks=pytest.mark.aws,
         id="aws-upload-big"
     ),
-    #pytest.param(          # RCLONE PROBLEMS
-    #    {"command": "rclone copy {src_path} {bucket_name}:{object_key} --progress",
-    #     "expected": "Transferred:"},
-    #    marks=pytest.mark.rclone,
-    #    id="rclone-upload-big"
-    #)
+    pytest.param(          # RCLONE PROBLEMS
+       {"command": "rclone copy {src_path} {profile_name}:{object_key} --progress",
+        "expected": "Transferred:"},
+       marks=pytest.mark.rclone,
+       id="rclone-upload-big"
+    )
 ]
 @pytest.mark.parametrize(
     "fixture_create_big_file, cmd_template, expected",
@@ -93,22 +93,22 @@ object_quantity = [100, 1000, 10000]
 commands = [
     pytest.param(
         {"command": "mgc object-storage objects upload {src_path} --dst {bucket_name}/{object_key} --no-confirm --raw",
-         "expected": "Upload successful"},
+         "expected": "uri:"},
         marks=pytest.mark.mgc,
         id="mgc-upload-big"
     ),
     pytest.param(
         {"command": "aws --profile {profile_name} s3 cp {src_path} s3://{bucket_name}/{object_key} --no-progress",
-         "expected": "Upload successful"},
+         "expected": "upload:"},
         marks=pytest.mark.aws,
         id="aws-upload-big"
     ),
-    #pytest.param(
-    #    {"command": "rclone copy {src_path} {bucket_name}:{object_key} --progress",
-    #     "expected": "Transferred:"},
-    #    marks=pytest.mark.rclone,
-    #    id="rclone-upload-big"
-    #)
+    pytest.param(
+       {"command": "rclone copy {src_path} {profile_name}:{object_key} --progress",
+        "expected": "Transferred:"},
+       marks=pytest.mark.rclone,
+       id="rclone-upload-big"
+    )
 ]
 @pytest.mark.parametrize(
     "cmd_template, quantity",
