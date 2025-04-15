@@ -87,6 +87,44 @@ def upload_multiple_objects(
 
     return successful_uploads
 
+def upload_multipart_file(s3_client, bucket_name, object_key, file_path, config=None) -> int:
+    """
+    Uploads a large file in multiple chunks to an S3 bucket.
+    :param s3_client: boto3 S3 client
+    :param bucket_name: str: name of the bucket
+    :param object_key: str: key of the object
+    :param file_path: str: path to the file to be uploaded
+    :param config: TransferConfig: optional configuration for multipart upload
+    :return: int: size in bytes of the uploaded object
+    """
+    # Default TransferConfig if none is provided
+    if config is None:
+        config = TransferConfig(multipart_threshold=8 * 1024 * 1024, max_concurrency=10)
+
+    # Getting file size
+    file_size = os.path.getsize(file_path)
+    logging.info(f"File size: {file_size} bytes")
+
+    # Upload Progress Bar with time stamp
+    with tqdm(
+        total=file_size,
+        desc=f"Uploading to {bucket_name}",
+        bar_format="Upload| {percentage:.1f}%|{bar:25}| {rate_fmt} | Time: {elapsed} | {desc}",
+        unit="B",
+        unit_scale=True,
+        unit_divisor=1024,
+    ) as pbar:
+        s3_client.upload_file(
+            file_path, bucket_name, object_key, Config=config, Callback=pbar.update
+        )
+
+    # Checking if the object was uploaded
+    object_size = s3_client.head_object(Bucket=bucket_name, Key=object_key).get(
+        "ContentLength", 0
+    )
+    logging.info(f"Uploaded object size: {object_size}")
+
+    return object_size
 
 def download_object(s3_client, bucket_name, object_key):
     """
@@ -293,49 +331,6 @@ def fixture_upload_multiple_objects(s3_client, fixture_bucket_with_name, request
     return upload_objects_multithreaded(
         s3_client, fixture_bucket_with_name, objects_names
     )
-
-@pytest.fixture
-def fixture_upload_multipart_file(s3_client, fixture_bucket_with_name, request) -> int:
-    """
-    Uploads a big file into multiple chunks to s3 bucket
-    :param s3_client: boto3 s3 client
-    :param fixture_bucket_with_name: pytest.fixture which setup and tears down bucket
-    :param request: dict: contains file_path, file_size and object_key
-    :return int: size in bytes of the obejct
-    """
-    bucket_name = fixture_bucket_with_name
-    file_path = request.param.get("file_path")
-    file_size = convert_unit(request.param.get("file_size"))
-    object_key = request.param.get("object_key")
-
-    # Config for multhreading of boto3 building multipart upload/download
-    config = TransferConfig(
-        multipart_threshold=8 * 1024 * 1024,  # Minimum size to start multipart upload
-        max_concurrency=10,
-        multipart_chunksize=8 * 1024 * 1024,
-        use_threads=True,
-    )
-
-    # Upload Progress Bar with time stamp
-    with tqdm(
-        total=file_size,
-        desc=bucket_name,
-        bar_format="Upload| {percentage:.1f}%|{bar:25}| {rate_fmt} | Time: {elapsed} | {desc}",
-        unit="B",
-        unit_scale=True,
-        unit_divisor=1024,
-    ) as pbar:
-        response = s3_client.upload_file(
-            file_path, bucket_name, object_key, Config=config, Callback=pbar.update
-        )
-        elapsed = pbar.format_dict["elapsed"]
-
-        # Checking if the object was uploaded
-        object_size = s3_client.get_object(Bucket=bucket_name, Key=object_key).get(
-            "ContentLength", 0
-        )
-
-    return object_size, response, elapsed  # return int of size in bytes
 
 @pytest.fixture(params=[{"prefix": "test-multiple-buckets-", "names": ["1", "2", "3"]}])
 def fixture_multiple_buckets(request, s3_client):
