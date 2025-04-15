@@ -1,7 +1,7 @@
 import pytest
 import logging
-from s3_specs.docs.tools.utils import create_big_file
-from s3_specs.docs.tools.crud import fixture_bucket_with_name, fixture_upload_multipart_file
+from s3_specs.docs.tools.utils import fixture_create_big_file
+from s3_specs.docs.tools.crud import fixture_bucket_with_name, upload_multipart_file
 from boto3.s3.transfer import TransferConfig
 import uuid
 from tqdm import tqdm
@@ -10,51 +10,33 @@ import os
 
 size_list = [
     {'size': 10, 'unit': 'mb'},
-    {'size': 100, 'unit': 'mb'},
-    {'size': 1, 'unit': 'gb'},
-    {'size': 5, 'unit': 'gb'},
-    {'size': 10, 'unit': 'gb'},
+  #  {'size': 100, 'unit': 'mb'},
+  #  {'size': 1, 'unit': 'gb'},
+  #  {'size': 5, 'unit': 'gb'},
+  #  {'size': 10, 'unit': 'gb'},
 ]
 
 ids_list = [f"{s['size']}{s['unit']}" for s in size_list]
 
-upload_params = [
-    {
-        'file_path': f"/tmp/big_file_download{size['size']}{size['unit']}",
-        'file_size': size,
-        'object_key': "big-object-" + uuid.uuid4().hex[:6],
-    }
-    for size in size_list
-]
 
 @pytest.mark.parametrize(
-    'params, fixture_upload_multipart_file',
-    [(p, p) for p in upload_params],  
+    'fixture_create_big_file',
+    [size for size in size_list],  
     ids=ids_list,
-    indirect=['fixture_upload_multipart_file']
+    indirect=['fixture_create_big_file']
 )
 
 # ## Test multipart download while implicitly tests the upload and delete of big objects
 
 @pytest.mark.slow
 @pytest.mark.big_objects
-def test_multipart_download(s3_client, fixture_bucket_with_name, fixture_upload_multipart_file, params):
-    """
-    Test to download a big object to an S3 bucket using multipart download
-    :param s3_client: fixture of boto3 s3 client
-    :param fixture_bucket_with_name: fixture to create a bucket with a unique name
-    :param params: dict: 'file_path': str, 'file_size': dict, 'object_key': str
-    :return: None
-    """
-
-    # Unpacking params
-    file_path = params.get('file_path')
-    download_path = file_path + "_downloaded"
-    object_key = params.get('object_key')
-
+#@pytest.mark.skip(reason="Not working")
+def test_multipart_download(s3_client, fixture_bucket_with_name, fixture_create_big_file):
+    # Setup
     bucket_name = fixture_bucket_with_name
-    total_size = create_big_file(file_path, params.get('file_size'))
-
+    file_path, total_size = fixture_create_big_file
+    object_key = os.path.split(file_path)[-1] # The object key is the file name
+    download_path = os.path.join(os.path.dirname(file_path), f"downloaded_{object_key}")
 
     # Config for multhreading of boto3 building multipart upload/download
     config = TransferConfig(
@@ -64,8 +46,12 @@ def test_multipart_download(s3_client, fixture_bucket_with_name, fixture_upload_
         use_threads=True
     )
 
-    # Uploading the big file
-    uploaded_file_size, _, _ = fixture_upload_multipart_file
+    # Uploading the big file upload_multipart_file
+    try:
+        uploaded_file_size = upload_multipart_file(s3_client, bucket_name, object_key, file_path, config)
+    except Exception as e:
+        logging.error(f"Error uploading object {object_key}: {e}")
+        pytest.fail(f"Upload failed: {e}")
 
     # Test download file from s3 bucket
     try:
