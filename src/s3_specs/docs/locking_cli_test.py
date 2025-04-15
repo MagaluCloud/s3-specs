@@ -50,7 +50,7 @@ commands = [
 
 # + {"jupyter": {"source_hidden": true}}
 @pytest.mark.parametrize("cmd_template", commands)
-def test_set_bucket_default_lock(cmd_template, mgc_path, versioned_bucket_with_one_object):
+def test_set_bucket_default_lock(cmd_template, active_mgc_workspace, mgc_path, versioned_bucket_with_one_object):
     days = "1"
     bucket_name, _, _ = versioned_bucket_with_one_object
     cmd = split(cmd_template.format(mgc_path=mgc_path, bucket_name=bucket_name, days=days))
