@@ -3,6 +3,7 @@ import os
 import pytest
 import subprocess
 from shlex import quote
+import boto3
 
 # Function is responsible to check and format bucket names into valid ones
 
