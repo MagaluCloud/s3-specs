@@ -6,9 +6,11 @@
 
 name: Pull Request Essential Tests
 
+# on:
+#     pull_request:
+#       types: [ready_for_review]
 on:
-    pull_request:
-      types: [ready_for_review]
+  workflow_dispatcher:
 
 jobs:
   run_tests:

@@ -2,13 +2,13 @@ name: Recurrent tests
 
 on:
   schedule:
-    - cron: "0 * * * *"        # Every hour at 00 min
+    - cron: "0 */2 * * *"       # Every hour at 00 min
     - cron: "15 */6 * * *"     # Every 6 hours at *h30 min  
     - cron: "30 */12 * * *"    # Every 12 hours at *h15 min  
 
 jobs:
   run_1h_tests:
-    if: github.event.schedule == '0 * * * *'  
+    if: github.event.schedule == '0 */2 * * *'  
     strategy:
       fail-fast: false
       matrix:
