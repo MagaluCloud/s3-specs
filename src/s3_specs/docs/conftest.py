@@ -23,6 +23,7 @@ from s3_specs.docs.s3_helpers import (
     get_policy_with_determination,
     probe_versioning_status,
     delete_all_objects_and_wait,
+    delete_all_objects_with_version_and_wait,
 )
 from datetime import datetime, timedelta
 from botocore.exceptions import ClientError
@@ -341,7 +342,10 @@ def versioned_bucket_with_one_object(s3_client, lock_mode):
 
     # Cleanup
     try:
-        cleanup_old_buckets(s3_client, base_name, lock_mode)
+        # Delete all versions of the object
+        delete_all_objects_with_version_and_wait(s3_client, bucket_name)
+        # Delete the bucket
+        delete_bucket_and_wait(s3_client, bucket_name)
     except Exception as e:
         print(f"Cleanup error {e}")
 
@@ -398,7 +402,9 @@ def versioned_bucket_with_one_object_cold_storage_class(s3_client, lock_mode):
 
     # Cleanup
     try:
-        cleanup_old_buckets(s3_client, base_name, lock_mode)
+        delete_all_objects_with_version_and_wait(s3_client, bucket_name)
+        # Delete the bucket
+        delete_bucket_and_wait(s3_client, bucket_name)
     except Exception as e:
         print(f"Cleanup error {e}")
 

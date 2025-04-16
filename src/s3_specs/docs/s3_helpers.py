@@ -86,9 +86,12 @@ def create_bucket_and_wait(s3_client, bucket_name):
     waiter.wait(Bucket=bucket_name)
     logging.info(f"Bucket '{bucket_name}' confirmed as created.")
 
-def delete_object_and_wait(s3_client, bucket_name, object_key):
+def delete_object_and_wait(s3_client, bucket_name, object_key, version_id=None):
     try:
-        s3_client.delete_object(Bucket=bucket_name, Key=object_key)
+        if version_id:
+            s3_client.delete_object(Bucket=bucket_name, Key=object_key, VersionId=version_id)
+        else:
+            s3_client.delete_object(Bucket=bucket_name, Key=object_key)
     except s3_client.exceptions.NoSuchKey:
         logging.info(f"Object '{object_key}' already deleted or not found.")
         return
@@ -101,6 +104,16 @@ def delete_object_and_wait(s3_client, bucket_name, object_key):
     except Exception as e:
         logging.info(f"delete waiter got error: {e}")
     logging.info(f"Object '{object_key}' in bucket '{bucket_name}' confirmed as deleted.")
+
+def delete_all_objects_with_version_and_wait(s3_client, bucket_name):
+    response = s3_client.list_objects_v2(Bucket=bucket_name)
+    if 'Contents' in response:
+        for obj in response['Contents']:
+            for version in obj['Versions']:
+                delete_object_and_wait(s3_client, bucket_name, obj['Key'], version['VersionId'])
+            delete_object_and_wait(s3_client, bucket_name, obj['Key'])
+    else:
+        logging.info(f"No objects found in bucket '{bucket_name}'.")
 
 def delete_all_objects_and_wait(s3_client, bucket_name):
     response = s3_client.list_objects_v2(Bucket=bucket_name)
