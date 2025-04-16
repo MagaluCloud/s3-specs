@@ -4,6 +4,7 @@ import pytest
 import subprocess
 from shlex import quote
 import boto3
+import logging
 
 # Function is responsible to check and format bucket names into valid ones
 
@@ -163,3 +164,24 @@ def execute_subprocess(cmd_command: str, expected_failure:bool = False):
         )
     # Validate true postives
     return result
+
+@pytest.fixture
+def get_different_profile_from_default(test_params, profile_name):
+    """
+    Retrieve a session with a profile name different from the default profile.
+
+    Args:
+        multiple_s3_clients (list): List of S3 client sessions.
+        profile_name (str): The default profile name to exclude.
+
+    Returns:
+        tuple: A tuple containing the default profile name and the profile name of a different session, 
+               or (profile_name, None) if no such session is found.
+    """
+    profiles = test_params["profiles"]
+
+    for p in profiles:
+        if p['profile_name'] != profile_name:
+            return profile_name, p['profile_name']
+    logging.warning("No session found with a profile different from the default.")
+    return profile_name, None
