@@ -37,11 +37,16 @@ jobs:
                 echo "rclone version: $(rclone --version)"
 
             - name: Format input name
+              shell: bash
               id: format_name
               run: |
                   FORMATTED_NAME="$(echo "${{ inputs.name }}" | sed 's/[^a-zA-Z0-9.]/_/g')"
-                  echo "formatted_name=$FORMATTED_NAME.${{ github.run_id }}" >> "$GITHUB_OUTPUT"
-                  echo "formatted_log_name=$FORMATTED_NAME.$(date +'%Y%m%dT%H%M%S')" >> "$GITHUB_OUTPUT"
+
+                  UNIQUE_ID_SUFFIX="${{ github.job }}.$RANDOM"
+                  echo "formatted_name=${FORMATTED_NAME}.${UNIQUE_ID_SUFFIX}" >> "$GITHUB_OUTPUT"
+
+                  HIGH_RES_TIMESTAMP=$(date +'%Y%m%dT%H%M%S%N')
+                  echo "formatted_log_name=${FORMATTED_NAME}.${HIGH_RES_TIMESTAMP}.$RANDOM" >> "$GITHUB_OUTPUT"
             - name: Configure Profiles
               run: |
                 echo "${{ secrets.PROFILES }}" > profiles.yaml
@@ -59,6 +64,7 @@ jobs:
                 uv run pytest ${{inputs.tests}}  --config ${{ inputs.config }} --profile ${{ inputs.profile }} ${{ inputs.flags }} | tee /s3-specs/artifact/actions_pytest_output_${{ steps.format_name.outputs.formatted_log_name }}.log
       
             - name: Upload Artifact
+              if: always()
               uses: actions/upload-artifact@v4
               with:
                 name: output_artifact_${{ steps.format_name.outputs.formatted_name }}
