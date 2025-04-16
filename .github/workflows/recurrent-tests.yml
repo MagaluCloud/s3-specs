@@ -1,6 +1,9 @@
 name: Recurrent tests
 
 on:
+  push:
+    branches:
+      - fix-recurrent-tests
   schedule:
     - cron: "0 */2 * * *"       # Every hour at 00 min
     - cron: "15 */6 * * *"     # Every 6 hours at *h30 min  
@@ -18,8 +21,8 @@ jobs:
           - br-ne1
         marker:
           # 1h tests
-          - test: "basic or cold_storage or presign"
-            name: "basic or cold_storage or presign"
+          - test: "'basic or cold_storage or presign'"
+            name: "'basic or cold_storage or presign'"
         config:
           - path: "../../../params.example.yaml"
             name: "example"
