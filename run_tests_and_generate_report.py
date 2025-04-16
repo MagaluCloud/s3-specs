@@ -80,12 +80,13 @@ def generate_pdf(category=None):
 
     return generate_pdf_report(data, REPORTS_DIR, category)
 
-def clean_old_reports(max_files=5):
-    reports = sorted(REPORTS_DIR.glob("test_report_*.pdf"))
-    if len(reports) > max_files:
-        for old_report in reports[:-max_files]:
-            old_report.unlink()
-            print(f"Removido relatório antigo: {old_report}")
+## If seems necessary to clean old reports, uncomment the following function
+# def clean_old_reports(max_files=100):
+#     reports = sorted(REPORTS_DIR.glob("test_report_*.pdf"))
+#     if len(reports) > max_files:
+#         for old_report in reports[:-max_files]:
+#             old_report.unlink()
+#             print(f"Removido relatório antigo: {old_report}")
 
 if __name__ == "__main__":
     args = parse_args()
@@ -95,7 +96,7 @@ if __name__ == "__main__":
 
     test_result = run_tests(args)
     generate_pdf(args.category)
-    clean_old_reports()
+    # clean_old_reports()
     create_index_html(HTML_REPORTS_DIR, list(CATEGORY_MAPPING.keys()), CATEGORY_MAPPING)
 
     sys.exit(test_result)
