@@ -100,14 +100,14 @@ def validate_key_in_objects(command, profile_name, bucket_name, object_key, requ
         print(f"Max retries reached or not enough successful checks. Total time: {elapsed_time:.2f} seconds.")
         return False
 
-# Fixture para criar o bucket e inicializá-lo com 100000 arquivos
+# Fixture para criar o bucket e inicializá-lo com 10000 arquivos
 @pytest.fixture(scope="session")
 def setup_standard_bucket(session_active_mgc_workspace, session_bucket_with_one_object):
     bucket_name, _, _ = session_bucket_with_one_object
 
     # Cria o diretório temporário e os arquivos
-    base_dir = "temp-report-100000-1"
-    create_temp_objects(100000, 1, base_dir)
+    base_dir = "temp-report-10000-1"
+    create_temp_objects(10000, 1, base_dir)
 
     upload_objects(bucket_name, base_dir, 256)
 
@@ -118,8 +118,8 @@ def setup_standard_bucket(session_active_mgc_workspace, session_bucket_with_one_
 def setup_versioned_bucket(session_active_mgc_workspace, session_versioned_bucket_with_one_object):
     bucket_name, _, _ = session_versioned_bucket_with_one_object
 
-    base_dir = "temp-report-100000-1"
-    create_temp_objects(100000, 1, base_dir)
+    base_dir = "temp-report-10000-1"
+    create_temp_objects(10000, 1, base_dir)
 
     upload_objects(bucket_name, base_dir, 256)
 

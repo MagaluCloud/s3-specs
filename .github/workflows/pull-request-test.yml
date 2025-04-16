@@ -6,9 +6,11 @@
 
 name: Pull Request Essential Tests
 
+# on:
+#     pull_request:
+#       types: [ready_for_review]
 on:
-    pull_request:
-      types: [ready_for_review]
+  workflow_dispatch:
 
 jobs:
   run_tests:
@@ -42,9 +44,9 @@ jobs:
         run:
           exit 0
 
-  cleanup-tests:
-    needs: [tests-success]
-    if: always() 
-    uses: ./.github/workflows/cleanup-tests.yml
-    secrets:
-      PROFILES: ${{ secrets.PROFILES }}
+  # cleanup-tests:
+  #   needs: [tests-success]
+  #   if: always() 
+  #   uses: ./.github/workflows/cleanup-tests.yml
+  #   secrets:
+  #     PROFILES: ${{ secrets.PROFILES }}

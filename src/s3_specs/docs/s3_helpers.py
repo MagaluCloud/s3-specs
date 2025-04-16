@@ -86,9 +86,12 @@ def create_bucket_and_wait(s3_client, bucket_name):
     waiter.wait(Bucket=bucket_name)
     logging.info(f"Bucket '{bucket_name}' confirmed as created.")
 
-def delete_object_and_wait(s3_client, bucket_name, object_key):
+def delete_object_and_wait(s3_client, bucket_name, object_key, version_id=None):
     try:
-        s3_client.delete_object(Bucket=bucket_name, Key=object_key)
+        if version_id:
+            s3_client.delete_object(Bucket=bucket_name, Key=object_key, VersionId=version_id)
+        else:
+            s3_client.delete_object(Bucket=bucket_name, Key=object_key)
     except s3_client.exceptions.NoSuchKey:
         logging.info(f"Object '{object_key}' already deleted or not found.")
         return
@@ -101,6 +104,23 @@ def delete_object_and_wait(s3_client, bucket_name, object_key):
     except Exception as e:
         logging.info(f"delete waiter got error: {e}")
     logging.info(f"Object '{object_key}' in bucket '{bucket_name}' confirmed as deleted.")
+
+def delete_all_objects_with_version_and_wait(s3_client, bucket_name):
+    bucket_versioning = s3_client.get_bucket_versioning(Bucket=bucket_name)
+
+    if bucket_versioning.get('Status') == 'Enabled':
+        paginator = s3_client.get_paginator('list_object_versions')
+        for page in paginator.paginate(Bucket=bucket_name):
+            # Delete object versions
+            for version in page.get('Versions', []):
+                delete_version(
+                    s3_client, bucket_name, version, "COMPLIANCE"
+                )
+            # Delete markers
+            for marker in page.get('DeleteMarkers', []):
+                delete_version(
+                    s3_client, bucket_name, marker, "COMPLIANCE"
+                )
 
 def delete_all_objects_and_wait(s3_client, bucket_name):
     response = s3_client.list_objects_v2(Bucket=bucket_name)

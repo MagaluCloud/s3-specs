@@ -2,17 +2,20 @@ docs_dir: "."
 default_profile_index: 0
 profiles:
   -
-    profile_name: "br-se1"
-    policy_wait_time: 120
-  -
-    profile_name: "br-se1-second"
-    policy_wait_time: 120
-  -
     profile_name: "br-ne1"
+    policy_wait_time: 120
   -
     profile_name: "br-ne1-second"
+    policy_wait_time: 120
   -
-    region_name: "br-ne1"
-    endpoint_url: "https://br-se1.magaluobjects.com/"
-    aws_access_key_id: "YOUR-KEY-ID-HERE"
-    aws_secret_access_key: "YOUR-SECRET-KEY-HERE"
+    profile_name: "br-ne1-sa" 
+    policy_wait_time: 120
+    sa_key_email: "service account email"
+    sa_tenant_id: "service account tenant"
+  
+  # Também pode ser passado apenas as keys junto ao endpoint e region, porém não funciona em testes de service account
+  # -
+  #   region_name: "br-ne1"
+  #   endpoint_url: "https://br-se1.magaluobjects.com/"
+  #   aws_access_key_id: "YOUR-KEY-ID-HERE"
+  #   aws_secret_access_key: "YOUR-SECRET-KEY-HERE"

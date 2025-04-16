@@ -23,6 +23,7 @@ from s3_specs.docs.s3_helpers import (
     get_policy_with_determination,
     probe_versioning_status,
     delete_all_objects_and_wait,
+    delete_all_objects_with_version_and_wait,
 )
 from datetime import datetime, timedelta
 from botocore.exceptions import ClientError
@@ -53,12 +54,11 @@ def test_params(request):
         config = yaml.safe_load(f)
         if not profile:
             return config
-        sufix = ["", "-second", "-third"]
+        sufix = ["", "-second", "-sa"]
         for index, profile_index in enumerate(config["profiles"]):
             if "profile_name" in profile_index and index < 3:
                 profile_index["profile_name"] = f"{profile}{sufix[index]}"
         
-        logging.info(f"Config: {config}")
         return config
 
 
@@ -237,7 +237,7 @@ def bucket_with_one_object(request, s3_client):
     object_key = request.param['object_key']
 
     # Generate a unique bucket name and ensure it exists
-    bucket_name = generate_unique_bucket_name(base_name="fixture-bucket")
+    bucket_name = generate_unique_bucket_name(base_name="test-fixture-bucket")
     create_bucket_and_wait(s3_client, bucket_name)
 
     # Define the object content, then upload the object
@@ -341,9 +341,14 @@ def versioned_bucket_with_one_object(s3_client, lock_mode):
 
     # Cleanup
     try:
-        cleanup_old_buckets(s3_client, base_name, lock_mode)
+        # Delete all versions of the object
+        logging.info(f"Deleting versions of {object_key}")
+        delete_all_objects_with_version_and_wait(s3_client, bucket_name)
+        # Delete the bucket
+        logging.info(f"Deleting bucket {bucket_name}")
+        delete_bucket_and_wait(s3_client, bucket_name)
     except Exception as e:
-        print(f"Cleanup error {e}")
+        logging.info(f"Cleanup error {e}")
 
 @pytest.fixture
 def versioned_bucket_with_one_object_cold_storage_class(s3_client, lock_mode):
@@ -398,9 +403,14 @@ def versioned_bucket_with_one_object_cold_storage_class(s3_client, lock_mode):
 
     # Cleanup
     try:
-        cleanup_old_buckets(s3_client, base_name, lock_mode)
+        # Delete all versions of the object
+        logging.info(f"Deleting versions of {object_key}")
+        delete_all_objects_with_version_and_wait(s3_client, bucket_name)
+        # Delete the bucket
+        logging.info(f"Deleting bucket {bucket_name}")
+        delete_bucket_and_wait(s3_client, bucket_name)
     except Exception as e:
-        print(f"Cleanup error {e}")
+        logging.info(f"Cleanup error {e}")
 
 @pytest.fixture
 def bucket_with_one_object_and_lock_enabled(s3_client, lock_mode, versioned_bucket_with_one_object):
@@ -549,7 +559,7 @@ def bucket_with_one_object_policy(multiple_s3_clients, policy_wait_time, request
 
 
 
-@pytest.fixture(params=[{ 'number_clients': 2 }])
+@pytest.fixture(params=[{ 'number_clients': 3 }])
 def multiple_s3_clients(request, test_params):
     """
     Creates multiple S3 clients based on the profiles provided in the test parameters.
@@ -713,6 +723,11 @@ def session_versioned_bucket_with_one_object(session_s3_client):
 
     # Cleanup
     try:
-        cleanup_old_buckets(session_s3_client, base_name)
+        # Delete all versions of the object
+        logging.info(f"Deleting versions of {object_key}")
+        delete_all_objects_with_version_and_wait(s3_client, bucket_name)
+        # Delete the bucket
+        logging.info(f"Deleting bucket {bucket_name}")
+        delete_bucket_and_wait(s3_client, bucket_name)
     except Exception as e:
-        print(f"Cleanup error {e}")
+        logging.info(f"Cleanup error {e}")

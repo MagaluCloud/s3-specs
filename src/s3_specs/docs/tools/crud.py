@@ -8,6 +8,7 @@ from botocore.exceptions import BotoCoreError, ClientError
 
 import os
 from tqdm import tqdm
+from datetime import datetime, timedelta
 
 ### Functions
 
@@ -87,6 +88,44 @@ def upload_multiple_objects(
 
     return successful_uploads
 
+def upload_multipart_file(s3_client, bucket_name, object_key, file_path, config=None) -> int:
+    """
+    Uploads a large file in multiple chunks to an S3 bucket.
+    :param s3_client: boto3 S3 client
+    :param bucket_name: str: name of the bucket
+    :param object_key: str: key of the object
+    :param file_path: str: path to the file to be uploaded
+    :param config: TransferConfig: optional configuration for multipart upload
+    :return: int: size in bytes of the uploaded object
+    """
+    # Default TransferConfig if none is provided
+    if config is None:
+        config = TransferConfig(multipart_threshold=8 * 1024 * 1024, max_concurrency=10)
+
+    # Getting file size
+    file_size = os.path.getsize(file_path)
+    logging.info(f"File size: {file_size} bytes")
+
+    # Upload Progress Bar with time stamp
+    with tqdm(
+        total=file_size,
+        desc=f"Uploading to {bucket_name}",
+        bar_format="Upload| {percentage:.1f}%|{bar:25}| {rate_fmt} | Time: {elapsed} | {desc}",
+        unit="B",
+        unit_scale=True,
+        unit_divisor=1024,
+    ) as pbar:
+        s3_client.upload_file(
+            file_path, bucket_name, object_key, Config=config, Callback=pbar.update
+        )
+
+    # Checking if the object was uploaded
+    object_size = s3_client.head_object(Bucket=bucket_name, Key=object_key).get(
+        "ContentLength", 0
+    )
+    logging.info(f"Uploaded object size: {object_size}")
+
+    return object_size
 
 def download_object(s3_client, bucket_name, object_key):
     """
@@ -218,31 +257,89 @@ def download_objects_multithreaded(s3_client, bucket_name):
 
     return len(successful_downloads)
 
-
-def delete_objects_multithreaded(s3_client, bucket_name):
+def delete_objects_multithreaded(s3_client, bucket_name, lock_mode=None, retention_days=1):
     """
-    Delete all objects in a bucket in parallel
-    :param s3_client: boto3 s3 client
-    :param bucket_name: str: name of the bucket
-    :return: int: number of successful deletions
+    Delete all objects, versions, and delete markers from a bucket using multithreading.
+    Attempt to delete versions and delete markers, retry with governance bypass if needed.
+
+    :param s3_client: Boto3 S3 client
+    :param bucket_name: Name of the bucket to target
+    :param lock_mode: Lock mode ('GOVERNANCE', 'COMPLIANCE', or None)
+    :param retention_days: Age threshold for objects to be cleaned up (ignored for GOVERNANCE)
     """
-    objects_keys = list_all_objects(s3_client, bucket_name)
+    try:
+        # Get bucket versioning info
+        bucket_versioning = s3_client.get_bucket_versioning(Bucket=bucket_name)
 
-    with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
-        # atributes processes to the available workers
-        futures = [
-            executor.submit(delete_object, s3_client, bucket_name, key)
-            for key in objects_keys
-        ]
+        # If bucket is versioned, delete all object versions and delete markers using multithreading
+        if bucket_versioning.get('Status') == 'Enabled':
+            paginator = s3_client.get_paginator('list_object_versions')
+            with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+                futures = []
+                for page in paginator.paginate(Bucket=bucket_name):
+                    # Delete object versions
+                    for version in page.get('Versions', []):
+                        futures.append(
+                            executor.submit(
+                                delete_version, s3_client, bucket_name, version, lock_mode
+                            )
+                        )
+                    # Delete markers
+                    for marker in page.get('DeleteMarkers', []):
+                        futures.append(
+                            executor.submit(
+                                delete_version, s3_client, bucket_name, marker, lock_mode
+                            )
+                        )
+                # Wait for all futures to complete
+                for future in as_completed(futures):
+                    future.result()
 
-        # List all results of the futures
-        successful_deletions = list(
-            filter(lambda f: f.result() == 204, as_completed(futures))
+        # Delete all objects in the bucket
+        objects_keys = list_all_objects(s3_client, bucket_name)
+        with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+            futures = [
+                executor.submit(delete_object, s3_client, bucket_name, key)
+                for key in objects_keys
+            ]
+    except Exception as e:
+        raise f"An unexpected error occurred while deleting object '{bucket_name}': {e}"
+
+def delete_version(s3_client, bucket_name, version, lock_mode):
+    """
+    Attempt to delete an object version or delete marker.
+for _ in range(5):
+
+    :param s3_client: Boto3 S3 client.
+    :param bucket_name: Name of the bucket.
+    :param version: The version or delete marker to delete.
+    :param lock_mode: Lock mode ('GOVERNANCE', 'COMPLIANCE', or None).
+    """
+    version_id = version['VersionId']
+    try:
+        # Attempt to delete the version
+        s3_client.delete_object(
+            Bucket=bucket_name,
+            Key=version['Key'],
+            VersionId=version_id
         )
-        logging.info(f"Successful deletions: {successful_deletions}")
-
-    return len(successful_deletions)
-
+        logging.info(f"Deleted version {version_id} of object {version['Key']} in bucket {bucket_name}")
+    except ClientError as e:
+        # Retry deletion with governance bypass if necessary
+        if e.response["Error"]["Code"] == "AccessDenied" and lock_mode == "GOVERNANCE":
+            logging.info(f"Retrying deletion of version {version_id} with governance bypass")
+            s3_client.delete_object(
+                Bucket=bucket_name,
+                Key=version['Key'],
+                VersionId=version_id,
+                BypassGovernanceRetention=True
+            )
+        else:
+            logging.warning(
+                f"Failed to delete version {version_id} of object {version['Key']} in bucket {bucket_name}: {e}"
+            )
+    except Exception as e:
+        logging.info(f"delete object errored with: {e}")
 
 # ## Fixtures
 
@@ -293,49 +390,6 @@ def fixture_upload_multiple_objects(s3_client, fixture_bucket_with_name, request
     return upload_objects_multithreaded(
         s3_client, fixture_bucket_with_name, objects_names
     )
-
-@pytest.fixture
-def fixture_upload_multipart_file(s3_client, fixture_bucket_with_name, request) -> int:
-    """
-    Uploads a big file into multiple chunks to s3 bucket
-    :param s3_client: boto3 s3 client
-    :param fixture_bucket_with_name: pytest.fixture which setup and tears down bucket
-    :param request: dict: contains file_path, file_size and object_key
-    :return int: size in bytes of the obejct
-    """
-    bucket_name = fixture_bucket_with_name
-    file_path = request.param.get("file_path")
-    file_size = convert_unit(request.param.get("file_size"))
-    object_key = request.param.get("object_key")
-
-    # Config for multhreading of boto3 building multipart upload/download
-    config = TransferConfig(
-        multipart_threshold=8 * 1024 * 1024,  # Minimum size to start multipart upload
-        max_concurrency=10,
-        multipart_chunksize=8 * 1024 * 1024,
-        use_threads=True,
-    )
-
-    # Upload Progress Bar with time stamp
-    with tqdm(
-        total=file_size,
-        desc=bucket_name,
-        bar_format="Upload| {percentage:.1f}%|{bar:25}| {rate_fmt} | Time: {elapsed} | {desc}",
-        unit="B",
-        unit_scale=True,
-        unit_divisor=1024,
-    ) as pbar:
-        response = s3_client.upload_file(
-            file_path, bucket_name, object_key, Config=config, Callback=pbar.update
-        )
-        elapsed = pbar.format_dict["elapsed"]
-
-        # Checking if the object was uploaded
-        object_size = s3_client.get_object(Bucket=bucket_name, Key=object_key).get(
-            "ContentLength", 0
-        )
-
-    return object_size, response, elapsed  # return int of size in bytes
 
 @pytest.fixture(params=[{"prefix": "test-multiple-buckets-", "names": ["1", "2", "3"]}])
 def fixture_multiple_buckets(request, s3_client):

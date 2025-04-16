@@ -59,6 +59,7 @@ markers = [
     "mgc: mgc cli",
     "aws: aws cli",
     "rclone: rclone cli",
+    "service_account: Service Account",
 ]
 
 [tool.s3-tester]
