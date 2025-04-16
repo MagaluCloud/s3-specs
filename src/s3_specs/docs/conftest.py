@@ -343,11 +343,13 @@ def versioned_bucket_with_one_object(s3_client, lock_mode):
     # Cleanup
     try:
         # Delete all versions of the object
+        logging.info(f"Deleting versions of {object_key}")
         delete_all_objects_with_version_and_wait(s3_client, bucket_name)
         # Delete the bucket
+        logging.info(f"Deleting bucket {bucket_name}")
         delete_bucket_and_wait(s3_client, bucket_name)
     except Exception as e:
-        print(f"Cleanup error {e}")
+        logging.info(f"Cleanup error {e}")
 
 @pytest.fixture
 def versioned_bucket_with_one_object_cold_storage_class(s3_client, lock_mode):
@@ -402,11 +404,14 @@ def versioned_bucket_with_one_object_cold_storage_class(s3_client, lock_mode):
 
     # Cleanup
     try:
+        # Delete all versions of the object
+        logging.info(f"Deleting versions of {object_key}")
         delete_all_objects_with_version_and_wait(s3_client, bucket_name)
         # Delete the bucket
+        logging.info(f"Deleting bucket {bucket_name}")
         delete_bucket_and_wait(s3_client, bucket_name)
     except Exception as e:
-        print(f"Cleanup error {e}")
+        logging.info(f"Cleanup error {e}")
 
 @pytest.fixture
 def bucket_with_one_object_and_lock_enabled(s3_client, lock_mode, versioned_bucket_with_one_object):
@@ -719,6 +724,11 @@ def session_versioned_bucket_with_one_object(session_s3_client):
 
     # Cleanup
     try:
-        cleanup_old_buckets(session_s3_client, base_name)
+        # Delete all versions of the object
+        logging.info(f"Deleting versions of {object_key}")
+        delete_all_objects_with_version_and_wait(s3_client, bucket_name)
+        # Delete the bucket
+        logging.info(f"Deleting bucket {bucket_name}")
+        delete_bucket_and_wait(s3_client, bucket_name)
     except Exception as e:
-        print(f"Cleanup error {e}")
+        logging.info(f"Cleanup error {e}")

@@ -106,14 +106,21 @@ def delete_object_and_wait(s3_client, bucket_name, object_key, version_id=None):
     logging.info(f"Object '{object_key}' in bucket '{bucket_name}' confirmed as deleted.")
 
 def delete_all_objects_with_version_and_wait(s3_client, bucket_name):
-    response = s3_client.list_objects_v2(Bucket=bucket_name)
-    if 'Contents' in response:
-        for obj in response['Contents']:
-            for version in obj['Versions']:
-                delete_object_and_wait(s3_client, bucket_name, obj['Key'], version['VersionId'])
-            delete_object_and_wait(s3_client, bucket_name, obj['Key'])
-    else:
-        logging.info(f"No objects found in bucket '{bucket_name}'.")
+    bucket_versioning = s3_client.get_bucket_versioning(Bucket=bucket_name)
+
+    if bucket_versioning.get('Status') == 'Enabled':
+        paginator = s3_client.get_paginator('list_object_versions')
+        for page in paginator.paginate(Bucket=bucket_name):
+            # Delete object versions
+            for version in page.get('Versions', []):
+                delete_version(
+                    s3_client, bucket_name, version, "COMPLIANCE"
+                )
+            # Delete markers
+            for marker in page.get('DeleteMarkers', []):
+                delete_version(
+                    s3_client, bucket_name, marker, "COMPLIANCE"
+                )
 
 def delete_all_objects_and_wait(s3_client, bucket_name):
     response = s3_client.list_objects_v2(Bucket=bucket_name)
