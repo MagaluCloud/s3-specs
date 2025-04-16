@@ -308,7 +308,13 @@ def create_index_html(reports_dir, categories, category_mapping):
 <body>
     <h1>Relatórios de Testes</h1>
     <p style="text-align: center;">Selecione uma categoria de testes para visualizar o relatório:</p>
-    
+
+    <div style="text-align: center; margin-top: 10px;">
+        <a href="https://github.com/MagaluCloud/s3-specs/tree/temp-action-test/reports_pdf" target="_blank" class="report-link" style="background-color: #2ecc71; display: inline-block; width: auto; padding: 10px 20px;">
+            📄 Ver últimas runs (PDF)
+        </a>
+    </div>
+
     <div class="report-container">
 """
 
