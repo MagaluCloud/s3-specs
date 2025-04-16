@@ -21,7 +21,7 @@ CATEGORY_MAPPING = {
     'benchmark': 'benchmark',
 }
 
-REPORTS_DIR = Path("reportspdfs")
+REPORTS_DIR = Path("reports_pdf")
 HTML_REPORTS_DIR = Path("reports_html")
 REPORTS_DIR.mkdir(exist_ok=True)
 HTML_REPORTS_DIR.mkdir(exist_ok=True)
