@@ -54,12 +54,11 @@ def test_params(request):
         config = yaml.safe_load(f)
         if not profile:
             return config
-        sufix = ["", "-second", "-third"]
+        sufix = ["", "-second", "-sa"]
         for index, profile_index in enumerate(config["profiles"]):
             if "profile_name" in profile_index and index < 3:
                 profile_index["profile_name"] = f"{profile}{sufix[index]}"
         
-        logging.info(f"Config: {config}")
         return config
 
 
@@ -238,7 +237,7 @@ def bucket_with_one_object(request, s3_client):
     object_key = request.param['object_key']
 
     # Generate a unique bucket name and ensure it exists
-    bucket_name = generate_unique_bucket_name(base_name="fixture-bucket")
+    bucket_name = generate_unique_bucket_name(base_name="test-fixture-bucket")
     create_bucket_and_wait(s3_client, bucket_name)
 
     # Define the object content, then upload the object
@@ -560,7 +559,7 @@ def bucket_with_one_object_policy(multiple_s3_clients, policy_wait_time, request
 
 
 
-@pytest.fixture(params=[{ 'number_clients': 2 }])
+@pytest.fixture(params=[{ 'number_clients': 3 }])
 def multiple_s3_clients(request, test_params):
     """
     Creates multiple S3 clients based on the profiles provided in the test parameters.

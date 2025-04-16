@@ -1,9 +1,7 @@
 # + {"jupyter": {"source_hidden": true}}
 import pytest
 import logging
-import subprocess
 import os
-from shlex import split
 from itertools import product 
 from s3_specs.docs.s3_helpers import run_example
 from s3_specs.docs.tools.utils import fixture_create_small_file, execute_subprocess
@@ -58,7 +56,7 @@ commands = [
     ],
     indirect=['fixture_versioned_bucket']
 )
-def test_set_version_on_bucket_with_acl(s3_client, fixture_versioned_bucket, cmd_template, expected, profile_name):
+def test_set_version_on_bucket_with_acl(s3_client, active_mgc_workspace, fixture_versioned_bucket, cmd_template, expected, profile_name):
     """Test versioning enablement through different CLI tools with various ACL settings."""
     bucket_name = fixture_versioned_bucket
 
@@ -103,7 +101,7 @@ commands = [
         id="rclone-upload"
     )
 ]
-
+# Upload versioned object tests
 @pytest.mark.parametrize(
     "fixture_versioned_bucket, cmd_template",
     [
@@ -189,6 +187,7 @@ commands = [
     )
 ]
 
+# Download versioned object tests
 @pytest.mark.parametrize(
     "fixture_versioned_bucket, cmd_template",
     [
@@ -199,7 +198,7 @@ commands = [
 )
 def test_download_version_on_bucket_with_acl(
     fixture_versioned_bucket_with_one_object,
-    active_mgc_workspace,
+    active_mgc_workspace, 
     fixture_create_small_file,
     cmd_template,
     profile_name,
@@ -345,7 +344,7 @@ commands = [
         id="rclone-delete-object"
     )
 ]
-
+# Generating the tuples of tests to run
 @pytest.mark.parametrize(
     "fixture_versioned_bucket, cmd_template, expected",
     [
@@ -362,7 +361,7 @@ commands = [
 )
 def test_delete_object_with_versions(
     fixture_versioned_bucket_with_one_object,
-    active_mgc_workspace,
+    active_mgc_workspace, 
     cmd_template,
     expected,
     profile_name
@@ -393,7 +392,6 @@ def test_delete_object_with_versions(
         bucket_name = bucket_name,
         object_key=object_key
     )
-
 
     assert result.returncode == 0, f"Command failed with error: {result.stderr}"  
     assert result.stdout == formatted_expected
