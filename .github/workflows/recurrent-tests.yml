@@ -1,9 +1,6 @@
 name: Recurrent tests
 
 on:
-  push:
-    branches:
-      - fix-recurrent-tests
   schedule:
     - cron: "0 */2 * * *"       # Every hour at 00 min
     - cron: "15 */6 * * *"     # Every 6 hours at *h30 min  
@@ -11,7 +8,7 @@ on:
 
 jobs:
   run_1h_tests:
-    # if: github.event.schedule == '0 */2 * * *'  
+    if: github.event.schedule == '0 */2 * * *'  
     strategy:
       fail-fast: false
       max-parallel: 1
@@ -47,10 +44,8 @@ jobs:
           - br-ne1
         marker:
             # 6h tests
-          - test: "acl or locking"
-            name: "acl or locking"
-          - test: "policy or bucket_versioning"
-            name: "policy or bucket_versioning"
+          - test: "'policy or bucket_versioning or acl or locking'"
+            name: "'policy or bucket_versioning or acl or locking'"
         config:
           - path: "../../../params.example.yaml"
             name: "example"
@@ -74,8 +69,8 @@ jobs:
           - br-ne1
         marker:
            # 12h tests
-          - test: "multiple_objects or big_objects"
-            name: "multiple_objects or big_objects"
+          - test: "'multiple_objects or big_objects'"
+            name: "'multiple_objects or big_objects'"
         config:
           - path: "../../../params.example.yaml"
             name: "example"
