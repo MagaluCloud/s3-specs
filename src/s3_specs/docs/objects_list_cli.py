@@ -62,6 +62,16 @@ test_buckets = [
     }
 ]
 
+special_characteres = ["*", "+", "-", "_", ".", "(parentesis)", "&", "$", "@", "=", ";", ":", "   ", ",", "?"]
+
+for special_charactere in special_characteres:
+    test_buckets.append({
+        "object_prefix": f"prefix/with/multiple/slashes/and/character {special_charactere} in key/",
+        "object_key_list": ["file.txt"]
+    })
+
+logging.info(f"Test cases: {test_buckets}")
+
 test_cases = [
     (command, test_bucket)
     for command in commands
