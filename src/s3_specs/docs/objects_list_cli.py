@@ -17,6 +17,8 @@
 commands = [
     "{mgc_path} object-storage objects list '{bucket_name}'",
     "{mgc_path} os objects list '{bucket_name}/{object_prefix}'",
+    "aws --profile {profile_name} s3api list-objects-v2 --bucket '{bucket_name}'",
+    "aws --profile {profile_name} s3api list-objects-v2 --bucket '{bucket_name}' --prefix '{object_prefix}'"
 ]
 
 # + {"jupyter": {"source_hidden": true}}
@@ -62,6 +64,16 @@ test_buckets = [
     }
 ]
 
+special_characteres = ["*", "+", "-", "_", ".", "(parentesis)", "&", "$", "@", "=", ";", ":", "   ", ",", "?"]
+
+for special_charactere in special_characteres:
+    test_buckets.append({
+        "object_prefix": f"prefix/with/multiple/slashes/and/character {special_charactere} in key/",
+        "object_key_list": ["file.txt"]
+    })
+
+logging.info(f"Test cases: {test_buckets}")
+
 test_cases = [
     (command, test_bucket)
     for command in commands
@@ -69,13 +81,13 @@ test_cases = [
 ]
 
 @pytest.mark.parametrize(
-    "cmd_template, bucket_with_many_objects",
+    "cmd_template, bucket_with_many_objects_session",
     test_cases,
-    indirect=["bucket_with_many_objects"]
+    indirect=["bucket_with_many_objects_session"]
 )
-def test_list_objects_cli(cmd_template, bucket_with_many_objects, active_mgc_workspace, mgc_path):
-    bucket_name, object_prefix, _content, _ = bucket_with_many_objects
-    cmd = split(cmd_template.format(mgc_path=mgc_path, bucket_name=bucket_name, object_prefix=object_prefix))
+def test_list_objects_cli(cmd_template, bucket_with_many_objects_session, profile_name, active_mgc_workspace, mgc_path):
+    bucket_name, object_prefix, _content, _ = bucket_with_many_objects_session
+    cmd = split(cmd_template.format(mgc_path=mgc_path, profile_name=profile_name, bucket_name=bucket_name, object_prefix=object_prefix))
 
     result = subprocess.run(cmd, capture_output=True, text=True)
 
