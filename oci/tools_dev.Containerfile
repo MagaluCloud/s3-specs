@@ -33,9 +33,6 @@ COPY --from=awscli /usr/local/aws-cli/ /tools/aws-cli/
 RUN ln -s "/tools/aws-cli/v2/${AWS_CLI_VERSION}/bin/aws" /usr/local/bin/aws && \
     ln -s "/tools/aws-cli/v2/${AWS_CLI_VERSION}/bin/aws_completer" /usr/local/bin/aws_completer;
 
-
-ENV PATH="/usr/src/aws-cli/venv/bin:$PATH"
-
 # rclone
 ARG RCLONE_VERSION
 RUN curl -Lo rclone.zip "https://downloads.rclone.org/v${RCLONE_VERSION}/rclone-v${RCLONE_VERSION}-linux-amd64.zip" && \
