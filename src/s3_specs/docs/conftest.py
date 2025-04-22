@@ -34,6 +34,35 @@ def pytest_addoption(parser):
     parser.addoption("--profile", action="store", help="profile to use for the tests")
 
 
+@pytest.fixture(autouse=True)
+def skip_based_on_region_marker(s3_client, request):
+    marker = request.node.get_closest_marker("only_run_in_region")
+    if marker:
+        # Pega a(s) região(ões) do marcador. Pode ser um ou mais argumentos.
+        regions_to_run = []
+        if marker.args:
+            regions_to_run.extend(marker.args)
+        # Poderia também suportar kwargs, mas args é mais simples aqui:
+        # if marker.kwargs.get('regions'):
+        #     regions_to_run.extend(marker.kwargs['regions']) # Assumindo uma lista
+
+        if not regions_to_run:
+            logging.warning("Marcador 'skip_in_region' usado sem especificar regiões.")
+            return # Não faz nada se nenhuma região for fornecida no marcador
+
+        current_region = s3_client.meta.region_name
+
+        logging.info(f"\n[Fixture skip_based_on_region_marker] Teste: {request.node.name}")
+        logging.info(f"  Marcador 'only_run_in_region' encontrado com regiões: {regions_to_run}")
+        logging.info(f"  Região atual do cliente Boto3 ({s3_client.__class__.__name__}): {current_region}")
+
+        if current_region not in regions_to_run:
+            skip_message = f"Teste pulado porque a região do cliente ({current_region}) não está na lista de skip do marcador {regions_to_run}"
+            logging.info(f"{skip_message}")
+            pytest.skip(skip_message)
+        else:
+            logging.info("Região atual está na lista de regiões onde o teste pode ser executado.")
+
 @pytest.fixture(scope="session", autouse=True)
 def verify_credentials(get_clients):
     tenants = get_tenants(get_clients)

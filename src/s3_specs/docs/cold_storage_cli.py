@@ -14,7 +14,7 @@ import uuid # For unique object keys
 config = "../params/br-se1.yaml"
 
 # + {"jupyter": {"source_hidden": true}}
-pytestmark = [pytest.mark.cold_storage, pytest.mark.cli]
+pytestmark = [pytest.mark.cold_storage, pytest.mark.cli, pytest.mark.only_run_in_region("br-se1")]
 config = "../params/br-se1.yaml"
 
 storage_classes_list = [
