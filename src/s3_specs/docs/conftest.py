@@ -34,7 +34,7 @@ def pytest_addoption(parser):
     parser.addoption("--profile", action="store", help="profile to use for the tests")
 
 
-@pytest.fixture(scope="session", autouse=False)
+@pytest.fixture(scope="session", autouse=True)
 def verify_credentials(get_clients):
     tenants = get_tenants(get_clients)
 
