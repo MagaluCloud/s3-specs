@@ -4,6 +4,8 @@
 #   - all 3 CLIs (rclone, aws, mgc)
 #   - Python dependencies to run boto3 based tests.
 ARG JUST_VERSION="1.40.0"
+ARG AWS_CLI_VERSION="2.15.27"
+ARG RCLONE_VERSION="1.66.0"
 # Main image
 FROM ubuntu:latest
 RUN apt-get update && \
@@ -25,28 +27,26 @@ RUN mkdir -p /tools
 
 ENV PATH="/usr/local/bin:${PATH}"
 
-# Clone the AWS CLI v2 Dev repository
-RUN git clone https://github.com/aws/aws-cli.git /usr/src/aws-cli && \
-    cd /usr/src/aws-cli && \
-    git checkout v2
+# aws cli
+ARG AWS_CLI_VERSION
+COPY --from=awscli /usr/local/aws-cli/ /tools/aws-cli/
+RUN ln -s "/tools/aws-cli/v2/${AWS_CLI_VERSION}/bin/aws" /usr/local/bin/aws && \
+    ln -s "/tools/aws-cli/v2/${AWS_CLI_VERSION}/bin/aws_completer" /usr/local/bin/aws_completer;
 
-RUN python3 -m venv /usr/src/aws-cli/venv && \
-    . /usr/src/aws-cli/venv/bin/activate && \
-    pip install -r /usr/src/aws-cli/requirements-dev.txt && \
-    pip install -e /usr/src/aws-cli
 
 ENV PATH="/usr/src/aws-cli/venv/bin:$PATH"
 
-# Install Rclone Beta
-RUN curl -Lo rclone.zip "https://beta.rclone.org/rclone-beta-latest-linux-amd64.zip" && \
+# rclone
+ARG RCLONE_VERSION
+RUN curl -Lo rclone.zip "https://downloads.rclone.org/v${RCLONE_VERSION}/rclone-v${RCLONE_VERSION}-linux-amd64.zip" && \
     unzip -q rclone.zip && rm rclone.zip && \
-    mv rclone-*-*-linux-amd64 /tools/rclone && \
-    ln -s "/tools/rclone/rclone" /usr/local/bin/rclone
+    mv rclone-v${RCLONE_VERSION}-linux-amd64 /tools/ && \
+    ln -s "/tools/rclone-v${RCLONE_VERSION}-linux-amd64/rclone" /usr/local/bin/rclone;
 
 
 
-# Install MGC CLI DEV on branch rafael/list-encode (todo: change to var)
-RUN git clone --single-branch --branch rafael/list-encode https://github.com/MagaluCloud/magalu.git mgc-cli && \
+# Install MGC CLI DEV on branch main
+RUN git clone https://github.com/MagaluCloud/magalu.git mgc-cli && \
     cd mgc-cli/mgc/cli/ && \
     go install && \
     go build -o mgc && \
