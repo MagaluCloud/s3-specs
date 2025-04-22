@@ -53,6 +53,13 @@ test_buckets = [
             "acentuação e emojis 😘 🎉 🥳-2.txt",
         ]
     },
+    {
+        "object_prefix": "prefix/with/multiple/slashes/and/someparam=Name with space/",
+        "object_key_list": [
+            "file1.txt",
+            "file 2 with space.txt",
+        ]
+    }
 ]
 
 test_cases = [
@@ -67,7 +74,7 @@ test_cases = [
     indirect=["bucket_with_many_objects"]
 )
 def test_list_objects_cli(cmd_template, bucket_with_many_objects, active_mgc_workspace, mgc_path):
-    bucket_name, object_prefix, _content = bucket_with_many_objects
+    bucket_name, object_prefix, _content, _ = bucket_with_many_objects
     cmd = split(cmd_template.format(mgc_path=mgc_path, bucket_name=bucket_name, object_prefix=object_prefix))
 
     result = subprocess.run(cmd, capture_output=True, text=True)
