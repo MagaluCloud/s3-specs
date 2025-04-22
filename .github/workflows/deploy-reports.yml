@@ -1,0 +1,28 @@
+name: Deploy Reports
+
+on:
+  push:
+    branches: [temp-action-test]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Build Reports
+        run: |
+          mkdir -p ./public
+          cp -r reports_html/* ./public/
+      
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          publish_branch: gh-pages
