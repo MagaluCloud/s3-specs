@@ -38,18 +38,12 @@ def pytest_addoption(parser):
 def skip_based_on_region_marker(s3_client, request):
     marker = request.node.get_closest_marker("only_run_in_region")
     if marker:
-        # Pega a(s) região(ões) do marcador. Pode ser um ou mais argumentos.
         regions_to_run = []
         if marker.args:
             regions_to_run.extend(marker.args)
-        # Poderia também suportar kwargs, mas args é mais simples aqui:
-        # if marker.kwargs.get('regions'):
-        #     regions_to_run.extend(marker.kwargs['regions']) # Assumindo uma lista
-
         if not regions_to_run:
             logging.warning("Marcador 'skip_in_region' usado sem especificar regiões.")
-            return # Não faz nada se nenhuma região for fornecida no marcador
-
+            return 
         current_region = s3_client.meta.region_name
 
         logging.info(f"\n[Fixture skip_based_on_region_marker] Teste: {request.node.name}")
