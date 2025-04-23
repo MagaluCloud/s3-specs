@@ -34,9 +34,9 @@ def parse_args():
     return parser.parse_args()
 
 def run_tests(args):
-    category_name = f"{args.category}_{args.mark}"
-    html_output = HTML_REPORTS_DIR / f"{category_name}.html"
-    json_output = HTML_REPORTS_DIR / f"{category_name}_report.json"
+    category_name = f"{args.category}"
+    html_output = HTML_REPORTS_DIR / f"{category_name}_{args.mark}_{args.profile}.html"
+    json_output = HTML_REPORTS_DIR / f"{category_name}_{args.mark}_{args.profile}_report.json"
     
     command = [
         "pytest",
@@ -98,7 +98,7 @@ if __name__ == "__main__":
         print(f"Com marcação adicional: {args.mark}")
 
     test_result = run_tests(args)
-    generate_pdf(args.category)
+    generate_pdf(f"{args.category}_{args.mark}_{args.profile}")
     # clean_old_reports()
     create_index_html(HTML_REPORTS_DIR, list(CATEGORY_MAPPING.keys()), CATEGORY_MAPPING)
 
