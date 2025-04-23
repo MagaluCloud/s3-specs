@@ -63,5 +63,5 @@ jobs:
               if: always()
               shell: bash
               run: |
-                mgc set workspace br-se1
+                mgc workspace set br-se1
                 mgc os objects upload-dir './reports_pdf/' results-test-do-not-delete/${{inputs.prefix_object_key}}/
