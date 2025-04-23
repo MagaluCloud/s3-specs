@@ -372,6 +372,37 @@ def fixture_bucket_with_name(s3_client, request):
     delete_bucket(s3_client, bucket_name)
 
 @pytest.fixture
+def fixture_bucket_with_one_object(s3_client, request):
+    """
+    This fixtures automatically creates a bucket based on the name of the test that called it and then returns its name
+    Lastly, teardown the bucket by deleting it and its objects
+    
+    Creates a bucket with a random name and then tear it down
+    :param s3_client: boto s3 cliet
+    :param request: dict: contains the name of the current test and [optional] acl name
+    :yield: str: generated bucket name    
+    """
+    # request.node get the name of the test currently running
+    bucket_name = generate_valid_bucket_name(request.node.name.replace("_", "-"))
+    create_bucket(s3_client, bucket_name)
+    object_key = f"{bucket_name}-object"
+
+    # Uploading one object to the bucket
+    upload_object(
+        s3_client,
+        bucket_name,
+        object_key,
+        body_file=f"test_file-{datetime.now().strftime('%Y-%m-%d')}.txt",
+    )
+    yield bucket_name, object_key
+    
+    # Teardown
+    delete_objects_multithreaded(s3_client, bucket_name)
+    delete_bucket(s3_client, bucket_name)
+
+
+
+@pytest.fixture
 def fixture_upload_multiple_objects(s3_client, fixture_bucket_with_name, request):
     """
     Utilizing multithreading Fixture uploads multiple objects while changing their names
