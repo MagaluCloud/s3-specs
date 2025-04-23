@@ -29,20 +29,20 @@ jobs:
             value: latest
 
         marker:
-          - test: basic
-            name: basic
-          - test: cold_storage
-            name: cold_storage
-          - test: presign
-            name: presign
-          - test: acl
-            name: acl
-          - test: locking
-            name: locking
-          - test: policy
-            name: policy
-          - test: bucket_versioning
-            name: bucket_versioning
+          - test: "'basic and not mgc'"
+            name: "'basic and not mgc'"
+          - test: "'cold_storage and not mgc'"
+            name: "'cold_storage and not mgc'"
+          - test: "'presign and not mgc'"
+            name: "'presign and not mgc'"
+          - test: "'acl and not mgc'"
+            name: "'acl and not mgc'"
+          - test: "'locking and not mgc'"
+            name: "'locking and not mgc'"
+          - test: "'policy and not mgc'"
+            name: "'policy and not mgc'"
+          - test: "'bucket_versioning and not mgc'"
+            name: "'bucket_versioning and not mgc'"
         config:
           - path: "../../../params.example.yaml"
             name: "example"
