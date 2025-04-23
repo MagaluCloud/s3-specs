@@ -34,7 +34,7 @@ def parse_args():
     return parser.parse_args()
 
 def run_tests(args):
-    category_name = args.category
+    category_name = f"{args.category}_{args.mark}"
     html_output = HTML_REPORTS_DIR / f"{category_name}.html"
     json_output = HTML_REPORTS_DIR / f"{category_name}_report.json"
     
