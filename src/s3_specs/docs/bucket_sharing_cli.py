@@ -41,9 +41,11 @@ from pathlib import Path
 from s3_specs.docs.s3_helpers import run_example
 from s3_specs.docs.tools.utils import fixture_create_small_file, execute_subprocess, get_different_profile_from_default, fixture_create_big_file
 from s3_specs.docs.tools.crud import fixture_bucket_with_one_object
+import requests
+import re
 
-# + {"tags": ["parameters"]}
-pytestmark = pytest.mark.bucket_sharing
+# + {"tags": ["parameters"]}[
+pytestmark = [pytest.mark.bucket_sharing, pytest.mark.presign]
 config = "../params/br-ne1.yaml"
 
 
@@ -93,6 +95,16 @@ def test_generate_presigned_url_cli(
     command,
     operation
     ):
+    """
+    Test the generation and usage of presigned URLs via CLI commands.
+
+    Parameters:
+    - active_mgc_workspace: Active workspace for MGC.
+    - profile_name: AWS profile name.
+    - fixture_bucket_with_one_object: Fixture providing a bucket and an object.
+    - command: CLI command template for generating presigned URLs.
+    - operation: S3 operation (e.g., GET, PUT).
+    """
 
     bucket_name, object_key = fixture_bucket_with_one_object
 
@@ -106,13 +118,28 @@ def test_generate_presigned_url_cli(
             operation=operation,
         )
         result = execute_subprocess(formatted_cmd)
-        logging.info(f"URL pré-assinada gerada: {result}")
+        logging.info(f"Presigned URL generated: {result}")
 
-        # Testar a URL pré-assinada
-        assert result is not None, "URL não foi gerada"
+        # Validate the presigned URL
+        assert result is not None, "Presigned URL was not generated"
+
+        # Extract the URL from the command output
+        match = re.search(r"(?P<url>https?://[^\s]+)", result.stdout)
+        assert match, "No valid URL found in the command output"
+        presigned_url = match.group("url")
+
+        # Log the URL for debugging purposes
+        logging.info("Validating access via presigned URL")
+        
+        # Perform a GET request to the presigned URL
+        response = requests.get(presigned_url)
+        logging.info(f"Request: {response}")
+        # Validate the response status and content
+        assert response.status_code == 200, f"Failed to access presigned URL: Status {response.status_code}"
     except subprocess.CalledProcessError as e:
         logging.error(f"Command failed with error: {e}")
         pytest.fail(f"Command execution failed: {e}")
+
 run_example(__name__, "test_generate_presigned_url_cli", config=config)
 
 # ## Referências

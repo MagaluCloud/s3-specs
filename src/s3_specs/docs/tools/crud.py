@@ -378,7 +378,7 @@ def fixture_bucket_with_one_object(s3_client, request):
     Lastly, teardown the bucket by deleting it and its objects
     
     Creates a bucket with a random name and then tear it down
-    :param s3_client: boto s3 cliet
+    :param s3_client: boto s3 client
     :param request: dict: contains the name of the current test and [optional] acl name
     :yield: str: generated bucket name    
     """
@@ -392,7 +392,7 @@ def fixture_bucket_with_one_object(s3_client, request):
         s3_client,
         bucket_name,
         object_key,
-        body_file=f"test_file-{datetime.now().strftime('%Y-%m-%d')}.txt",
+        body_file=f"{object_key}",
     )
     yield bucket_name, object_key
     
