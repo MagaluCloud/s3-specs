@@ -1,7 +1,7 @@
 import pytest
 from uuid import uuid4
 from s3_specs.docs.tools.utils import generate_valid_bucket_name
-from s3_specs.docs.tools.crud import upload_object 
+from s3_specs.docs.tools.crud import upload_object, bulk_delete_bucket_mgccli
 from s3_specs.docs.tools.versioning import fixture_versioned_bucket
 from s3_specs.docs.s3_helpers import cleanup_old_buckets
 from datetime import datetime, timedelta, timezone
@@ -95,8 +95,13 @@ def fixture_bucket_with_one_object_with_lock(s3_client, fixture_versioned_bucket
         # Teardown: Wait for the retention period to expire and delete the bucket
     try:
         sleep(10)  # Wait for the retention period to expire
-        s3_client.delete_object(Bucket=bucket_name, Key=object_key)
-        s3_client.delete_bucket(Bucket=bucket_name)
+        # Delete the object and bucket
+        try:
+            bulk_delete_bucket_mgccli(bucket_name)    
+        except Exception as e:
+            s3_client.delete_object(Bucket=bucket_name, Key=object_key)
+            s3_client.delete_bucket(Bucket=bucket_name)
+            pytest.fail(f"Failed to delete bucket {bucket_name}: {e}")
     except s3_client.exceptions.ClientError as e:
         pytest.fail(f"Failed to clean up bucket {bucket_name} or object {object_key}: {e}")
     except Exception as e:

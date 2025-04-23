@@ -1,6 +1,6 @@
 import pytest
 from s3_specs.docs.tools.utils import generate_valid_bucket_name, fixture_create_small_file
-from s3_specs.docs.tools.crud import create_bucket, upload_object, delete_bucket, delete_objects_multithreaded
+from s3_specs.docs.tools.crud import create_bucket, upload_object, delete_bucket, delete_objects_multithreaded, bulk_delete_bucket_mgccli
 from uuid import uuid4
 
 
@@ -38,8 +38,11 @@ def fixture_versioned_bucket(s3_client, request):
     finally:
         # Cleanup - runs whether test passes or fails
         try:
-            delete_objects_multithreaded(s3_client, bucket_name)
-            delete_bucket(s3_client, bucket_name)
+            bulk_delete_bucket_mgccli(bucket_name)
+        except Exception as cleanup_error:
+                # Attempt to delete all objects in the bucket
+                delete_objects_multithreaded(s3_client, bucket_name)
+                delete_bucket(s3_client, bucket_name)
         except Exception as cleanup_error:
             pytest.fail(f"Fixture cleanup failed: {str(cleanup_error)}")
 

@@ -12,6 +12,7 @@ import ipynbname
 import json
 import time
 from s3_specs.docs.tools.utils import generate_valid_bucket_name
+from s3_specs.docs.tools.crud import bulk_delete_bucket_mgccli
 
 def get_spec_path():
     spec_path = os.getenv("SPEC_PATH")
@@ -191,7 +192,16 @@ def cleanup_old_buckets(s3_client, base_name, lock_mode=None, retention_days=1):
     :param lock_mode: Lock mode ('GOVERNANCE', 'COMPLIANCE', or None)
     :param retention_days: Age threshold for buckets to be cleaned up (ignored for GOVERNANCE)
     """
+    # Using bulk delete from mgccli, if it fails use boto3
+    try:
+        bulk_delete_bucket_mgccli(base_name)
+    except Exception as e:
+        logging.info(f"bulk delete bucket mgccli errored with: {e}")
+        # Fallback to boto3 for cleanup
+        logging.info(f"Deleting old buckets with prefix '{base_name}'...")
+        delete_bucket_and_objects(s3_client, base_name, lock_mode, retention_days)
 
+def delete_bucket_and_objects(s3_client, base_name, lock_mode, retention_days):
     response = s3_client.list_buckets()
     for bucket in response['Buckets']:
         bucket_name = bucket['Name']
@@ -226,6 +236,7 @@ def cleanup_old_buckets(s3_client, base_name, lock_mode=None, retention_days=1):
                     logging.warning(f"Could not delete bucket '{bucket_name}': {e}")
                 except Exception as e:
                     logging.info(f"get bucket versioning errored with: {e}")
+
 
 def delete_version(s3_client, bucket_name, version, lock_mode):
     """
