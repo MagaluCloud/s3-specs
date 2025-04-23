@@ -3,6 +3,13 @@ name: Tests de Homologação
 on:
   workflow_dispatch:
       inputs:
+        container:
+          description: 'Container to run the tests'
+          type: choice
+          default: 'ghcr.io/magalucloud/s3-specs:tools_latest'
+          options:
+            - 'ghcr.io/magalucloud/s3-specs:tests_latest'
+            - 'ghcr.io/magalucloud/s3-specs:tests_oldest'
         profile:
           description: 'Profile em que os testes serão executados'
           type: choice
@@ -44,7 +51,7 @@ jobs:
       name: "${{ matrix.marker.name }}_1hours.${{ matrix.config.name }}"
       config: ${{ matrix.config.path }}
       flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
-      container: "ghcr.io/magalucloud/s3-specs:tests_${{matrix.tools.value}}"
+      container: ${{ inputs.container }}
       profile: ${{ inputs.profile }}
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
