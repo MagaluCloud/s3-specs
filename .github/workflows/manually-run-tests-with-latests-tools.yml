@@ -18,6 +18,10 @@ on:
             - 'br-ne1-yel'
             - 'br-se1'
             - 'br-ne1'
+        object_key_prefix:
+          description: "Prefixo para identificar os reports gerados no bucket"
+          required: true
+          type: string
 
 jobs:
   run-tests:
@@ -49,7 +53,7 @@ jobs:
     uses: ./.github/workflows/run-tests-with-report.yml
     with:
       name: "${{ matrix.marker.name }}_1hours.${{ matrix.config.name }}"
-      prefix_object_key: "homologacao"
+      prefix_object_key: "homologacao/${{inputs.object_key_prefix}}"
       mark: ${{matrix.marker.test}}
       container: ${{ inputs.container }}
       profile: ${{ inputs.profile }}
