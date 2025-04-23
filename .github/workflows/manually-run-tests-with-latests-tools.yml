@@ -46,11 +46,11 @@ jobs:
         config:
           - path: "../../../params.example.yaml"
             name: "example"
-    uses: ./.github/workflows/run-tests.yml
+    uses: ./.github/workflows/run-tests-with-report.yml
     with:
       name: "${{ matrix.marker.name }}_1hours.${{ matrix.config.name }}"
-      config: ${{ matrix.config.path }}
-      flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
+      prefix_object_key: "homologacao"
+      mark: ${{matrix.marker.test}}
       container: ${{ inputs.container }}
       profile: ${{ inputs.profile }}
     secrets:

@@ -30,6 +30,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Executar testes e gerar relatório PDF e HTML.")
     parser.add_argument("category", choices=CATEGORY_MAPPING.keys(), help="Categoria de testes a executar")
     parser.add_argument("--mark", help="Marcação adicional do pytest", default="")
+    parser.add_argument("--profile", help="Profile a ser executado os testes", default="br-se1")
     return parser.parse_args()
 
 def run_tests(args):
@@ -46,6 +47,8 @@ def run_tests(args):
         f"--json-report-file={json_output}",
         f"--html={html_output}",
         "--self-contained-html",
+        "--profile",
+        f"{args.profile}"
     ]
 
     if args.category != 'full':
