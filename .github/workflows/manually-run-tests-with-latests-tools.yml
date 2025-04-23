@@ -45,6 +45,6 @@ jobs:
       config: ${{ matrix.config.path }}
       flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
       container: "ghcr.io/magalucloud/s3-specs:tests_${{matrix.tools.value}}"
-      profile:
+      profile: ${{ inputs.profile }}
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
