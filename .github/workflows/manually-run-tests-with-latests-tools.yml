@@ -1,0 +1,50 @@
+name: Tests de Homologação
+
+on:
+  workflow_dispatch:
+      inputs:
+        profile:
+          description: 'Profile em que os testes serão executados'
+          type: choice
+          default: 'br-ne1-yel'
+          options:
+            - 'br-ne1-yel'
+            - 'br-se1'
+            - 'br-ne1'
+
+jobs:
+  run-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        tools:
+          - name: latest
+            value: latest
+
+        marker:
+          - test: basic
+            name: basic
+          - test: cold_storage
+            name: cold_storage
+          - test: presign
+            name: presign
+          - test: acl
+            name: acl
+          - test: locking
+            name: locking
+          - test: policy
+            name: policy
+          - test: bucket_versioning
+            name: bucket_versioning
+        config:
+          - path: "../../../params.example.yaml"
+            name: "example"
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      name: "${{ matrix.marker.name }}_1hours.${{ matrix.config.name }}"
+      config: ${{ matrix.config.path }}
+      flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
+      container: "ghcr.io/magalucloud/s3-specs:tests_${{matrix.tools.value}}"
+      profile:
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}
