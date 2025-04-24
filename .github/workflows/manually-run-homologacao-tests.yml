@@ -28,10 +28,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tools:
-          - name: latest
-            value: latest
-
         marker:
           - test: "'basic and not mgc'"
             name: "'basic and not mgc'"
@@ -47,12 +43,9 @@ jobs:
             name: "'policy and not mgc'"
           - test: "'bucket_versioning and not mgc'"
             name: "'bucket_versioning and not mgc'"
-        config:
-          - path: "../../../params.example.yaml"
-            name: "example"
     uses: ./.github/workflows/run-tests-with-report.yml
     with:
-      name: "${{ matrix.marker.name }}_1hours.${{ matrix.config.name }}"
+      name: "${{ matrix.marker.name }}_1hours"
       prefix_object_key: "homologacao/${{inputs.object_key_prefix}}"
       mark: ${{matrix.marker.test}}
       container: ${{ inputs.container }}
