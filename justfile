@@ -20,14 +20,18 @@ setup-profiles:
 _run_tests config_file *pytest_params:
     uv run pytest ./src/s3_specs/docs/*_test.py --config {{config_file}} {{pytest_params}}
 
-#Execute the tests of s3-specs
-tests *pytest_params: setup-profiles
-    just _run_tests "./params.example.yaml" {{pytest_params}}
+_run_tests_with_report category mark = "''":
+    uv run python3 run_tests_and_generate_report.py {{category}} --mark {{mark}}
 
-#Execute the tests of s3-specs and generate a report of the tests after running.
-report category="":
-    just setup-profiles
-    reports/run.sh '{{category}}' ./params.example.yaml ./src/s3_specs/docs/
+
+#Execute the tests of s3-specs
+tests category mark = "" : setup-profiles
+    # just _run_tests "./params.example.yaml" 
+    just _run_tests_with_report {{category}} {{mark}}
+
+#Execute the tests of s3-specs using pytest
+tests-pytest *pytest_params: setup-profiles
+    just _run_tests "./params.example.yaml" {{pytest_params}}
 
 # List known categories (pytest markers)
 categories:
