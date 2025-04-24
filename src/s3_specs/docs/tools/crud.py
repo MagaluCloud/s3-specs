@@ -207,11 +207,23 @@ def delete_bucket(s3_client, bucket_name):
     try:
         response = s3_client.delete_bucket(Bucket=bucket_name)
         logging.info(f"Bucket '{bucket_name}' confirmed as deleted.")
+        return
     except s3_client.exceptions.NoSuchBucket:
         logging.error("No such Bucket")
     except Exception as e:
         logging.error(f"Error deleting bucket {bucket_name}: {e}")
-
+    
+    # if bucket delete does not work, try to delete all objects from the bucket
+    try:
+        delete_objects_multithreaded(s3_client, bucket_name)
+        response = s3_client.delete_bucket(Bucket=bucket_name)
+        logging.info(f"Bucket '{bucket_name}' confirmed as deleted.")
+    except Exception as e:
+        logging.error(f"Error deleting bucket {bucket_name}: {e}")
+        # If the bucket is not empty, it will raise an error
+        logging.error(f"Bucket '{bucket_name}' is not empty. Cannot delete.")
+        raise Exception(f"Bucket '{bucket_name}' is not empty. Cannot delete.")
+    
     return response
 
 # ## Multi-threading
