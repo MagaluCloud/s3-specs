@@ -51,7 +51,7 @@ def skip_based_on_region_marker(s3_client, request):
         logging.info(f"  Região atual do cliente Boto3 ({s3_client.__class__.__name__}): {current_region}")
 
         if current_region not in regions_to_run:
-            skip_message = f"Teste pulado porque a região do cliente ({current_region}) não está na lista de skip do marcador {regions_to_run}"
+            skip_message = f"Teste pulado porque a região do cliente não está na lista de skip do marcador {regions_to_run}"
             logging.info(f"{skip_message}")
             pytest.skip(skip_message)
         else:
