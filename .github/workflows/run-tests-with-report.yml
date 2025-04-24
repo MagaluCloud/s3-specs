@@ -1,0 +1,67 @@
+name: Run Tests With Reports
+
+on:
+    workflow_call:
+      inputs:
+        name: {required: true, type: string, default: "run_test"}
+        prefix_object_key: {required: true, type: string}
+        category: {type: string, default: "full"}
+        mark: {type: string, default: ""}
+        runner: { required: false, type: string, default: "ubuntu-24.04" }
+        container: { required: false, type: string, default: "ghcr.io/magalucloud/s3-specs:tests_oldest" }
+        profile: { required: false, type: string, default: "br-se1" }
+      secrets:
+        PROFILES: { required: true }
+jobs:
+    build:
+        runs-on: ${{ inputs.runner }}
+        container:
+          image: ${{ inputs.container }}
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.head_ref }}
+                  fetch-depth: 0
+
+            - name: Copy pyproject.toml from app
+              run: |
+                cp /app/pyproject.toml .
+
+            - name: Show tools version
+              run: |
+                uv run python -c "import boto3; print(f'boto3 version: {boto3.__version__}')"
+                echo "aws version: $(aws --version)"
+                echo "mgc version: $(mgc --version)"
+                echo "rclone version: $(rclone --version)"
+
+            - name: Format input name
+              shell: bash
+              id: format_name
+              run: |
+                  FORMATTED_NAME="$(echo "${{ inputs.name }}" | sed 's/[^a-zA-Z0-9.]/_/g')"
+
+                  UNIQUE_ID_SUFFIX="${{ github.job }}.$RANDOM"
+                  echo "formatted_name=${FORMATTED_NAME}.${UNIQUE_ID_SUFFIX}" >> "$GITHUB_OUTPUT"
+
+                  HIGH_RES_TIMESTAMP=$(date +'%Y%m%dT%H%M%S%N')
+                  echo "formatted_log_name=${FORMATTED_NAME}.${HIGH_RES_TIMESTAMP}.$RANDOM" >> "$GITHUB_OUTPUT"
+            - name: Configure Profiles
+              run: |
+                echo "${{ secrets.PROFILES }}" > profiles.yaml
+                sha256sum profiles.yaml
+                sha256sum ./bin/configure_profiles.py
+                echo "Configuring Profiles..."
+                uv run python ./bin/configure_profiles.py ./profiles.yaml
+      
+            - name: Run tests ${{ inputs.name }}
+              shell: bash
+              run: |
+                uv run python3 run_tests_and_generate_report.py ${{ inputs.category }} --mark ${{ inputs.mark }} --profile ${{ inputs.profile }}
+            
+            - name: Upload Reports
+              if: always()
+              shell: bash
+              run: |
+                mgc workspace set br-se1
+                mgc os objects upload-dir './reports_pdf/' results-test-do-not-delete/${{inputs.prefix_object_key}}/
