@@ -30,12 +30,13 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Executar testes e gerar relatório PDF e HTML.")
     parser.add_argument("category", choices=CATEGORY_MAPPING.keys(), help="Categoria de testes a executar")
     parser.add_argument("--mark", help="Marcação adicional do pytest", default="")
+    parser.add_argument("--profile", help="Profile a ser executado os testes", default="br-se1")
     return parser.parse_args()
 
 def run_tests(args):
-    category_name = args.category
-    html_output = HTML_REPORTS_DIR / f"{category_name}.html"
-    json_output = HTML_REPORTS_DIR / f"{category_name}_report.json"
+    category_name = f"{args.category}"
+    html_output = HTML_REPORTS_DIR / f"{category_name}_{args.mark}_{args.profile}.html"
+    json_output = HTML_REPORTS_DIR / f"{category_name}_{args.mark}_{args.profile}_report.json"
     
     command = [
         "pytest",
@@ -46,6 +47,8 @@ def run_tests(args):
         f"--json-report-file={json_output}",
         f"--html={html_output}",
         "--self-contained-html",
+        "--profile",
+        f"{args.profile}"
     ]
 
     if args.category != 'full':
@@ -95,7 +98,7 @@ if __name__ == "__main__":
         print(f"Com marcação adicional: {args.mark}")
 
     test_result = run_tests(args)
-    generate_pdf(args.category)
+    generate_pdf(f"{args.category}_{args.mark}_{args.profile}")
     # clean_old_reports()
     create_index_html(HTML_REPORTS_DIR, list(CATEGORY_MAPPING.keys()), CATEGORY_MAPPING)
 
