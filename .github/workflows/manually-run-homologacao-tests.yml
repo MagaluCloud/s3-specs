@@ -1,6 +1,10 @@
 name: Tests de Homologação
 
 on:
+  push:
+    branches:
+      - fix-workflow
+      
   workflow_dispatch:
       inputs:
         container:
