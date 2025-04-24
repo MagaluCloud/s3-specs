@@ -96,12 +96,9 @@ def fixture_bucket_with_one_object_with_lock(s3_client, fixture_versioned_bucket
     try:
         sleep(10)  # Wait for the retention period to expire
         # Delete the object and bucket
-        try:
-            bulk_delete_bucket_mgccli(bucket_name)    
-        except Exception as e:
-            s3_client.delete_object(Bucket=bucket_name, Key=object_key)
-            s3_client.delete_bucket(Bucket=bucket_name)
-            pytest.fail(f"Failed to delete bucket {bucket_name}: {e}")
+        s3_client.delete_object(Bucket=bucket_name, Key=object_key)
+        s3_client.delete_bucket(Bucket=bucket_name)
+        pytest.fail(f"Failed to delete bucket {bucket_name}: {e}")
     except s3_client.exceptions.ClientError as e:
         pytest.fail(f"Failed to clean up bucket {bucket_name} or object {object_key}: {e}")
     except Exception as e:
