@@ -26,7 +26,7 @@ from s3_specs.docs.s3_helpers import(run_example)
 import logging
 
 config = os.getenv("CONFIG", config)
-pytestmark = [pytest.mark.policy, pytest.mark.skip_if_dev]
+pytestmark = [pytest.mark.policy, pytest.mark.skip_if_dev, pytest.mark.homologacao]
 
 policy_dict_template = {
     "Version": "2012-10-17",

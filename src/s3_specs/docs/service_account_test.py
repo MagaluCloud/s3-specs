@@ -9,7 +9,7 @@ from s3_specs.docs.tools.utils import execute_subprocess
 from s3_specs.docs.tools.service_account import profile_name_sa, active_mgc_workspace_sa, get_sa_infos, bucket_with_one_object_and_bucket_policy
 from pathlib import Path # Para lidar com caminhos de arquivo de forma mais robusta
 
-pytestmark = [pytest.mark.service_account, pytest.mark.cli, pytest.mark.skip_if_dev]
+pytestmark = [pytest.mark.service_account, pytest.mark.cli, pytest.mark.skip_if_dev, pytest.mark.homologacao]
 
 commands = [
     pytest.param(

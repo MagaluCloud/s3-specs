@@ -11,7 +11,7 @@ from s3_specs.docs.tools.versioning import fixture_versioned_bucket, fixture_ver
 config = "../params/br-se1.yaml"
 
 # + {"jupyter": {"source_hidden": true}}
-pytestmark = [pytest.mark.bucket_versioning, pytest.mark.cli]
+pytestmark = [pytest.mark.bucket_versioning, pytest.mark.cli, pytest.mark.homologacao]
 
 
 # Acl related tests
