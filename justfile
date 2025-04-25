@@ -18,13 +18,18 @@ setup-profiles:
 
 # Run the tests
 _run_tests config_file *pytest_params:
-    uv run pytest ./src/s3_specs/docs/*_test.py --config {{config_file}} {{pytest_params}}
+    uv run pytest ./src/s3_specs/docs/ --config {{config_file}} {{pytest_params}}
 
 _run_tests_with_report category mark = "''":
     uv run python3 run_tests_and_generate_report.py {{category}} --mark {{mark}}
 
+_run_specific_test_file config_file test_name *pytest_params:
+    uv run pytest ./src/s3_specs/docs/{{test_name}} --config {{config_file}} {{pytest_params}}
 
-#Execute the tests of s3-specs
+_run_dev_tests *pytest_params:
+    uv run pytest ./src/s3_specs/docs/ --config ./params.example.yaml -m '(not consistency) and (not benchmark)' {{pytest_params}} --run-dev 
+
+#Execute the tests of s3-specs generating reports
 tests category mark = "" : setup-profiles
     # just _run_tests "./params.example.yaml" 
     just _run_tests_with_report {{category}} {{mark}}
@@ -32,6 +37,14 @@ tests category mark = "" : setup-profiles
 #Execute the tests of s3-specs using pytest
 tests-pytest *pytest_params: setup-profiles
     just _run_tests "./params.example.yaml" {{pytest_params}}
+
+#Execute a specific test of s3-specs
+test test_name *pytest_params: setup-profiles
+    just _run_specific_test_file "./params.example.yaml" {{test_name}} {{pytest_params}}
+
+#Execute test in dev mode
+dev *pytest_params: setup-profiles
+    just _run_dev_tests {{pytest_params}}
 
 # List known categories (pytest markers)
 categories:

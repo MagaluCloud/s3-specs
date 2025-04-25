@@ -102,7 +102,8 @@ run_example(__name__, "test_create_bucket_invalid_name", config=config)
 @pytest.mark.parametrize("multiple_s3_clients, client_index", [
     ({"number_clients": 2}, 0),
     ({"number_clients": 2}, 1),
-], indirect=["multiple_s3_clients"]) 
+], indirect=["multiple_s3_clients"])
+@pytest.mark.skip_if_dev
 def test_create_bucket_duplicate(multiple_s3_clients, existing_bucket_name, client_index):
     logging.info(existing_bucket_name)
     sessions = multiple_s3_clients

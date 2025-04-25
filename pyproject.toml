@@ -53,6 +53,7 @@ env = ["JUPYTER_PLATFORM_DIRS=1"]
 addopts = "--json-report --json-report-file=reports/report.json --html=reports/report.html --self-contained-html"
 markers = [
     "only_run_in_region(regions): Only run the test in a specific region",
+    "skip_if_dev: Skip the tests if running as dev",
     "acl: Canned ACL (access control list)",
     "locking: Bucket Lock configuration and Object lock retention",
     "policy: Bucket Policy",

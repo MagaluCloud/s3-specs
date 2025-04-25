@@ -32,7 +32,7 @@ from s3_specs.docs.s3_helpers import(
     change_policies_json,
 )
 config = os.getenv("CONFIG", config)
-pytestmark = pytest.mark.policy
+pytestmark = [pytest.mark.policy, pytest.mark.skip_if_dev]
 # -
 
 # Políticas de bucket são descritas por meio de arquivos no formato JSON, que seguem uma gramática
