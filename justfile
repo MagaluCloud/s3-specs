@@ -27,7 +27,7 @@ _run_specific_test_file config_file test_name *pytest_params:
     uv run pytest ./src/s3_specs/docs/{{test_name}} --config {{config_file}} {{pytest_params}}
 
 _run_dev_tests *pytest_params:
-    uv run pytest ./src/s3_specs/docs/ --config ./params.example.yaml -m '(not consistency) and (not benchmark)' {{pytest_params}} --run-dev 
+    uv run pytest ./src/s3_specs/docs/ --config ./params.example.yaml -m '(not consistency) and (not benchmark) and (not mgc)' {{pytest_params}} --run-dev 
 
 #Execute the tests of s3-specs generating reports
 tests category mark = "" : setup-profiles
@@ -44,7 +44,7 @@ test test_name *pytest_params: setup-profiles
 
 #Execute test in dev mode
 dev *pytest_params: setup-profiles
-    just _run_dev_tests -m "not mgc" --tb=short {{pytest_params}}
+    just _run_dev_tests {{pytest_params}}
 
 #Execute homologation tests
 homologate *pytest_params: setup-profiles
