@@ -51,9 +51,9 @@ config = "../params/br-ne1.yaml"
 
 # -
 
-# ### Teste 1: Criar URL Pré-assinada (GET)
+# ### Teste 1: Criar URL Pré-assinada copm mgccli
 #
-# Este teste verifica a criação de URLs pré-assinadas para operações GET.
+# Este teste verifica a criação de URLs pré-assinadas para operações GET e PUT.
 
 # +
 
@@ -70,25 +70,17 @@ operations = [
 commands = [
     pytest.param(
         {
-            "command": "mgc os objects presign --dst {bucket_name}/{object_key} --method {operation} --no-confirm --raw",
+            "command": "mgc os objects presign --dst {bucket_name}/{object_key} --method {operation} --no-confirm --raw --output json",
             "expected": "url"
         },
         marks = pytest.mark.mgc,
         id="mgc-presign"
     ),
-    pytest.param(
-        {
-            "command": "aws s3 presign {bucket_name}/{object_key} --profile {profile_name}",
-            "expected": "url"
-        },
-        marks = pytest.mark.aws,
-        id="aws-presign"
-    ),
 ]
 
 @pytest.mark.parametrize("operation", operations)
 @pytest.mark.parametrize("command", commands)
-def test_generate_presigned_url_cli(
+def test_generate_presigned_url_mgc_cli(
     active_mgc_workspace,
     profile_name,
     fixture_bucket_with_one_object,
@@ -124,23 +116,82 @@ def test_generate_presigned_url_cli(
         assert result is not None, "Presigned URL was not generated"
 
         # Extract the URL from the command output
-        match = re.search(r"(?P<url>https?://[^\s]+)", result.stdout)
+        logging.info(f"Command output: {result.stdout}")
+        match = re.search(r"(?P<url>https?://[^\s|^(\"\'\~)]+)", result.stdout)
+        logging.info(f"Regex match: {match}")
         assert match, "No valid URL found in the command output"
         presigned_url = match.group("url")
 
         # Log the URL for debugging purposes
         logging.info("Validating access via presigned URL")
         
-        # Perform a GET request to the presigned URL
-        response = requests.get(presigned_url)
-        logging.info(f"Request: {response}")
-        # Validate the response status and content
-        assert response.status_code == 200, f"Failed to access presigned URL: Status {response.status_code}"
+        if operation == "GET":
+            # Validate the presigned URL by making a GET request
+            response = requests.get(presigned_url)
+            logging.info(f"Response status code: {response.status_code}")
+            assert response.status_code == 200, f"Failed to access presigned URL: Status {response.status_code}"
+            assert object_key in response.text, f"Content does not contain '{object_key}'"
+        elif operation == "PUT":    
+            # Validate the presigned URL by making a PUT request
+            response = requests.put(presigned_url, data=object_key)
+            logging.info(f"Response status code: {response.status_code}")
+            assert response.status_code == 200, f"Failed to access presigned URL: Status {response.status_code}"
+
     except subprocess.CalledProcessError as e:
         logging.error(f"Command failed with error: {e}")
         pytest.fail(f"Command execution failed: {e}")
 
 run_example(__name__, "test_generate_presigned_url_cli", config=config)
+
+# -
+# ### Teste 2: Criar URL Pré-assinada com AWS CLI do tipo get
+#
+
+@pytest.mark.aws
+def test_generate_presigned_url_aws_cli(
+    active_mgc_workspace,
+    profile_name,
+    fixture_bucket_with_one_object,
+    ):
+    """
+    Test the generation and usage of presigned URLs via CLI commands.
+
+    Parameters:
+    - active_mgc_workspace: Active workspace for MGC.
+    - profile_name: AWS profile name.
+    - fixture_bucket_with_one_object: Fixture providing a bucket and an object.
+    - command: CLI command template for generating presigned URLs.
+    - operation: S3 operation (e.g., GET, PUT).
+    """
+    bucket_name, object_key = fixture_bucket_with_one_object
+    # Testing presigned URL generation
+    command = f"aws s3 presign {bucket_name}/{object_key} --profile {profile_name}"
+    try:
+        result = execute_subprocess(command)
+        logging.info(f"Presigned URL generated: {result}")
+
+        # Validate the presigned URL
+        assert result is not None, "Presigned URL was not generated"
+
+        # Extract the URL from the command output
+        match = re.search(r"(?P<url>https?://[^\s|^(\"\'\~)]+)", result.stdout)
+        assert match, "No valid URL found in the command output"
+        presigned_url = match.group("url")
+
+        # Log the URL for debugging purposes
+        logging.info("Validating access via presigned URL")
+        
+        response = requests.get(presigned_url)
+        logging.info(f"Response status code: {response.status_code}")
+        assert response.status_code == 200, f"Failed to access presigned URL: Status {response.status_code}"
+        assert object_key in response.text, f"Content does not contain '{object_key}'"
+
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Command failed with error: {e}")
+        pytest.fail(f"Command execution failed: {e}")
+
+
+
 
 # ## Referências
 #
