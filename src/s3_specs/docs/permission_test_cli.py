@@ -7,7 +7,7 @@ from s3_specs.docs.tools.permission import fixture_public_bucket, fixture_privat
 from botocore.exceptions import ClientError
 from s3_specs.docs.s3_helpers import get_tenants
 
-pytestmark = pytest.mark.acl
+pytestmark = [pytest.mark.acl, pytest.mark.homologacao]
 config = "../params/br-se1.yaml"
 logging.basicConfig(level=logging.INFO)
 
