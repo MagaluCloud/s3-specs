@@ -43,7 +43,7 @@ import yaml
 from pathlib import Path
 from s3_specs.docs.s3_helpers import run_example
 
-pytestmark = pytest.mark.bucket_sharing
+pytestmark = [pytest.mark.bucket_sharing, pytest.mark.presign]
 config = os.getenv("CONFIG", config)
 
 def get_second_profile_boto3_client(profile_name, service='s3'):
