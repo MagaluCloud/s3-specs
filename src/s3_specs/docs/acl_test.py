@@ -12,7 +12,7 @@ from botocore.exceptions import ClientError
 from s3_specs.docs.s3_helpers import update_existing_keys
 import logging
 
-pytestmark = pytest.mark.acl
+pytestmark = [pytest.mark.acl, pytest.mark.skip_if_dev, pytest.mark.homologacao]
 
 # # OBJECT ACL
 

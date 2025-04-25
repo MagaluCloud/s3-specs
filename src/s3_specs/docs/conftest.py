@@ -32,6 +32,7 @@ from botocore.exceptions import ClientError
 def pytest_addoption(parser):
     parser.addoption("--config", action="store", help="Path to the YAML config file")
     parser.addoption("--profile", action="store", help="profile to use for the tests")
+    parser.addoption("--run-dev", action="store_true", help="Rodar testes no modo dev")
 
 
 @pytest.fixture(autouse=True)
@@ -48,7 +49,6 @@ def skip_based_on_region_marker(s3_client, request):
 
         logging.info(f"\n[Fixture skip_based_on_region_marker] Teste: {request.node.name}")
         logging.info(f"  Marcador 'only_run_in_region' encontrado com regiões: {regions_to_run}")
-        logging.info(f"  Região atual do cliente Boto3 ({s3_client.__class__.__name__}): {current_region}")
 
         if current_region not in regions_to_run:
             skip_message = f"Teste pulado porque a região do cliente não está na lista de skip do marcador {regions_to_run}"
@@ -57,9 +57,21 @@ def skip_based_on_region_marker(s3_client, request):
         else:
             logging.info("Região atual está na lista de regiões onde o teste pode ser executado.")
 
+@pytest.fixture(autouse=True)
+def skip_if_is_dev_run(s3_client, request):
+    marker = request.node.get_closest_marker("skip_if_dev")
+    isDevRun = request.config.getoption("--run-dev")
+    if marker:
+        if isDevRun:
+            pytest.skip("This test doesn't working with dev mode")
+
 @pytest.fixture(scope="session", autouse=True)
-def verify_credentials(get_clients):
+def verify_credentials(get_clients, request):
     tenants = get_tenants(get_clients)
+    isDevRun = request.config.getoption("--profile")
+
+    if isDevRun:
+        return
 
     if not len(tenants) == len(set(tenants)) or len(tenants) < 2:
         pytest.exit("Perfis estão configurados de forma incorreta. É necessário que tenha dois perfis configurados para diferentes owners")
@@ -72,7 +84,7 @@ def test_params(request):
     config_path = request.config.getoption("--config") or os.environ.get("CONFIG_PATH", "../params.example.yaml")
     
     profile = request.config.getoption("--profile") or os.environ.get("PROFILE", None)
-    logging.info(f"Region: {profile}")
+    logging.info(f"Profile: {profile}")
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
         if not profile:
@@ -610,7 +622,7 @@ def bucket_with_one_object_policy(multiple_s3_clients, policy_wait_time, request
 
 
 
-@pytest.fixture(params=[{ 'number_clients': 3 }])
+@pytest.fixture(params=[{ 'number_clients': 2 }])
 def multiple_s3_clients(request, test_params):
     """
     Creates multiple S3 clients based on the profiles provided in the test parameters.

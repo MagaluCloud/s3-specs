@@ -2,6 +2,8 @@ custom-mgc/*
 
 params.yaml
 
+temp*
+
 # Ignore any output folder created on run time
 **output/*.parquet
 output/processed.csv

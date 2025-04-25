@@ -7,6 +7,7 @@ import uuid
 from tqdm import tqdm
 import os
 
+pytestmark = [pytest.mark.skip_if_dev]
 
 size_list = [
     {'size': 10, 'unit': 'mb'},

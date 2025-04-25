@@ -45,7 +45,7 @@ import requests
 import re
 
 # + {"tags": ["parameters"]}[
-pytestmark = [pytest.mark.bucket_sharing, pytest.mark.presign]
+pytestmark = [pytest.mark.bucket_sharing, pytest.mark.presign, pytest.mark.homologacao]
 config = "../params/br-ne1.yaml"
 
 

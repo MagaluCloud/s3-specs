@@ -23,8 +23,10 @@ import os
 import pytest
 from botocore.exceptions import ClientError
 from s3_specs.docs.s3_helpers import(run_example)
+import logging
+
 config = os.getenv("CONFIG", config)
-pytestmark = pytest.mark.policy
+pytestmark = [pytest.mark.policy, pytest.mark.skip_if_dev, pytest.mark.homologacao]
 
 policy_dict_template = {
     "Version": "2012-10-17",
@@ -126,6 +128,7 @@ def test_allowed_policy_operations(multiple_s3_clients, bucket_with_one_object_p
     
     method = getattr(allowed_client, boto3_action)
     response = method(**kwargs)
+    logging.info(f"REQUEST RESPONSE: {response}")
     assert response['ResponseMetadata']['HTTPStatusCode'] == expected
 run_example(__name__, "test_allowed_policy_operations", config=config)
 
