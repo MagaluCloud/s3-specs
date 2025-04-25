@@ -44,7 +44,7 @@ test test_name *pytest_params: setup-profiles
 
 #Execute test in dev mode
 dev *pytest_params: setup-profiles
-    just _run_dev_tests {{pytest_params}}
+    just _run_dev_tests -m "not mgc" --tb=short {{pytest_params}}
 
 #Execute homologation tests
 homologate *pytest_params: setup-profiles
