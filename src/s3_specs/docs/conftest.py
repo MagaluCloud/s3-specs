@@ -610,7 +610,7 @@ def bucket_with_one_object_policy(multiple_s3_clients, policy_wait_time, request
 
 
 
-@pytest.fixture(params=[{ 'number_clients': 3 }])
+@pytest.fixture(params=[{ 'number_clients': 2 }])
 def multiple_s3_clients(request, test_params):
     """
     Creates multiple S3 clients based on the profiles provided in the test parameters.
