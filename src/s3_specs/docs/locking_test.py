@@ -52,7 +52,7 @@ from s3_specs.docs.tools.crud import fixture_bucket_with_name
 from s3_specs.docs.tools.locking import bucket_with_lock_enabled
 
 config = os.getenv("CONFIG", config)
-pytestmark = pytest.mark.locking
+pytestmark = [pytest.mark.locking, pytest.mark.homologacao]
 # -
 
 # ### Criando um novo bucket, já com locking habilitado

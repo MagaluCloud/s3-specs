@@ -10,7 +10,7 @@ import os
 
 config = "../params/br-se1.yaml"
 
-pytestmark = [pytest.mark.big_objects, pytest.mark.cli]
+pytestmark = [pytest.mark.big_objects, pytest.mark.cli, pytest.mark.skip_if_dev]
 
 
 size_list = [

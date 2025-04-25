@@ -32,7 +32,7 @@ from s3_specs.docs.s3_helpers import (
     get_object_retention_with_determination,
 )
 from datetime import datetime, timedelta, timezone
-pytestmark = [pytest.mark.locking, pytest.mark.cli]
+pytestmark = [pytest.mark.locking, pytest.mark.cli, pytest.mark.homologacao]
 # -
 
 # ## Exemplos
