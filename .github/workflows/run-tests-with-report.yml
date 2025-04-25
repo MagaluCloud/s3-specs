@@ -1,14 +1,13 @@
-name: Run Tests
+name: Run Tests With Reports
 
 on:
     workflow_call:
       inputs:
         name: {required: true, type: string, default: "run_test"}
-        tests: { required: false, type: string, default: "*_test.py"}
-        config: { required: true, type: string }
-        flags: { required: true, type: string }
+        prefix_object_key: {required: true, type: string}
+        category: {type: string, default: "full"}
+        mark: {type: string, default: ""}
         runner: { required: false, type: string, default: "ubuntu-24.04" }
-        mgc_version: { required: false, type: string, default: "0.34.0" }
         container: { required: false, type: string, default: "ghcr.io/magalucloud/s3-specs:tests_oldest" }
         profile: { required: false, type: string, default: "br-se1" }
       secrets:
@@ -58,14 +57,11 @@ jobs:
             - name: Run tests ${{ inputs.name }}
               shell: bash
               run: |
-                cd src/s3_specs/docs
-                mkdir -p /s3-specs/artifact/
-                set -o pipefail
-                uv run pytest ${{inputs.tests}}  --config ${{ inputs.config }} --profile ${{ inputs.profile }} ${{ inputs.flags }} | tee /s3-specs/artifact/actions_pytest_output_${{ steps.format_name.outputs.formatted_log_name }}.log
-      
-            - name: Upload Artifact
+                uv run python3 run_tests_and_generate_report.py ${{ inputs.category }} --mark ${{ inputs.mark }} --profile ${{ inputs.profile }}
+            
+            - name: Upload Reports
               if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                name: output_artifact_${{ steps.format_name.outputs.formatted_name }}
-                path: "/s3-specs/artifact/actions_pytest_output_${{ steps.format_name.outputs.formatted_log_name }}.log"
+              shell: bash
+              run: |
+                mgc workspace set br-se1
+                mgc os objects upload-dir './reports_pdf/' results-test-do-not-delete/${{inputs.prefix_object_key}}/

@@ -46,7 +46,7 @@ from s3_specs.docs.s3_helpers import run_example
 from botocore.exceptions import ClientError
 from s3_specs.docs.utils.cold_storage import fixture_multipart_upload_cold, calculate_checksum_fixture
 
-pytestmark = pytest.mark.cold_storage
+pytestmark = [pytest.mark.cold_storage, pytest.mark.cli, pytest.mark.only_run_in_region("br-se1")]
 # -
 
 # ## Exemplos

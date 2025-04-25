@@ -34,6 +34,29 @@ def pytest_addoption(parser):
     parser.addoption("--profile", action="store", help="profile to use for the tests")
 
 
+@pytest.fixture(autouse=True)
+def skip_based_on_region_marker(s3_client, request):
+    marker = request.node.get_closest_marker("only_run_in_region")
+    if marker:
+        regions_to_run = []
+        if marker.args:
+            regions_to_run.extend(marker.args)
+        if not regions_to_run:
+            logging.warning("Marcador 'skip_in_region' usado sem especificar regiões.")
+            return 
+        current_region = s3_client.meta.region_name
+
+        logging.info(f"\n[Fixture skip_based_on_region_marker] Teste: {request.node.name}")
+        logging.info(f"  Marcador 'only_run_in_region' encontrado com regiões: {regions_to_run}")
+        logging.info(f"  Região atual do cliente Boto3 ({s3_client.__class__.__name__}): {current_region}")
+
+        if current_region not in regions_to_run:
+            skip_message = f"Teste pulado porque a região do cliente não está na lista de skip do marcador {regions_to_run}"
+            logging.info(f"{skip_message}")
+            pytest.skip(skip_message)
+        else:
+            logging.info("Região atual está na lista de regiões onde o teste pode ser executado.")
+
 @pytest.fixture(scope="session", autouse=True)
 def verify_credentials(get_clients):
     tenants = get_tenants(get_clients)
@@ -276,6 +299,34 @@ def bucket_with_many_objects(request, s3_client):
         delete_object_and_wait(s3_client, bucket_name, object_key)
     delete_bucket_and_wait(s3_client, bucket_name)
 
+
+@pytest.fixture(params=[{
+    'object_prefix': "",
+    'object_key_list': ['test-object-1.txt', 'test-object-2.txt']
+}],
+scope="session"
+)
+def bucket_with_many_objects_session(request, s3_client):
+    # this fixture accepts an optional request.param['object_key_list'] with a list of custom key names
+    object_key_list = request.param['object_key_list']
+    # and a string prefix to prepend on all objects
+    object_prefix = request.param.get('object_prefix', "")
+
+    bucket_name = generate_unique_bucket_name(base_name='fixture-bucket-with-many-objects')
+    create_bucket_and_wait(s3_client, bucket_name)
+
+    content = b"Sample content for testing presigned URLs."
+    for object_key in object_key_list:
+        put_object_and_wait(s3_client, bucket_name, f"{object_prefix}{object_key}", content)
+
+    # Yield the bucket name and object details to the test
+    yield bucket_name, object_prefix, content, object_key_list
+
+    logging.info(f"object keys list: {object_key_list}")
+    # Teardown: Delete the object and bucket after the test
+    for object_key in object_key_list:
+        delete_object_and_wait(s3_client, bucket_name, object_key)
+    delete_bucket_and_wait(s3_client, bucket_name)
 
 
 @pytest.fixture
