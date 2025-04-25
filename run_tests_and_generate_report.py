@@ -8,6 +8,7 @@ from report_generators import generate_pdf_report, create_index_html
 
 CATEGORY_MAPPING = {
     'full': '',
+    'homologacao': 'homologacao',
     'acl': 'acl',
     'locking': 'locking',
     'policy': 'policy',

@@ -46,6 +46,10 @@ test test_name *pytest_params: setup-profiles
 dev *pytest_params: setup-profiles
     just _run_dev_tests {{pytest_params}}
 
+#Execute homologation tests
+homologate *pytest_params: setup-profiles
+    just _run_tests_with_report homologacao
+
 # List known categories (pytest markers)
 categories:
   just _extract_list "pyproject.toml" "tool.pytest.ini_options" "markers"
