@@ -191,7 +191,7 @@ commands = [
 @pytest.mark.parametrize(
     "fixture_versioned_bucket, cmd_template",
     [
-        pytest.param(acl.values, ''.join(cmd.values), id=f"{cmd.id}-{acl.id}")
+        pytest.param(acl.values, ''.join(cmd.values), id=f"{cmd.id}-{acl.id}", marks=[*acl.marks, *cmd.marks])
         for acl, cmd in product(acl_list, commands)
     ],
     indirect=['fixture_versioned_bucket']
