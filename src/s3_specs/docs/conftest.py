@@ -68,7 +68,7 @@ def skip_if_is_dev_run(s3_client, request):
 @pytest.fixture(scope="session", autouse=True)
 def verify_credentials(get_clients, request):
     tenants = get_tenants(get_clients)
-    isDevRun = request.config.getoption("--profile")
+    isDevRun = request.config.getoption("--run-dev")
 
     if isDevRun:
         return
