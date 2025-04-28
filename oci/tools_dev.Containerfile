@@ -48,7 +48,7 @@ RUN curl -Lo rclone.zip "https://downloads.rclone.org/v${RCLONE_VERSION}/rclone-
 
 
 # Install MGC CLI DEV on branch main
-RUN git clone --single-branch --branch rafael/custom-query-string-encoder https://github.com/MagaluCloud/magalu.git mgc-cli && \
+RUN git clone --single-branch --branch folkzb-remove-region-enum https://github.com/folkzb/magalu.git mgc-cli && \
     cd mgc-cli/mgc/cli/ && \
     go install && \
     go build -o mgc && \
