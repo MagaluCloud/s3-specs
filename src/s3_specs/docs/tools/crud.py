@@ -1,8 +1,7 @@
 import logging
 import pytest
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from s3_specs.docs.tools.utils import generate_valid_bucket_name, convert_unit
-from s3_specs.docs.s3_helpers import generate_unique_bucket_name
+from s3_specs.docs.tools.utils import generate_valid_bucket_name, convert_unit, execute_subprocess
 from boto3.s3.transfer import TransferConfig
 from botocore.exceptions import BotoCoreError, ClientError
 
@@ -180,6 +179,20 @@ def delete_object(s3_client, bucket_name, object_key):
     except Exception as e:
         logging.error(f"Error deleting object {object_key}: {e}")
 
+def bulk_delete_bucket_mgccli(bucket_name):
+    """
+    Delete all objects from a bucket using the mgccli command line tool
+    :param s3_client: boto3 s3 client
+    :param bucket_name: str: name of the bucket
+    :return: HTTPStatusCode from boto3 delete_object
+    """
+    command = f"mgc os buckets delete {bucket_name} --recursive --raw --no-confirm"
+
+    try:
+        _ = execute_subprocess(command)       
+        logging.info(f"Deleted all objects from bucket: {bucket_name}")
+    except Exception as e:
+        logging.error(f"Error deleting objects from bucket {bucket_name}: {e}")
 
 def delete_bucket(s3_client, bucket_name):
     """
@@ -194,11 +207,23 @@ def delete_bucket(s3_client, bucket_name):
     try:
         response = s3_client.delete_bucket(Bucket=bucket_name)
         logging.info(f"Bucket '{bucket_name}' confirmed as deleted.")
+        return
     except s3_client.exceptions.NoSuchBucket:
         logging.error("No such Bucket")
     except Exception as e:
         logging.error(f"Error deleting bucket {bucket_name}: {e}")
-
+    
+    # if bucket delete does not work, try to delete all objects from the bucket
+    try:
+        delete_objects_multithreaded(s3_client, bucket_name)
+        response = s3_client.delete_bucket(Bucket=bucket_name)
+        logging.info(f"Bucket '{bucket_name}' confirmed as deleted.")
+    except Exception as e:
+        logging.error(f"Error deleting bucket {bucket_name}: {e}")
+        # If the bucket is not empty, it will raise an error
+        logging.error(f"Bucket '{bucket_name}' is not empty. Cannot delete.")
+        raise Exception(f"Bucket '{bucket_name}' is not empty. Cannot delete.")
+    
     return response
 
 # ## Multi-threading
@@ -368,7 +393,12 @@ def fixture_bucket_with_name(s3_client, request):
 
     yield bucket_name
 
-    delete_objects_multithreaded(s3_client, bucket_name)
+    # Trying to use bulk delete, use regular delete if it fails
+    try:
+        bulk_delete_bucket_mgccli(bucket_name)
+    except Exception as e:
+        logging.error(f"Bulk delete failed: {e}, deleting objects one by one")
+        delete_objects_multithreaded(s3_client, bucket_name)
     delete_bucket(s3_client, bucket_name)
 
 @pytest.fixture
@@ -435,4 +465,9 @@ def fixture_multiple_buckets(request, s3_client):
     yield bucket_names
 
     for bucket_name in bucket_names:
-        delete_bucket(s3_client, bucket_name)
+        try:
+            bulk_delete_bucket_mgccli(bucket_name)
+        except Exception as e:
+            logging.error(f"Bulk delete failed: {e}, deleting objects one by one")
+            delete_objects_multithreaded(s3_client, bucket_name)
+            delete_bucket(s3_client, bucket_name)
