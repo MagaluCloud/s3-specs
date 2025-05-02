@@ -26,6 +26,7 @@ on:
             - 'ghcr.io/magalucloud/s3-specs:tests_latest'
             - 'ghcr.io/magalucloud/s3-specs:tests_nightly'
             - 'ghcr.io/magalucloud/s3-specs:tests_oldest'
+            - 'ghcr.io/magalucloud/s3-specs:tests_dev'
 
         profile:
           description: 'Region to use for the tests'
