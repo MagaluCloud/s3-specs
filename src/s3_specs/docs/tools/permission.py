@@ -1,3 +1,4 @@
+import json
 import pytest
 import logging
 import subprocess
@@ -55,3 +56,18 @@ def active_mgc_workspace_second(profile_name_second, mgc_path):
     logging.info(f"mcg workspace set stdout: {result.stdout}")
     return profile_name_second
 
+def generate_policy(effect, principals, actions, resources):
+    Statement = []
+    Statement.append({
+        'Effect': effect,
+        'Principal': principals,
+        'Action': actions,
+        'Resource': resources,
+    })
+    return json.dumps(
+        {
+            'Version': '2012-10-17',
+            'Statement': Statement,
+        },
+        separators=(',', ':'),
+    )

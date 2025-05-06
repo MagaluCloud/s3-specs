@@ -658,8 +658,19 @@ def session_test_params(request):
     Loads test parameters from a config file or environment variable.
     """
     config_path = request.config.getoption("--config") or os.environ.get("CONFIG_PATH", "../params.example.yaml")
+    
+    profile = request.config.getoption("--profile") or os.environ.get("PROFILE", None)
+    logging.info(f"Profile: {profile}")
     with open(config_path, "r") as f:
-        return yaml.safe_load(f)
+        config = yaml.safe_load(f)
+        if not profile:
+            return config
+        sufix = ["", "-second", "-sa"]
+        for index, profile_index in enumerate(config["profiles"]):
+            if "profile_name" in profile_index and index < 3:
+                profile_index["profile_name"] = f"{profile}{sufix[index]}"
+        
+        return config
 
 @pytest.fixture(scope="session")
 def session_default_profile(session_test_params):
