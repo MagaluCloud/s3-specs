@@ -63,44 +63,65 @@ def create_bucket(owner, lock_enabled=False):
         logging.info(f"Error during bucket creation -> {e}")
         pytest.fail("Error during bucket creation")
 
-@pytest.fixture
-def create_bucket_with_all_permissions_for_second_account(request, multiple_s3_clients):
-    owner, second = multiple_s3_clients
-
-    permission = request.param
-
-    owner_tenant, second_tenant = get_tenants([owner, second])
-
-    logging.info(f"Owner Tenant: {owner_tenant}")
-    logging.info(f"Second Tenant: {second_tenant}")
-
-    bucket_name = create_bucket(owner)
-    
-    if permission in ["both", "acl"]:
-        response = owner.put_bucket_acl(Bucket=bucket_name, GrantFullControl=f'id={second_tenant}')
-        status_code = response.get('ResponseMetadata', {}).get('HTTPStatusCode', None)
-        assert status_code == 200, f"{status_code} should be 200"
-        
-    if permission in ["both", "policy"]:
-        bucket_policy = generate_policy(effect='Allow', principals=second_tenant, actions='s3:*', resources=f'{bucket_name}/*')
-
-        response = owner.put_bucket_policy(Bucket=bucket_name, Policy=bucket_policy)
-        status_code = response.get('ResponseMetadata', {}).get('HTTPStatusCode', None)
-        assert status_code == 204, f"{status_code} should be 204"
-
-
-    logging.info(f"Waiting if second user can see the bucket {bucket_name}")
-    waiter = second.get_waiter('bucket_exists')
-    waiter.wait(
-        Bucket=bucket_name,
-        WaiterConfig={
-            'Delay': 60
-        }
-    )
-
-    response = second.put_object(Bucket=bucket_name, Key='test.txt', Body='teste put object')
+def assertStatusCode(response, target_status_code):
     status_code = response.get('ResponseMetadata', {}).get('HTTPStatusCode', None)
-    logging.info(f"Put object using second user got {status_code} as status code")
-    assert status_code == 200, f"{status_code} should be 200"
+    assert status_code == target_status_code, f"{status_code} should be {target_status_code}"
+        
 
-    return bucket_name
+@pytest.fixture
+def setup_bucket(request, multiple_s3_clients):
+    owner, second = multiple_s3_clients
+    owner_tenant, second_tenant = get_tenants([owner, second])
+    
+    test_args = request.node.callspec.params
+
+    permission = test_args.get("permission")
+    state = test_args.get("state")
+    access = test_args.get("access")
+    lock = test_args.get("lock")
+
+    bucket_name = create_bucket(owner, lock)
+
+    if state == "cold":
+        response = owner.put_object(
+            Bucket=bucket_name,
+            Key="teste.txt",
+            Body="teste", 
+            StorageClass="GLACIER_IR"
+        )
+        assertStatusCode(response, 200)
+    
+    elif state == "multipart":
+        response = owner.create_multipart_upload(
+            Bucket=bucket_name,
+            Key="test.txt"
+        )
+
+        assertStatusCode(response, 200)
+
+        response_upload_part = owner.upload_part(
+            Bucket=bucket_name,
+            Key="test.txt",
+            Body=b"A"*1024*1024*7,
+            PartNumber=1,
+            UploadId = response['UploadId'],
+        )
+
+        assertStatusCode(response_upload_part, 200)
+
+    if access != "owner":
+        if permission == "acl":
+            response = owner.put_bucket_acl(Bucket=bucket_name, GrantFullControl=f'id={second_tenant}')
+            assertStatusCode(response, 200)
+        else:
+            bucket_policy = generate_policy(effect='Allow', principals=second_tenant, actions='s3:*', resources=bucket_name)
+            response = owner.put_bucket_policy(Bucket=bucket_name, Policy=bucket_policy)
+            assertStatusCode(response, 204)
+    
+
+    yield bucket_name
+
+    try:
+        owner.delete_bucket(Bucket=bucket_name)
+    except Exception as e:
+        logging.info(f"Error during delete: {e}")
