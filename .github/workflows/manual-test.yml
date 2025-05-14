@@ -28,9 +28,13 @@ on:
             - 'ghcr.io/magalucloud/s3-specs:tests_oldest'
 
         profile:
-          description: 'Region to use for the tests'
-          default: 'br-se1'
-          required: false
+          description: 'Profile em que os testes serão executados'
+          type: choice
+          default: 'homologacao'
+          options:
+            - 'homologacao'
+            - 'br-se1'
+            - 'br-ne1'
 jobs:
   run-tests:
     uses: ./.github/workflows/run-tests.yml
