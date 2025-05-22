@@ -47,6 +47,8 @@ jobs:
             name: "'policy and not mgc'"
           - test: "'bucket_versioning and not mgc'"
             name: "'bucket_versioning and not mgc'"
+          - test: "'bulk_delete'"
+            name: "'bulk_delete'"
         config:
           - path: "../../../params.example.yaml"
             name: "example"
