@@ -96,7 +96,8 @@ def setup_bucket(request, multiple_s3_clients):
             Bucket=bucket_name,
             Key="test.txt"
         )
-
+        uploadId = response['UploadId']
+        logging.info(f"UploadId: {uploadId}")
         assertStatusCode(response, 200)
 
         part1 = b"A"*1024*1024*7
@@ -108,7 +109,7 @@ def setup_bucket(request, multiple_s3_clients):
             Key="test.txt",
             Body=part1,
             PartNumber=1,
-            UploadId = response['UploadId'],
+            UploadId = uploadId,
         )
         parts.append({'ETag': response_upload_part['ETag'], 'PartNumber': 1})
 
@@ -119,7 +120,7 @@ def setup_bucket(request, multiple_s3_clients):
             Key="test.txt",
             Body=part2,
             PartNumber=2,
-            UploadId = response['UploadId'],
+            UploadId = uploadId,
         )
         parts.append({'ETag': response_upload_part['ETag'], 'PartNumber': 2})
 
@@ -127,9 +128,9 @@ def setup_bucket(request, multiple_s3_clients):
 
         response_complete_multipart = owner.complete_multipart_upload(
             Bucket=bucket_name,
-            UploadId = response['UploadId'],
+            UploadId = uploadId,
             MultipartUpload={'Parts': parts},
-            Key="teste.txt"
+            Key="test.txt"
         )
 
         assertStatusCode(response_complete_multipart, 200)

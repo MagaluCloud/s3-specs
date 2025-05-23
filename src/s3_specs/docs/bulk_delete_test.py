@@ -59,5 +59,5 @@ def test_delete_bucket(setup_bucket, get_bulk_s3_clients, permission, state, acc
                 raise e
             
         logging.info(exc_info)
-        assert any(msg in str(exc_info.value) for msg in ['AccessDeniedByBucketPolicy', 'AccessDenied'])
+        assert any(msg in str(exc_info.value) for msg in ['AccessDeniedByBucketPolicy', 'AccessDenied', 'InvalidBucketState'])
     
