@@ -10,6 +10,7 @@ CATEGORY_MAPPING = {
     'full': '',
     'homologacao': 'homologacao',
     'acl': 'acl',
+    'quick': 'quick',
     'locking': 'locking',
     'policy': 'policy',
     'cold storage': 'cold storage',

@@ -5,7 +5,7 @@ import logging
 from s3_specs.docs.tools.bulk_delete import setup_bucket, get_bulk_s3_clients, create_bucket
 import itertools
 
-pytestmark = [pytest.mark.bulk_delete, pytest.mark.skip_if_dev, pytest.mark.homologacao]
+pytestmark = [pytest.mark.bulk_delete, pytest.mark.quick, pytest.mark.skip_if_dev, pytest.mark.homologacao]
 
 permissions = [pytest.param("acl", id="with-acl"), pytest.param("policy", id="with-policy")]
 states = [

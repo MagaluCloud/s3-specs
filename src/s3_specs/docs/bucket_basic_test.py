@@ -25,7 +25,7 @@ import secrets
 import uuid
 import botocore
 
-pytestmark = [pytest.mark.basic, pytest.mark.homologacao]
+pytestmark = [pytest.mark.basic, pytest.mark.homologacao, pytest.mark.quick]
 config = os.getenv("CONFIG", config)
 # -
 

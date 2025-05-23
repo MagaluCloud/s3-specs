@@ -13,7 +13,7 @@ from s3_specs.docs.tools.locking import bucket_with_lock_enabled, fixture_bucket
 
 config = "../params/br-se1.yaml"
 
-pytestmark = [pytest.mark.locking, pytest.mark.cli, pytest.mark.homologacao]
+pytestmark = [pytest.mark.locking, pytest.mark.quick, pytest.mark.cli, pytest.mark.homologacao]
 
 ## # Bucket locking
 object_lock_json = json.dumps({
