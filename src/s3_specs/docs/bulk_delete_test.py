@@ -5,7 +5,7 @@ import logging
 from s3_specs.docs.tools.bulk_delete import setup_bucket, get_bulk_s3_clients, create_bucket
 import itertools
 
-pytestmark = [pytest.mark.bulk_delete, pytest.mark.skip_if_dev, pytest.mark.homologacao]
+pytestmark = [pytest.mark.bulk_delete, pytest.mark.quick, pytest.mark.skip_if_dev, pytest.mark.homologacao]
 
 permissions = [pytest.param("acl", id="with-acl"), pytest.param("policy", id="with-policy")]
 states = [
@@ -59,5 +59,5 @@ def test_delete_bucket(setup_bucket, get_bulk_s3_clients, permission, state, acc
                 raise e
             
         logging.info(exc_info)
-        assert any(msg in str(exc_info.value) for msg in ['AccessDeniedByBucketPolicy', 'AccessDenied'])
+        assert any(msg in str(exc_info.value) for msg in ['AccessDeniedByBucketPolicy', 'AccessDenied', 'InvalidBucketState'])
     

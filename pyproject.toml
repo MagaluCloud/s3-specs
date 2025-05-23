@@ -68,7 +68,7 @@ markers = [
     "big_objects: Tests with files bigger than 5 mb",
     "consistency: Tests for measure consistency time",
     "benchmark: Tests for benchmark",
-    "rapid: quick expected execution magnitude",
+    "quick: quick expected execution magnitude",
     "regular: regular time expected execution magnitude",
     "slow: slow expected execution magnitude",
     "mgc: mgc cli",

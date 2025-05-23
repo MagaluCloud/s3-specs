@@ -40,7 +40,7 @@ import subprocess
 from shlex import split
 from s3_specs.docs.s3_helpers import run_example
 
-pytestmark = [pytest.mark.cli, pytest.mark.homologacao]
+pytestmark = [pytest.mark.cli, pytest.mark.quick, pytest.mark.homologacao]
 config = os.getenv("CONFIG", config)
 # -
 
