@@ -236,7 +236,7 @@ def test_multipart_upload_with_cold_storage_class(s3_client, existing_bucket_nam
     assert len(list_parts_response) == 2, "Expected list part return has the same size of interaction index"
 
     list_parts_etag = [part.get("ETag") for part in list_parts_response]
-    assert response_part.get("ETag") in lis, pytest.mark.quick
+    assert response_part.get("ETag") in list_parts_etag, pytest.mark.quick
     response = s3_client.complete_multipart_upload(
         Bucket=bucket_name,
         Key=object_key,
