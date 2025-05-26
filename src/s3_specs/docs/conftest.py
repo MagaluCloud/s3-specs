@@ -6,6 +6,8 @@ import yaml
 import logging
 import subprocess
 import shutil
+from s3_specs.docs.tools.versioning import *
+from s3_specs.docs.tools.locking import *
 from s3_specs.docs.tools.utils import get_clients
 from s3_specs.docs.s3_helpers import (
     generate_unique_bucket_name,
