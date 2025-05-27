@@ -310,7 +310,6 @@ commands = [
         )
         for cmd in commands
     ],
-    # versioned_bucket_with_one_object depends on fixture_versioned_bucket which asks for values
     indirect=['bucket_with_lock_enabled']
 ) 
 # TODO Eventual inconsistency when getting the object locking
