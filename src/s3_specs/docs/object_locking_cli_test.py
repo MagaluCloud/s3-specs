@@ -299,7 +299,7 @@ commands = [
 ]
 
 @pytest.mark.parametrize(
-    "fixture_versioned_bucket, cmd_template, expected",
+    "bucket_with_lock_enabled, cmd_template, expected",
     [
         pytest.param(
             "private",
@@ -310,8 +310,7 @@ commands = [
         )
         for cmd in commands
     ],
-    # versioned_bucket_with_one_object depends on fixture_versioned_bucket which asks for values
-    indirect=['fixture_versioned_bucket']
+    indirect=['bucket_with_lock_enabled']
 ) 
 # TODO Eventual inconsistency when getting the object locking
 def test_unset_bucket_lock_cli(s3_client, active_mgc_workspace,  bucket_with_lock_enabled, profile_name, cmd_template, expected):
@@ -320,7 +319,7 @@ def test_unset_bucket_lock_cli(s3_client, active_mgc_workspace,  bucket_with_loc
     
     Args:
         s3_client: Boto3 S3 client fixture
-        fixture_versioned_bucket: Fixture providing a versioned bucket
+        bucket_with_lock_enabled: Fixture providing a versioned bucket
         profile_name: AWS profile name fixture
         cmd_template: CLI command template
         expected: Expected output or error

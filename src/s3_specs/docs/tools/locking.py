@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 from time import sleep
 
 @pytest.fixture
-def bucket_with_lock_enabled(s3_client, fixture_versioned_bucket):
+def bucket_with_lock_enabled(s3_client, request):
     """
     Fixture to create a bucket with object lock enabled and clean up after the test.
 
@@ -19,22 +19,23 @@ def bucket_with_lock_enabled(s3_client, fixture_versioned_bucket):
     Yields:
         str: The name of the bucket with object lock enabled.
     """
-    bucket_name = fixture_versioned_bucket
+    bucket_name = generate_valid_bucket_name(request.node.name.replace("_", "-"))
 
     try:
         # Enable object lock on the bucket
-        s3_client.put_object_lock_configuration(
-            Bucket=bucket_name,
-            ObjectLockConfiguration={
-                "ObjectLockEnabled": "Enabled",
-                "Rule": {
-                    "DefaultRetention": {
-                        "Mode": "COMPLIANCE",  # Lock mode
-                        "Days": 1  # Retention period
-                    }
-                }
-            }
-        )
+        create_params = {
+            "Bucket": bucket_name,
+            "ObjectLockEnabledForBucket": True
+        }
+
+        response = s3_client.create_bucket(**create_params)
+
+        status_code = response.get('ResponseMetadata', {}).get('HTTPStatusCode', None)
+        assert status_code == 200, f"{status_code} should be 200"
+
+        lock_conf = s3_client.get_object_lock_configuration(Bucket=bucket_name)
+        assert "ObjectLockConfiguration" in lock_conf
+
     except s3_client.exceptions.ClientError as e:
         pytest.fail(f"Failed to enable object lock on bucket {bucket_name}: {e}")
     except Exception as e:
@@ -44,7 +45,7 @@ def bucket_with_lock_enabled(s3_client, fixture_versioned_bucket):
 
     # Note: Locked buckets will be cleaned up by a separate process due to retention policies.
 @pytest.fixture
-def fixture_bucket_with_one_object_with_lock(s3_client, fixture_versioned_bucket, fixture_create_small_file):
+def fixture_bucket_with_one_object_with_lock(s3_client, bucket_with_lock_enabled, fixture_create_small_file):
     """
     Fixture to create a versioned S3 bucket with a single object and locking enabled and then tear it down after 10 seconds
 
@@ -61,7 +62,7 @@ def fixture_bucket_with_one_object_with_lock(s3_client, fixture_versioned_bucket
     """
     object_key = f"versioned_object_{uuid4().hex}"
     source_path = fixture_create_small_file
-    bucket_name = fixture_versioned_bucket
+    bucket_name = bucket_with_lock_enabled
 
     try:
         # Upload the object to the bucket
@@ -72,7 +73,7 @@ def fixture_bucket_with_one_object_with_lock(s3_client, fixture_versioned_bucket
             body_file=str(source_path)
         )
 
-        retain_until_date = (datetime.now(timezone.utc) + timedelta(seconds=10)).strftime("%Y-%m-%dT%H:%M:%S")  # converting to ISO 8601 format
+        retain_until_date = (datetime.now(timezone.utc) + timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S")  # converting to ISO 8601 format
         s3_client.put_object_retention(
             Bucket=bucket_name,
             Key=object_key,
@@ -91,13 +92,3 @@ def fixture_bucket_with_one_object_with_lock(s3_client, fixture_versioned_bucket
         pytest.fail(f"Object lock is not correctly applied on object {object_key}")
 
     yield bucket_name, object_key, source_path
-
-        # Teardown: Wait for the retention period to expire and delete the bucket
-    try:
-        sleep(10)  # Wait for the retention period to expire
-        s3_client.delete_object(Bucket=bucket_name, Key=object_key)
-        s3_client.delete_bucket(Bucket=bucket_name)
-    except s3_client.exceptions.ClientError as e:
-        pytest.fail(f"Failed to clean up bucket {bucket_name} or object {object_key}: {e}")
-    except Exception as e:
-        pytest.fail(f"Unexpected error during cleanup of bucket {bucket_name}: {e}")
