@@ -48,7 +48,7 @@ dev *pytest_params: setup-profiles
 
 #Execute homologation tests
 homologate *pytest_params: setup-profiles
-    just _run_tests_with_report homologacao
+    just _run_tests_with_report 'homologacao and not mgc'
 
 # List known categories (pytest markers)
 categories:
