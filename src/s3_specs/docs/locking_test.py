@@ -456,7 +456,7 @@ run_example(__name__, "test_policy_for_put_object_retention", config=config,)
 # - [put_object_lock_configuration](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/put_object_lock_configuration.html) - Configurar Object Lock em um bucket
 # - [get_object_lock_configuration](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/get_object_lock_configuration.html) - Recuperar configuração de Object Lock de um bucket
 # - [Why can I delete objects even after I turned on Object Lock for my Amazon S3 bucket?](https://repost.aws/knowledge-center/s3-object-lock-delete) - Detalhamento de como deletar e gerenciar retenção e legal hold em objetos S3
-pytestmark = [pytest.mark.policy, pytest.mark.locking, pytest.mark.rapid]
+pytestmark = [pytest.mark.policy, pytest.mark.locking, pytest.mark.quick]
 
 policy_dict_template = {
     "Version": "2012-10-17",
