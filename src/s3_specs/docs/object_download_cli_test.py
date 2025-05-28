@@ -35,7 +35,7 @@ config = "../params/br-ne1.yaml"
 # +
 object_keys = [
     "test-object.txt",
-    "test/object/sub/folder/😘 Arquivo com espaço e acentuação 🍕.txt",
+    "test/object/sub/folder/😘 Arquivo com espaço e acentuação.txt",
 ]
 test_cases = [
     (command, {'object_key': object_key}) 
