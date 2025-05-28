@@ -25,7 +25,7 @@ from shlex import split
 from s3_specs.docs.s3_helpers import (
     run_example,
 )
-pytestmark = [pytest.mark.basic, pytest.mark.quick, pytest.mark.cli, pytest.mark.homologacao]
+pytestmark = [pytest.mark.basic, pytest.mark.mgc, pytest.mark.quick, pytest.mark.cli, pytest.mark.homologacao]
 # -
 
 # + tags=["parameters"]
