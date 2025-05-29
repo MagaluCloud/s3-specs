@@ -74,11 +74,19 @@ for special_charactere in special_characteres:
 
 logging.info(f"Test cases: {test_buckets}")
 
-test_cases = [
-    (command, test_bucket)
-    for command in commands
+aws_test_cases = [
+    pytest.param(cmd, test_bucket, marks=pytest.mark.aws)
+    for cmd in commands if cmd.startswith("aws")
     for test_bucket in test_buckets
 ]
+
+mgc_test_cases = [
+    pytest.param(cmd, test_bucket, marks=pytest.mark.mgc)
+    for cmd in commands if cmd.startswith("{mgc_path}")
+    for test_bucket in test_buckets
+]
+
+test_cases = aws_test_cases + mgc_test_cases
 
 @pytest.mark.parametrize(
     "cmd_template, bucket_with_many_objects_session",
