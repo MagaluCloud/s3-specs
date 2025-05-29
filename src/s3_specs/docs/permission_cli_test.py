@@ -179,12 +179,12 @@ cli_commands = [
         "cli": "mgc",
         "canned_cmd": "mgc workspace set {profile_name} && mgc object-storage objects acl set --dst={bucket_name}/{obj_key} --{acl_name}",
         "grant_cmd": "mgc workspace set {profile_name} &&  mgc object-storage objects acl set --dst={bucket_name}/{obj_key} --grant-{mgc_grant_flag} id={grantee_id}"
-    }, id="mgc-put-acl"),
+    }, id="mgc-put-acl", marks=[pytest.mark.mgc]),
     pytest.param({
         "cli": "aws",
         "canned_cmd": "aws s3api --profile {profile_name} put-object-acl --bucket {bucket_name} --key {obj_key} --acl {acl_name}",
         "grant_cmd": "aws s3api --profile {profile_name} put-object-acl --bucket {bucket_name} --key {obj_key} --grant-{aws_grant_flag} id={grantee_id}"
-    }, id="aws-put-acl"),
+    }, id="aws-put-acl", marks=[pytest.mark.aws]),
 ]
 
 
@@ -275,7 +275,14 @@ cli_validate_templates = {
 }
 
 @pytest.mark.parametrize("acl_info", acls_to_test) # Itera sobre as ACLs (que contêm a expectativa)
-@pytest.mark.parametrize("validate_cli_name, validate_cmds", cli_validate_templates.items()) # Itera sobre as CLIs de validação
+@pytest.mark.parametrize(
+    "validate_cli_name, validate_cmds",
+    [
+        pytest.param("mgc", cli_validate_templates["mgc"], marks=pytest.mark.mgc),
+        pytest.param("aws", cli_validate_templates["aws"], marks=pytest.mark.aws),
+        pytest.param("rclone", cli_validate_templates["rclone"], marks=pytest.mark.rclone),
+    ]
+)
 def test_set_acl_boto3_validate_cli_read(
     active_mgc_workspace_second,
     multiple_s3_clients,
