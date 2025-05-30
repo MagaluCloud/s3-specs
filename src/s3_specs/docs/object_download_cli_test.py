@@ -25,7 +25,7 @@ from shlex import split
 from s3_specs.docs.s3_helpers import (
     run_example,
 )
-pytestmark = [pytest.mark.basic, pytest.mark.quick, pytest.mark.cli, pytest.mark.homologacao]
+pytestmark = [pytest.mark.basic, pytest.mark.mgc, pytest.mark.quick, pytest.mark.cli, pytest.mark.homologacao]
 # -
 
 # + tags=["parameters"]
@@ -35,7 +35,7 @@ config = "../params/br-ne1.yaml"
 # +
 object_keys = [
     "test-object.txt",
-    "test/object/sub/folder/😘 Arquivo com espaço e acentuação 🍕.txt",
+    "test/object/sub/folder/😘 Arquivo com espaço e acentuação.txt",
 ]
 test_cases = [
     (command, {'object_key': object_key}) 

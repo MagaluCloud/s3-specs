@@ -54,6 +54,7 @@ def delete_bucket_and_wait(s3_client, bucket_name):
         return
     except Exception as e:
         logging.info(f"delete bucket errored with: {e}")
+        return
 
     waiter = s3_client.get_waiter('bucket_not_exists')
     try:
