@@ -69,8 +69,7 @@ def delete_all_objects(s3, bucket_name):
 
 def delete_all_object_versions(s3, bucket_name):
     """Delete all object versions and delete markers, suppressing unnecessary output."""
-    paginator = s3.get_paginator(            #if (bucket['Name'].startswith('existing-bucket') or bucket['Name'].startswith('fixture-bucket-with') or bucket['Name'].startswith('versioned-')) and bucket['CreationDate'] < six_hours_ago
-'list_object_versions')
+    paginator = s3.get_paginator('list_object_versions')
     locked_objects = []
 
     try:
