@@ -4,10 +4,6 @@ on:
   schedule:
     - cron: "0 1 * * *"
   workflow_dispatch:
-  
-  push:
-    branches:
-      - fix-cleanup-script
 jobs:
   clean_up:
     strategy:
@@ -17,7 +13,6 @@ jobs:
         profile:
           - br-se1
           - br-ne1
-          - homologacao
     uses: ./.github/workflows/cleanup-tests.yml
     with:
       profile: ${{ matrix.profile }}
