@@ -1,0 +1,32 @@
+name: S3-specs cleanup
+
+on:
+  schedule:
+    - cron: "0 1 * * *"
+  workflow_dispatch:
+  
+  push:
+    branches:
+      - fix-cleanup-script
+jobs:
+  clean_up:
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        profile:
+          - br-se1
+          - br-ne1
+          - homologacao
+    uses: ./.github/workflows/cleanup-tests.yml
+    with:
+      profile: ${{ matrix.profile }}
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}
+
+  # cleanup-tests:
+  #   needs: [run_1h_tests]
+  #   if: always() 
+  #   uses: ./.github/workflows/cleanup-tests.yml
+  #   secrets:
+  #     PROFILES: ${{ secrets.PROFILES }}
