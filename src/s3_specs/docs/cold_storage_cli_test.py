@@ -277,6 +277,7 @@ acl_list = [
     ],
     indirect=["fixture_bucket_with_name"]
 )
+@pytest.mark.skip_if_dev
 def test_upload_storage_class_acl_cli(get_different_profile_from_default, active_mgc_workspace, fixture_bucket_with_name, fixture_create_small_file, acl,cmd_template, head_template, list_template):
     """
     Test ACL operations on storage classes: Upload, Head, and List using a second profile.

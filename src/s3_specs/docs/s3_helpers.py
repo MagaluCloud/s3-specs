@@ -1,7 +1,7 @@
 import os
 
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, WaiterError
 from datetime import datetime, timedelta
 import uuid
 import logging
@@ -44,24 +44,58 @@ def generate_unique_bucket_name(base_name="my-unique-bucket"):
 
     return base_name.lower()
 
+def wait_until_bucket_is_empty(s3_client, bucket_name, max_retries=3, delay=2):
+    """
+    Espera até que o bucket esteja vazio, com número limitado de tentativas.
 
+    :param s3_client: Cliente Boto3 configurado para S3
+    :param bucket_name: Nome do bucket S3
+    :param max_retries: Número máximo de tentativas
+    :param delay: Tempo de espera entre as tentativas (em segundos)
+    :raises ClientError: Se houver erro no acesso ao bucket
+    """
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = s3_client.list_objects_v2(Bucket=bucket_name)
+            key_count = response.get("KeyCount", 0)
+            
+            if key_count == 0:
+                logging.info(f"Bucket '{bucket_name}' está vazio (tentativa {attempt}).")
+                return True
+            
+            logging.info(f"Bucket '{bucket_name}' ainda tem {key_count} objetos (tentativa {attempt}/{max_retries}).")
+        
+        except ClientError as e:
+            logging.error(f"Erro ao acessar o bucket: {e}")
+            raise
 
-def delete_bucket_and_wait(s3_client, bucket_name):
-    try:
-        s3_client.delete_bucket(Bucket=bucket_name)
-    except s3_client.exceptions.NoSuchBucket:
-        logging.info("Bucket already deleted by someone else.")
-        return
-    except Exception as e:
-        logging.info(f"delete bucket errored with: {e}")
-        return
+        if attempt < max_retries:
+            time.sleep(delay)
+
+    return False
+
+def delete_bucket_and_wait(s3_client, bucket_name, max_retries=3, delay=2):
+    for attempt in range(1, max_retries + 1):
+        try:
+            s3_client.delete_bucket(Bucket=bucket_name)
+            break  # Sucesso, sai do loop
+        except s3_client.exceptions.NoSuchBucket:
+            logging.info(f"Bucket '{bucket_name}' já foi deletado.")
+            return
+        except Exception as e:
+            logging.warning(f"Tentativa {attempt} de {max_retries} falhou ao deletar o bucket '{bucket_name}': {e}")
+            if attempt < max_retries:
+                time.sleep(delay)
+            else:
+                logging.error(f"Falha ao deletar o bucket '{bucket_name}' após {max_retries} tentativas.")
+                return
 
     waiter = s3_client.get_waiter('bucket_not_exists')
     try:
         waiter.wait(Bucket=bucket_name)
-        logging.info(f"Bucket '{bucket_name}' confirmed as deleted.")
-    except Exception as e:
-        logging.info(f"delete bucket waiter errored with: {e}")
+        logging.info(f"Bucket '{bucket_name}' confirmado como deletado.")
+    except WaiterError as e:
+        logging.error(f"Erro ao aguardar confirmação de deleção do bucket '{bucket_name}': {e}")
 
 def create_bucket(s3_client, bucket_name):
     # anything different than us-east-1 must have LocationConstraint on aws
