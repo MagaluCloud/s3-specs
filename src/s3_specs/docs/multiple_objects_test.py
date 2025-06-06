@@ -12,6 +12,8 @@ from s3_specs.docs.tools.crud import (fixture_bucket_with_name,
 # A função abaixo faz o upload de N objects para um bucket S3 e então os deleta.
 
 # Multiple objects test data
+pytestmark = [pytest.mark.skip_if_dev]
+
 objects_number = [100, 1_000, 10_000]
 file_path = "../AUTHORS"
 

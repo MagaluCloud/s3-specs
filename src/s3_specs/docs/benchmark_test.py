@@ -4,6 +4,8 @@ import subprocess
 import pytest
 import tempfile
 
+pytestmark = [pytest.mark.skip_if_dev]
+
 # Função para medir o tempo de uma operação em millisegundos
 def measure_time(command):
     t0 = datetime.now()

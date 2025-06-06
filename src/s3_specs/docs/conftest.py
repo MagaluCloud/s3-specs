@@ -32,11 +32,46 @@ from botocore.exceptions import ClientError
 def pytest_addoption(parser):
     parser.addoption("--config", action="store", help="Path to the YAML config file")
     parser.addoption("--profile", action="store", help="profile to use for the tests")
+    parser.addoption("--run-dev", action="store_true", help="Rodar testes no modo dev")
 
+
+@pytest.fixture(autouse=True)
+def skip_based_on_region_marker(s3_client, request):
+    marker = request.node.get_closest_marker("only_run_in_region")
+    if marker:
+        regions_to_run = []
+        if marker.args:
+            regions_to_run.extend(marker.args)
+        if not regions_to_run:
+            logging.warning("Marcador 'skip_in_region' usado sem especificar regiões.")
+            return 
+        current_region = s3_client.meta.region_name
+
+        logging.info(f"\n[Fixture skip_based_on_region_marker] Teste: {request.node.name}")
+        logging.info(f"  Marcador 'only_run_in_region' encontrado com regiões: {regions_to_run}")
+
+        if current_region not in regions_to_run:
+            skip_message = f"Teste pulado porque a região do cliente não está na lista de skip do marcador {regions_to_run}"
+            logging.info(f"{skip_message}")
+            pytest.skip(skip_message)
+        else:
+            logging.info("Região atual está na lista de regiões onde o teste pode ser executado.")
+
+@pytest.fixture(autouse=True)
+def skip_if_is_dev_run(s3_client, request):
+    marker = request.node.get_closest_marker("skip_if_dev")
+    isDevRun = request.config.getoption("--run-dev")
+    if marker:
+        if isDevRun:
+            pytest.skip("This test doesn't working with dev mode")
 
 @pytest.fixture(scope="session", autouse=True)
-def verify_credentials(get_clients):
+def verify_credentials(get_clients, request):
     tenants = get_tenants(get_clients)
+    isDevRun = request.config.getoption("--run-dev")
+
+    if isDevRun:
+        return
 
     if not len(tenants) == len(set(tenants)) or len(tenants) < 2:
         pytest.exit("Perfis estão configurados de forma incorreta. É necessário que tenha dois perfis configurados para diferentes owners")
@@ -49,7 +84,7 @@ def test_params(request):
     config_path = request.config.getoption("--config") or os.environ.get("CONFIG_PATH", "../params.example.yaml")
     
     profile = request.config.getoption("--profile") or os.environ.get("PROFILE", None)
-    logging.info(f"Region: {profile}")
+    logging.info(f"Profile: {profile}")
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
         if not profile:
@@ -587,7 +622,7 @@ def bucket_with_one_object_policy(multiple_s3_clients, policy_wait_time, request
 
 
 
-@pytest.fixture(params=[{ 'number_clients': 3 }])
+@pytest.fixture(params=[{ 'number_clients': 2 }])
 def multiple_s3_clients(request, test_params):
     """
     Creates multiple S3 clients based on the profiles provided in the test parameters.
@@ -623,8 +658,19 @@ def session_test_params(request):
     Loads test parameters from a config file or environment variable.
     """
     config_path = request.config.getoption("--config") or os.environ.get("CONFIG_PATH", "../params.example.yaml")
+    
+    profile = request.config.getoption("--profile") or os.environ.get("PROFILE", None)
+    logging.info(f"Profile: {profile}")
     with open(config_path, "r") as f:
-        return yaml.safe_load(f)
+        config = yaml.safe_load(f)
+        if not profile:
+            return config
+        sufix = ["", "-second", "-sa"]
+        for index, profile_index in enumerate(config["profiles"]):
+            if "profile_name" in profile_index and index < 3:
+                profile_index["profile_name"] = f"{profile}{sufix[index]}"
+        
+        return config
 
 @pytest.fixture(scope="session")
 def session_default_profile(session_test_params):

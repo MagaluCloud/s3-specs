@@ -4,13 +4,14 @@ on:
   push:
     branches:
       - main
+      - skip-test-crossaccount
 jobs:
   build:
     permissions:
       packages: write  
       contents: read 
     strategy:
-      max-parallel: 1
+      max-parallel: 3
       matrix:
         include:
           - image: tools_oldest
