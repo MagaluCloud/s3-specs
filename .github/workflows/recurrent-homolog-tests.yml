@@ -1,0 +1,56 @@
+name: Testes Automatizados Homologação
+
+on:
+  # schedule:
+  #   - cron: "0 */2 * * *"  # A cada 2 horas
+  workflow_dispatch:
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        tools:
+          - name: latest
+            value: latest
+
+        marker:
+          - test: "'basic and not mgc'"
+            name: basic_and_not_mgc
+          - test: "'cold_storage and not mgc'"
+            name: cold_storage_and_not_mgc
+          - test: "'presign and not mgc'"
+            name: presign_and_not_mgc
+          - test: "'acl and not mgc'"
+            name: acl_and_not_mgc
+          - test: "'locking and not mgc'"
+            name: locking_and_not_mgc
+          - test: "'policy and not mgc'"
+            name: policy_and_not_mgc
+          - test: "'bucket_versioning and not mgc'"
+            name: bucket_versioning_and_not_mgc
+          - test: "'bulk_delete'"
+            name: bulk_delete
+
+        config:
+          - path: "../../../params.example.yaml"
+            name: example
+
+    steps:
+
+      - name: Set timestamp
+        id: timestamp
+        run: echo "timestamp=$(date +'%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
+
+      - name: Run tests with report
+        uses: ./.github/workflows/run-tests-with-report.yml
+        with:
+          name: "${{ matrix.marker.name }}_2hours.${{ matrix.config.name }}"
+          prefix_object_key: "homologacao/automatic_tests/${{ steps.timestamp.outputs.timestamp }}_${{ matrix.marker.name }}_${{ matrix.tools.name }}"
+          mark: ${{ matrix.marker.test }}
+          container: 'ghcr.io/magalucloud/s3-specs:tests_oldest'
+          profile: 'homologacao'
+        env:
+          PROFILES: ${{ secrets.PROFILES }}
