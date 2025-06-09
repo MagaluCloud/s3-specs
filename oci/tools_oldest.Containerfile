@@ -6,7 +6,6 @@
 
 ARG AWS_CLI_VERSION="2.15.27"
 ARG RCLONE_VERSION="1.66.0"
-ARG MGC_VERSION="0.34.1"
 ARG JUST_VERSION="1.40.0"
 
 # aws-cli
@@ -39,11 +38,16 @@ RUN ln -s "/tools/aws-cli/v2/${AWS_CLI_VERSION}/bin/aws" /usr/local/bin/aws && \
     ln -s "/tools/aws-cli/v2/${AWS_CLI_VERSION}/bin/aws_completer" /usr/local/bin/aws_completer;
 
 # mgc cli
-ARG MGC_VERSION
-RUN curl -Lo mgc.tar.gz "https://github.com/MagaluCloud/mgccli/releases/download/v${MGC_VERSION}/mgccli_${MGC_VERSION}_linux_amd64.tar.gz" && \
-    tar xzvf mgc.tar.gz && rm mgc.tar.gz && \
-    # ln -s "/tools/mgc" /usr/local/bin/mgc;
-    mv mgc /usr/local/bin/mgc
+
+# Download da chave de verificação
+RUN gpg --yes --keyserver keyserver.ubuntu.com --recv-keys 0C59E21A5CB00594 &&  gpg --export --armor 0C59E21A5CB00594 |  gpg --dearmor -o /etc/apt/keyrings/magalu-archive-keyring.gpg
+
+# Adiciona repositório APT na lista de repositórios
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/magalu-archive-keyring.gpg] https://packages.magalu.cloud/apt stable main" |  tee /etc/apt/sources.list.d/magalu.list
+
+# Instala a MGC CLI
+RUN apt update
+RUN apt install mgccli
 
 # uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
