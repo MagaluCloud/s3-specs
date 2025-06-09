@@ -19,7 +19,8 @@ RUN apt-get update && \
     unzip \
     python3 \
     git \
-    fzf;
+    fzf \
+    gpg;
 
 # directory to download binaries
 RUN mkdir -p /tools;
