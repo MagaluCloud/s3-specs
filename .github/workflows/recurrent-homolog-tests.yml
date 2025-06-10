@@ -54,3 +54,8 @@ jobs:
           profile: 'homologacao'
         env:
           PROFILES: ${{ secrets.PROFILES }}
+      - name: webhook send
+        if: always()
+        run: |
+          cd /app
+          ./bin/webhook.py "${{ vars.WEBHOOK_URL }}" "src/s3_specs/docs/s3-specs/artifact/" "${{ github.repository }}" "${{ github.run_id }}"
