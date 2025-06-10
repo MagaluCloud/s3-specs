@@ -4,7 +4,7 @@ import sys
 import os
 import glob
 
-def send_notification(webhook_url, failed_string, failed_string_see_more, git_run_url, num_falhas, filename):
+def send_notification(webhook_url, failed_string, failed_string_see_more, git_run_url, num_falhas, filename, object_path):
     app_message = {
         'cardsV2': [{
             'cardId': 'createCardMessage',
@@ -35,10 +35,18 @@ def send_notification(webhook_url, failed_string, failed_string_see_more, git_ru
                                 'buttonList': {
                                     'buttons': [
                                         {
-                                            'text': 'View results',
+                                            'text': 'View run on GitHub',
                                             'onClick': {
                                                 'openLink': {
                                                     'url': git_run_url
+                                                }
+                                            }
+                                        },
+                                        {
+                                            'text': 'Artifacts path',
+                                            'onClick': {
+                                                'openLink': {
+                                                    'url': "https://results-test-do-not-delete.magaluobjects.com/" + object_path
                                                 }
                                             }
                                         }
@@ -75,15 +83,15 @@ def count_fails(file_path):
         return f.read().count("\nFAILED ")
 
 def main():
-    if len(sys.argv) != 5:
-        print("Usage: python script.py WEBHOOK_URL LOG_PATH GITHUB_REPOSITORY GITHUB_RUN_ID")
-        print("LOG_PATH can be a file or directory")
+    if len(sys.argv) != 6:
+        print("Usage: python script.py WEBHOOK_URL LOG_PATH GITHUB_REPOSITORY GITHUB_RUN_ID OBJECT_PATH")
         return
     
     webhook_url = sys.argv[1]
     log_path = sys.argv[2]
     github_repository = sys.argv[3]
     github_run_id = sys.argv[4]
+    object_path = sys.argv[5]
     git_run_url = f"https://github.com/{github_repository}/actions/runs/{github_run_id}"
 
     # Determine if path is file or directory
@@ -121,7 +129,8 @@ def main():
                     failed_string_see_more,
                     git_run_url,
                     num_falhas,
-                    file_path
+                    file_path,
+                    object_path
                 )
             
         except Exception as e:

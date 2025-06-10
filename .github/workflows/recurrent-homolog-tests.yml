@@ -45,6 +45,7 @@ jobs:
         run: echo "timestamp=$(date +'%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
 
       - name: Run tests with report
+        id: run_tests
         uses: ./.github/workflows/run-tests-with-report.yml
         with:
           name: "${{ matrix.marker.name }}_2hours.${{ matrix.config.name }}"
@@ -54,8 +55,15 @@ jobs:
           profile: 'homologacao'
         env:
           PROFILES: ${{ secrets.PROFILES }}
+
+      - name: Upload Reports
+        if: always()
+        shell: bash
+        run: |
+          mgc workspace set br-se1
+          mgc os objects upload-dir './reports_pdf/' results-test-do-not-delete/${{ steps.run_tests.outputs.prefix_object_key }}/      
       - name: webhook send
         if: always()
         run: |
           cd /app
-          ./bin/webhook.py "${{ vars.WEBHOOK_URL }}" "src/s3_specs/docs/s3-specs/artifact/" "${{ github.repository }}" "${{ github.run_id }}"
+          ./bin/webhook.py "${{ vars.WEBHOOK_URL }}" "src/s3_specs/docs/s3-specs/artifact/" "${{ github.repository }}" "${{ github.run_id }}" "${{ steps.run_tests.outputs.prefix_object_key }}"
