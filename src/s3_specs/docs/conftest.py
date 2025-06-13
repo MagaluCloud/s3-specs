@@ -153,7 +153,7 @@ def active_mgc_workspace(profile_name, mgc_path):
     result = subprocess.run([mgc_path, "workspace", "set", profile_name],
                             capture_output=True, text=True)
     if result.returncode != 0:
-        pytest.skip("This test requires an mgc profile name")
+        raise Exception(f"Failed setting correct profile for mgc cli: {result.stderr}")
 
     logging.info(f"mcg workspace set stdout: {result.stdout}")
     return profile_name
