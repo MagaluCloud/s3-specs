@@ -15,6 +15,10 @@ _default:
 #Configure profiles in the CLI's
 setup-profiles:
     uv run ./bin/configure_profiles.py ./params.example.yaml
+    mkdir -p fakehomes/mgc-second/.config
+    cp -r ~/.config/mgc fakehomes/mgc-second/.config
+    cp -r ~/.config/rclone fakehomes/mgc-second/.config
+    cp -r ~/.aws fakehomes/mgc-second
 
 # Run the tests
 _run_tests config_file *pytest_params:
@@ -27,11 +31,11 @@ _run_specific_test_file config_file test_name *pytest_params:
     uv run pytest ./src/s3_specs/docs/{{test_name}} --config {{config_file}} {{pytest_params}}
 
 _run_dev_tests *pytest_params:
-    uv run pytest ./src/s3_specs/docs/ --config ./params.example.yaml -m '(not consistency) and (not benchmark) and (not mgc)' {{pytest_params}} --run-dev 
+    uv run pytest ./src/s3_specs/docs/ --config ./params.example.yaml -m '(not consistency) and (not benchmark) and (not mgc)' {{pytest_params}} --run-dev
 
 #Execute the tests of s3-specs generating reports
 tests category mark = "" : setup-profiles
-    # just _run_tests "./params.example.yaml" 
+    # just _run_tests "./params.example.yaml"
     just _run_tests_with_report {{category}} {{mark}}
 
 #Execute the tests of s3-specs using pytest
