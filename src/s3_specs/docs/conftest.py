@@ -158,6 +158,14 @@ def active_mgc_workspace(profile_name, mgc_path):
     logging.info(f"mcg workspace set stdout: {result.stdout}")
     return profile_name
 
+
+@pytest.fixture
+def active_mgc_workspace_second_env(profile_name_second):
+    env = os.environ.copy()
+    env['MGC_WORKSPACE'] = profile_name_second
+    return env
+
+
 @pytest.fixture
 def s3_client(default_profile):
     """

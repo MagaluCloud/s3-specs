@@ -113,7 +113,7 @@ def fixture_create_small_file(tmp_path_factory: pytest.TempdirFactory):
     assert os.path.exists(tmp_path), "Temporary object not created"
     return tmp_path
 
-def execute_subprocess(cmd_command: str, expected_failure:bool = False):
+def execute_subprocess(cmd_command: str, expected_failure:bool = False, env=None):
     """
     Execute a shell command as a subprocess and handle errors gracefully.
     
@@ -143,7 +143,8 @@ def execute_subprocess(cmd_command: str, expected_failure:bool = False):
             shell=True,
             capture_output=True,  # Capture stdout and stderr
             text=True,           # Return output as strings (not bytes)
-            check=True           # Raise CalledProcessError if returncode != 0
+            check=True,           # Raise CalledProcessError if returncode != 0
+            env=env
         )
     except subprocess.CalledProcessError as e:
         # Propagate the error to the query 
