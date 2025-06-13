@@ -156,6 +156,7 @@ run_example(__name__, "test_multipart_upload_versioned_with_cold_storage_class",
 # que o gerenciamento de versões e o comportamento da classe de armazenamento "Cold" estão funcionando corretamente.
 
 # +
+@pytest.mark.only_run_in_region("br-se1", "us-east-1")
 def test_delete_object_version1_cold_storage_class(s3_client, versioned_bucket_with_one_object_cold_storage_class):
     bucket_name, object_key, version_v1 = versioned_bucket_with_one_object_cold_storage_class
 
@@ -214,6 +215,7 @@ run_example(__name__, "test_delete_object_version1_cold_storage_class", config=c
 # e o comportamento da classe de armazenamento "Cold" funcionam corretamente.
 
 # +
+@pytest.mark.only_run_in_region("br-se1", "us-east-1")
 def test_delete_object_version2_cold_storage_class(s3_client, versioned_bucket_with_one_object_cold_storage_class):
     bucket_name, object_key, version_v1 = versioned_bucket_with_one_object_cold_storage_class
 
