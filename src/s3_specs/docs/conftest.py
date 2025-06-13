@@ -166,6 +166,30 @@ def s3_client(default_profile):
     return session.client("s3", endpoint_url=default_profile.get("endpoint_url"))
 
 @pytest.fixture
+def rbac_s3_client(test_params, request):
+    """
+    Creates a boto3 S3 client using profile credentials or explicit config.
+    RBAC clients only
+    """
+
+    index = request.param # singular int
+
+    def get_client(profile):
+        session = boto3.Session(
+            region_name=profile["region_name"],
+            aws_access_key_id=profile["aws_access_key_id"],
+            aws_secret_access_key=profile["aws_secret_access_key"],
+        )
+        return session.client("s3", endpoint_url=profile.get("endpoint_url"))
+
+    rbac_profiles = [
+        get_client(profile)
+        for profile in test_params['profiles']
+        if 'rbac' in profile.get('profile_name', '')
+    ]
+    return rbac_profiles[index]
+
+@pytest.fixture
 def bucket_name(request, s3_client):
     test_name = request.node.name.replace("_", "-")
     unique_name = generate_unique_bucket_name(base_name=f"{test_name}")
