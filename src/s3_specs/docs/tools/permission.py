@@ -46,10 +46,10 @@ def profile_name_second(test_params, profile_name):
     return f"{profile_name}-second"
 
 @pytest.fixture
-def active_mgc_workspace_second(profile_name_second, mgc_path):
+def active_mgc_workspace_second(profile_name_second, mgc_path, active_mgc_workspace_second_env):
     # set the profile
     result = subprocess.run([mgc_path, "workspace", "set", profile_name_second],
-                            capture_output=True, text=True)
+                            capture_output=True, text=True, env=active_mgc_workspace_second_env)
     if result.returncode != 0:
         raise Exception(f"Failed setting correct profile for mgc cli: {result.stdout}")
         # pytest.skip("This test requires an mgc profile name")
