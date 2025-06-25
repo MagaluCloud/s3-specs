@@ -49,6 +49,8 @@ jobs:
             name: "'bucket_versioning and not mgc'"
           - test: "'bulk_delete'"
             name: "'bulk_delete'"
+          - test: "'cors'"
+            name: "'cors'"
         config:
           - path: "../../../params.example.yaml"
             name: "example"
