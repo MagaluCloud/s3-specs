@@ -548,3 +548,33 @@ def probe_versioning_status(s3_client, bucket_name):
     end_time = datetime.now()
     logging.warning(f"[wait_for_versioning_status] Total wait time={end_time - start_time}")
     return response_versioning_status
+
+def change_cors_json(bucket_name, cors_args, principal="*"):
+    """
+    Generate CORS configuration JSON for an S3 bucket.
+
+    Args:
+        bucket_name (str): Name of the S3 bucket.
+        cors_args (dict): Dictionary with CORS parameters:
+            - allowed_origins (list[str]): List of allowed origins.
+            - allowed_methods (list[str]): List of allowed HTTP methods.
+            - allowed_headers (list[str]): List of allowed headers.
+            - expose_headers (list[str]): List of headers exposed to the client.
+            - max_age (int): Max age for caching preflight response in seconds.
+        principal (str, optional): The principal for the policy. Defaults to "*".
+
+    Returns:
+        dict: CORS configuration dictionary compatible with S3 API.
+    """
+    return {
+        "CORSRules": [
+            {
+                "AllowedOrigins": cors_args.get("allowed_origins", ["*"]),
+                "AllowedMethods": cors_args.get("allowed_methods", ["GET"]),
+                "AllowedHeaders": cors_args.get("allowed_headers", ["*"]),
+                "ExposeHeaders": cors_args.get("expose_headers", []),
+                "MaxAgeSeconds": cors_args.get("max_age", 3000),
+            }
+        ]
+    }
+

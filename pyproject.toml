@@ -76,7 +76,8 @@ markers = [
     "rclone: rclone cli",
     "service_account: Service Account",
     "bucket_sharing: Bucket Sharing",
-    "rbac: Only run rbac tests, which require a specific configuration"
+    "rbac: Only run rbac tests, which require a specific configuration",
+    "cors: Bucket Cors tests",
 ]
 
 [tool.s3-tester]
