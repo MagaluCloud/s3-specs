@@ -33,6 +33,8 @@ def pytest_addoption(parser):
     parser.addoption("--config", action="store", help="Path to the YAML config file")
     parser.addoption("--profile", action="store", help="profile to use for the tests")
     parser.addoption("--run-dev", action="store_true", help="Rodar testes no modo dev")
+    parser.addoption("--manual-standard", action="store", default=None, help="Bucket padrão (não versionado) manual")
+    parser.addoption("--manual-versioned", action="store", default=None, help="Bucket versionado manual")
 
 
 @pytest.fixture(autouse=True)
