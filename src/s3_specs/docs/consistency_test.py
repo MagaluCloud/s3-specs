@@ -66,7 +66,7 @@ def upload_objects(bucket_name, prefix, dir_name, workers):
     logging.info(f"Uploading objects from directory '{dir_name}' to bucket '{bucket_name}' with {workers} workers")
     try:
         result = subprocess.run([
-            'mgc', 'object-storage', 'objects', 'upload-dir', dir_name, f"{bucket_name}/{prefix}", '--workers', str(workers), '--retries', '5'
+            'mgc', 'object-storage', 'objects', 'upload-dir', dir_name, f"{bucket_name}/{prefix}", '--workers', str(workers)
         ], check=True, capture_output=True, text=True)
         print("stdout:", result.stdout)
         print("stderr:", result.stderr)
