@@ -4,31 +4,11 @@ import pytest
 import logging
 import requests
 from s3_specs.docs.s3_helpers import run_example, change_cors_json
+from s3_specs.docs.tools.permission import generate_policy
 
 pytestmark = [pytest.mark.homologacao, pytest.mark.cors]
 config = "../params/br-ne1.yaml"
 config = os.getenv("CONFIG", config)
-
-
-def put_allow_all_policy_simple(s3_client, bucket_name):
-    """
-    Apply an 'Allow all' policy to the given bucket.
-    """
-    policy_dict = {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Principal": "*",
-                "Action": "s3:*",
-                "Resource": [f"{bucket_name}", f"{bucket_name}/*"],
-            }
-        ],
-    }
-    policy_str = json.dumps(policy_dict)
-    s3_client.put_bucket_policy(Bucket=bucket_name, Policy=policy_str)
-    logging.info(f"Policy 'Allow all' applied to bucket {bucket_name}")
-
 
 base_cors_args = {
     "allowed_methods": ["GET", "PUT"],
@@ -59,8 +39,15 @@ def test_real_cors_request(s3_client, existing_bucket_name, test_case):
     """
     cors_args = base_cors_args
     method, origin, expected_preflight_status, expected_real_status, expect_cors = test_case
-
-    put_allow_all_policy_simple(s3_client, existing_bucket_name)
+    
+    policy_str = generate_policy(
+        effect="Allow",
+        principals="*",
+        actions="s3:*",
+        resources=[f"{existing_bucket_name}", f"{existing_bucket_name}/*"],
+    )
+    s3_client.put_bucket_policy(Bucket=existing_bucket_name, Policy=policy_str)
+    logging.info(f"Policy 'Allow all' applied to bucket {existing_bucket_name}")
 
     cors_config = change_cors_json(bucket_name=existing_bucket_name, cors_args=cors_args)
     s3_client.put_bucket_cors(Bucket=existing_bucket_name, CORSConfiguration=cors_config)
@@ -118,19 +105,3 @@ def test_real_cors_request(s3_client, existing_bucket_name, test_case):
 
 
 run_example(__name__, "test_real_cors_request", config=config)
-
-
-def cleanup_bucket(s3_client, bucket_name):
-    """
-    Delete all objects in the bucket and then delete the bucket itself.
-    """
-    try:
-        objects = s3_client.list_objects_v2(Bucket=bucket_name)
-        if 'Contents' in objects:
-            for obj in objects['Contents']:
-                s3_client.delete_object(Bucket=bucket_name, Key=obj['Key'])
-        
-        s3_client.delete_bucket(Bucket=bucket_name)
-        logging.info(f"Bucket {bucket_name} successfully removed")
-    except Exception as e:
-        logging.warning(f"Error cleaning bucket {bucket_name}: {str(e)}")
