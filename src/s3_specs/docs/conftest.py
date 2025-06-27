@@ -25,6 +25,12 @@ from s3_specs.docs.s3_helpers import (
     delete_all_objects_and_wait,
     delete_all_objects_with_version_and_wait,
 )
+from s3_specs.docs.utils.consistency import (
+    setup_standard_bucket,
+    setup_versioned_bucket,
+    resolve_bucket,
+    available_buckets
+)
 from datetime import datetime, timedelta
 from botocore.exceptions import ClientError
 
