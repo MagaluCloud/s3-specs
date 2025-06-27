@@ -25,7 +25,7 @@ paths = {
 objs_consistency_time = Gauge(
     'objs_consistency_time',
     'Tempo de execução para diferentes operações de consistência',
-    ['quantity', 'workers', 'command', 'region', 'bucket_state', 'elapsed']
+    ['quantity', 'workers', 'command', 'region', 'bucket_state', 'elapsed', 'attempts']
 )
 
 avg_gauge = Gauge(
@@ -66,7 +66,8 @@ def read_csv_and_update_metrics():
                         'command': row['command'],
                         'region': row['region'],
                         'bucket_state': row['bucket_state'],
-                        'elapsed': str(row['elapsed'])
+                        'elapsed': str(row['elapsed']),
+                        'attempts': str(row['attempts'])
                     }
                     objs_consistency_time.labels(**labels).set(row['elapsed'])
     else:
