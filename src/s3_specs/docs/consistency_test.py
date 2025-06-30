@@ -10,7 +10,6 @@ from s3_specs.docs.utils.consistency import (
 
 # Testes de consistência para objetos adicionais
 @pytest.mark.slow
-@pytest.mark.multiple_objects
 @pytest.mark.consistency
 @pytest.mark.skip_if_dev
 @pytest.mark.parametrize("quantity", [512])
