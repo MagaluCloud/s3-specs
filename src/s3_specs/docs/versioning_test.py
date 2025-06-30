@@ -46,7 +46,7 @@ from s3_specs.docs.utils.versioning import fixture_multipart_upload
 config = "../params/br-se1.yaml"
 
 # +
-pytestmark = [pytest.mark.bucket_versioning, pytest.mark.quick, pytest.mark.homologacao]
+pytestmark = [pytest.mark.bucket_versioning, pytest.mark.quick, pytest.mark.homologacao, pytest.mark.only_run_in_region("br-se1", "us-east-1")]
 
 # ## Deletar objeto com duas versões em uma bucket com versionamento
 # Este teste tem como objetivo verificar a exclusão bem-sucedida de um objeto da lista padrão de objetos 
