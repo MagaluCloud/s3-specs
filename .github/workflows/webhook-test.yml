@@ -6,7 +6,6 @@ on:
     - cron: "15 */6 * * *"
     - cron: "30 */12 * * *"
   workflow_dispatch:
- 
 
 jobs:
   run_1h_tests:
