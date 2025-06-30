@@ -1,10 +1,12 @@
-name: Recurrent tests
+nname: Recurrent tests - bot test
 
 on:
   schedule:
-    - cron: "0 */2 * * *"       # Every hour at 00 min
-    - cron: "15 */6 * * *"     # Every 6 hours at *h30 min  
-    - cron: "30 */12 * * *"    # Every 12 hours at *h15 min  
+    - cron: "0 */2 * * *"
+    - cron: "15 */6 * * *"
+    - cron: "30 */12 * * *"
+  workflow_dispatch:
+ 
 
 jobs:
   run_1h_tests:
@@ -17,7 +19,6 @@ jobs:
           - br-se1
           - br-ne1
         marker:
-          # 1h tests
           - test: "'basic or cold_storage or presign'"
             name: "'basic or cold_storage or presign'"
         config:
@@ -32,18 +33,29 @@ jobs:
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
+  webhook_1h:
+    needs: run_1h_tests
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Send webhook for 1h tests
+        run: |
+          cd /app
+          ./bin/webhook.py "${{ vars.WEBHOOK_URL }}" "src/s3_specs/docs/s3-specs/artifact/" "${{ github.repository }}" "${{ github.run_id }}" "1h"
+
   run_6h_tests:
     if: github.event.schedule == '15 */6 * * *'
     strategy:
       max-parallel: 2
       fail-fast: false
-
       matrix:
         profile:
           - br-se1
           - br-ne1
         marker:
-            # 6h tests
           - test: "'policy or bucket_versioning or acl or locking'"
             name: "'policy or bucket_versioning or acl or locking'"
         config:
@@ -58,6 +70,19 @@ jobs:
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
+  webhook_6h:
+    needs: run_6h_tests
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Send webhook for 6h tests
+        run: |
+          cd /app
+          ./bin/webhook.py "${{ vars.WEBHOOK_URL }}" "src/s3_specs/docs/s3-specs/artifact/" "${{ github.repository }}" "${{ github.run_id }}" "6h"
+
   run_12h_tests:
     if: github.event.schedule == '30 */12 * * *'  
     strategy:
@@ -68,7 +93,6 @@ jobs:
           - br-se1
           - br-ne1
         marker:
-           # 12h tests
           - test: "'multiple_objects or big_objects'"
             name: "'multiple_objects or big_objects'"
         config:
@@ -83,10 +107,15 @@ jobs:
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
+  webhook_12h:
+    needs: run_12h_tests
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-  # cleanup-tests:
-  #   needs: [run_1h_tests]
-  #   if: always() 
-  #   uses: ./.github/workflows/cleanup-tests.yml
-  #   secrets:
-  #     PROFILES: ${{ secrets.PROFILES }}
+      - name: Send webhook for 12h tests
+        run: |
+          cd /app
+          ./bin/webhook.py "${{ vars.WEBHOOK_URL }}" "src/s3_specs/docs/s3-specs/artifact/" "${{ github.repository }}" "${{ github.run_id }}" "12h"
