@@ -1,4 +1,4 @@
-nname: Recurrent tests - bot test
+name: Recurrent tests - bot test
 
 on:
   schedule:
