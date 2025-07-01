@@ -7,18 +7,21 @@ import os
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--parquet_path',
-                    required=True, 
+                    default='./output/tests.parquet',
+                    required=False,
                     help='Path of folder containing the execution_time and test parquet artifacts')
 
 
 args = parser.parse_args()
 
+exported_keys = set()
 
 paths = {
     'report_folder': './output/',
     'grouped_file': './output/resultado_grouped.csv',
     'inconsistencies_file': './output/report_inconsistencies.csv',
     'benchmark_file': './output/benchmark_results.csv',
+    'rotativo_metrics_file': './output/rotativo_metrics.csv'
 }
 
 # Definir as métricas Gauge
@@ -35,15 +38,21 @@ avg_gauge = Gauge(
 )
 
 execution_time_gauge = Gauge(
-    's3_specs_time_metrics', 
-    'Tests time metrics',  
-    ['name', 'execution_type', 'category','time_metric']  
+    's3_specs_time_metrics',
+    'Tests time metrics',
+    ['name', 'execution_type', 'category','time_metric']
 )
 
 execution_status_counter = Counter(
     's3_specs_status_counter',
     'Counter containing the number of status ocurrences on the recurrent testing',
     ['name', 'status', 'category']
+)
+
+rotativo_gauge = Gauge(
+    's3_rotativo_inconsistencies',
+    'Inconsistências por execução nos testes rotativos de consistência',
+    ['bucket', 'timestamp', 'type']
 )
 
 def read_csv_and_update_metrics():
@@ -102,13 +111,13 @@ def read_csv_and_update_metrics():
 def execution_time_metrics_exporter():
     file_path = os.path.join(args.parquet_path, 'execution_time.parquet')
     tests_file_path = os.path.join(args.parquet_path, 'tests.parquet')
-    
+
     try:
         df_category = pd.read_parquet(file_path)
     except FileNotFoundError:
         print(f"Arquivo {file_path} não encontrado.")
         return
-    
+
     try:
         df_tests = pd.read_parquet(tests_file_path)
     except FileNotFoundError:
@@ -117,9 +126,9 @@ def execution_time_metrics_exporter():
 
     # Merge to retrieve the categories
     df_category = df_category.merge(
-        df_tests, 
+        df_tests,
         how='inner',
-        left_on=['execution_name', 'execution_datetime'], 
+        left_on=['execution_name', 'execution_datetime'],
         right_on=['name', 'execution_datetime']
     ).drop_duplicates()
 
@@ -166,7 +175,7 @@ def test_metrics_exporter():
 
     # Clean the dataframe
     cleaned_status_df = df.drop(columns=['artifact_name', 'execution_datetime', 'arguments'])
-    
+
     # Convert status to more readable labels if needed
     cleaned_status_df['status'] = cleaned_status_df['status'].map(status_mapping)
 
@@ -178,7 +187,9 @@ def test_metrics_exporter():
             status=row['status']
         ).inc(1)
 
-    print("Test metrics exported...")
+        print("Test metrics exported...")
+    else:
+        print(f"Arquivo {file_path} não encontrado. Nenhum teste foi exportado.")
 
 def delete_temp_parquets():
     # deleting temporary parquets
@@ -193,6 +204,47 @@ def delete_temp_parquets():
     except Exception as e:
         print(f"Error occurred while deleting parquets: {e}")
 
+def export_rotativo_metrics():
+    csv_path = paths.get('rotativo_metrics_file')
+
+    if not os.path.exists(csv_path):
+        print(f"Arquivo {csv_path} não encontrado.")
+        return
+
+    try:
+        df = pd.read_csv(csv_path)
+    except Exception as e:
+        print(f"Erro ao ler {csv_path}: {e}")
+        return
+
+    if df.empty:
+        print(f"CSV {csv_path}. Nenhuma métrica exportada.")
+        return
+
+    # Sanitize campos
+    df['bucket'] = df['bucket'].astype(str).str.strip()
+    df['timestamp'] = df['timestamp'].astype(str).str.strip().str.split('.').str[0]
+
+    rotativo_gauge.clear()
+    novas_metricas = 0
+
+    for _, row in df.iterrows():
+        key = f"{row['bucket']}:{row['timestamp']}"
+        if key in exported_keys:
+            continue
+
+        exported_keys.add(key)
+
+        bucket = row['bucket']
+        timestamp = row['timestamp']
+        rotativo_gauge.labels(bucket=bucket, timestamp=timestamp, type='missing').set(float(row['missing']))
+        rotativo_gauge.labels(bucket=bucket, timestamp=timestamp, type='unexpected').set(float(row['unexpected']))
+
+        novas_metricas += 1
+
+    print(f"Rotativo metrics exported ({novas_metricas} novas).")
+
+
 if __name__ == '__main__':
     start_http_server(8000)
     while True:
@@ -200,6 +252,7 @@ if __name__ == '__main__':
         read_csv_and_update_metrics()
         test_metrics_exporter()
         execution_time_metrics_exporter()
+        export_rotativo_metrics()
         delete_temp_parquets()
 
-        time.sleep(600)  # Atualize a cada 600 segundos (10 minutos)
+        time.sleep(3600)  # Atualize a cada 3600 segundos (1 hora)
