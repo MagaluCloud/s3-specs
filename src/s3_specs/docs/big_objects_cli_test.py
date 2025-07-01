@@ -35,8 +35,8 @@ commands = [
         marks=pytest.mark.aws,
         id="aws-upload-big"
     ),
-    pytest.param(          # RCLONE PROBLEMS
-       {"command": "rclone copy {src_path} {profile_name}:{bucket_name} --progress",
+    pytest.param(
+       {"command": "rclone copy {src_path} {profile_name}:{bucket_name}/{object_key}  --progress",
         "expected": "Transferred:"},
        marks=pytest.mark.rclone,
        id="rclone-upload-big"
