@@ -121,19 +121,6 @@ def main():
                     object_path
                 )
 
-        except Exception as e:
-            print(f"Error processing {file_path}: {str(e)}")
-            send_notification(
-                webhook_url,
-                f"Exception while processing file: {file_path}",
-                str(e),
-                git_run_url,
-                1,
-                file_path,
-                object_path
-            )
-            any_failures = True
-
     # Teste: envia notificação mesmo sem falhas
     if not any_failures:
         print("\nNo failures found in any files. Sending test notification anyway...")
