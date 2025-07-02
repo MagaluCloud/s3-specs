@@ -71,7 +71,7 @@ jobs:
               run: |
                 uv run python3 ./bin/webhook.py \
                   "${{ vars.WEBHOOK_URL }}" \
-                  "src/s3_specs/docs/s3-specs/artifact/" \
+                  "reports_html/" \
                   "${{ github.repository }}" \
                   "${{ github.run_id }}" \
-                  "${{ inputs.prefix_object_key }}"
+                  "${{ inputs.prefix_object_key }}/"
