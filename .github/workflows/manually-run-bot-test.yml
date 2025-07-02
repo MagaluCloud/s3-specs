@@ -1,0 +1,77 @@
+name: Tests de Homologação com notificação do bot
+
+on:
+  workflow_dispatch:
+    inputs:
+      container:
+        description: 'Container to run the tests'
+        type: choice
+        default: 'ghcr.io/magalucloud/s3-specs:tools_latest'
+        options:
+          - 'ghcr.io/magalucloud/s3-specs:tests_latest'
+          - 'ghcr.io/magalucloud/s3-specs:tests_oldest'
+      profile:
+        description: 'Profile em que os testes serão executados'
+        type: choice
+        default: 'homologacao'
+        options:
+          - 'homologacao'
+          - 'br-se1'
+          - 'br-ne1'
+      object_key_prefix:
+        description: "Prefixo para identificar os reports gerados no bucket"
+        required: true
+        type: string
+
+jobs:
+  run-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        tools:
+          - name: latest
+            value: latest
+
+        marker:
+          - test: "'basic and not mgc'"
+            name: "'basic and not mgc'"
+          - test: "'cold_storage and not mgc'"
+            name: "'cold_storage and not mgc'"
+          - test: "'presign and not mgc'"
+            name: "'presign and not mgc'"
+          - test: "'acl and not mgc'"
+            name: "'acl and not mgc'"
+          - test: "'locking and not mgc'"
+            name: "'locking and not mgc'"
+          - test: "'policy and not mgc'"
+            name: "'policy and not mgc'"
+          - test: "'bucket_versioning and not mgc'"
+            name: "'bucket_versioning and not mgc'"
+          - test: "'bulk_delete'"
+            name: "'bulk_delete'"
+        config:
+          - path: "../../../params.example.yaml"
+            name: "example"
+    uses: ./.github/workflows/run-tests-with-report.yml
+    with:
+      name: "${{ matrix.marker.name }}_1hours.${{ matrix.config.name }}"
+      prefix_object_key: "homologacao/${{inputs.object_key_prefix}}"
+      mark: ${{matrix.marker.test}}
+      container: ${{ inputs.container }}
+      profile: ${{ inputs.profile }}
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}
+
+  send-webhook:
+    name: Webhook Send
+    needs: run-tests
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Send webhook
+        run: |
+          cd /app
+          ./bin/webhook.py "${{ vars.WEBHOOK_URL }}" "src/s3_specs/docs/s3-specs/artifact/" "${{ github.repository }}" "${{ github.run_id }}" "homologacao/${{inputs.object_key_prefix}}"
