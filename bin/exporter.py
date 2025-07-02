@@ -244,8 +244,8 @@ def export_rotativo_metrics():
 
         bucket = row['bucket']
         timestamp = row['timestamp']
-        rotativo_gauge.labels(bucket=bucket, timestamp=timestamp, type='missing').set(float(row['missing']))
-        rotativo_gauge.labels(bucket=bucket, timestamp=timestamp, type='unexpected').set(float(row['unexpected']))
+        rotativo_gauge.labels(bucket=bucket, timestamp=timestamp, type='expected').set(float(row['expected']))
+        rotativo_gauge.labels(bucket=bucket, timestamp=timestamp, type='found').set(float(row['found']))
 
         novas_metricas += 1
 
