@@ -50,7 +50,6 @@ def test_object_validations(available_buckets, profile_name, quantity, workers):
 
 # Testes de consistência para objetos deletados
 @pytest.mark.slow
-@pytest.mark.multiple_objects
 @pytest.mark.consistency
 @pytest.mark.skip_if_dev
 @pytest.mark.parametrize("quantity", [512])
