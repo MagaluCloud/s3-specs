@@ -1,4 +1,4 @@
-name: Tests de Homologação com notificação do bot
+name: Tests de Homologação
 
 on:
   workflow_dispatch:
@@ -62,16 +62,16 @@ jobs:
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
-  send-webhook:
-    name: Webhook Send
-    needs: run-tests
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
+  # send-webhook:
+  #   name: Webhook Send
+  #   needs: run-tests
+  #   if: always()
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Repo
+  #       uses: actions/checkout@v4
 
-      - name: Send webhook
-        run: |
-          cd /app
-          ./bin/webhook.py "${{ vars.WEBHOOK_URL }}" "src/s3_specs/docs/s3-specs/artifact/" "${{ github.repository }}" "${{ github.run_id }}" "homologacao/${{inputs.object_key_prefix}}"
+  #     - name: Send webhook
+  #       run: |
+  #         cd /app
+  #         ./bin/webhook.py "${{ vars.WEBHOOK_URL }}" "src/s3_specs/docs/s3-specs/artifact/" "${{ github.repository }}" "${{ github.run_id }}" "homologacao/${{inputs.object_key_prefix}}"
