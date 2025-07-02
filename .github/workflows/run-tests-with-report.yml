@@ -65,3 +65,13 @@ jobs:
               run: |
                 mgc workspace set br-se1
                 mgc os objects upload-dir './reports_pdf/' results-test-do-not-delete/${{inputs.prefix_object_key}}/
+
+            - name: Send webhook
+              if: always()
+              run: |
+                uv run python3 ./bin/webhook.py \
+                  "${{ vars.WEBHOOK_URL }}" \
+                  "src/s3_specs/docs/s3-specs/artifact/" \
+                  "${{ github.repository }}" \
+                  "${{ github.run_id }}" \
+                  "${{ inputs.prefix_object_key }}"
