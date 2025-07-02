@@ -12,7 +12,7 @@ def send_notification(webhook_url, failed_string, failed_string_see_more, git_ru
                 'header': {
                     'title': 'Test Results:',
                     'subtitle': f'{num_falhas} failed' if num_falhas else 'All tests passed',
-                    'imageUrl': 'https://avatars.githubusercontent.com/u/153554540?s=200&v=4',
+                    'imageUrl': 'https://avatars.githubusercontent.com/u/146738539?s=200&v=4',
                     'imageType': 'CIRCLE'
                 },
                 'sections': [
