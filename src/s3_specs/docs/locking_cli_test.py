@@ -208,7 +208,9 @@ def test_simple_delete_object_on_locked_bucket(cmd_template, active_mgc_workspac
 
     cmd = split(cmd_template.format(mgc_path=mgc_path, bucket_name=bucket_name, object_key=object_key))
     result = subprocess.run(cmd, capture_output=True, text=True)
-    assert result.returncode == 0, f"Command failed with error: {result.stderr}"
+    # assert result.returncode == 0, f"Command failed with error: {result.stderr}"
+    # logging.info(f"Output from {cmd}: {result.stdout}")
+     assert result.returncode == 1, f"expect to fail just test webhook"
     logging.info(f"Output from {cmd}: {result.stdout}")
 
 run_example(__name__, "test_simple_delete_object_on_locked_bucket", config=config)
