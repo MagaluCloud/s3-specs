@@ -21,10 +21,17 @@ paths = {
     'grouped_file': './output/resultado_grouped.csv',
     'inconsistencies_file': './output/report_inconsistencies.csv',
     'benchmark_file': './output/benchmark_results.csv',
-    'rotativo_metrics_file': './output/rotativo_metrics.csv'
+    'rotativo_metrics_file': './output/rotativo_metrics.csv',
+    'replicator_file': './output/replicator_results.csv'
 }
 
 # Definir as métricas Gauge
+replicator_gauge = Gauge(
+    'replicator_consistency',
+    'Métricas de consistência em replicação',
+    ['timestamp', 'bucket', 'prefix', 'total_missing', 'found_after_wait']
+)
+
 objs_consistency_time = Gauge(
     'objs_consistency_time',
     'Tempo de execução para diferentes operações de consistência',
@@ -244,6 +251,36 @@ def export_rotativo_metrics():
 
     print(f"Rotativo metrics exported ({novas_metricas} novas).")
 
+def export_replicator_metrics():
+    csv_path = paths.get('replicator_file')
+
+    if not os.path.exists(csv_path):
+        print(f"Arquivo {csv_path} não encontrado.")
+        return
+
+    try:
+        df = pd.read_csv(csv_path)
+    except Exception as e:
+        print(f"Erro ao ler {csv_path}: {e}")
+        return
+
+    if df.empty:
+        print(f"CSV {csv_path}. Nenhuma métrica exportada.")
+        return
+
+    replicator_gauge.clear()
+
+    for _, row in df.iterrows():
+        replicator_gauge.labels(
+            timestamp=row['timestamp'],
+            bucket=row['bucket'],
+            prefix=row['prefix'],
+            total_missing=int(row['total_missing']),
+            found_after_wait=int(row['found_after_wait'])
+        ).set(1)
+
+    print("Replicator metrics exported.")
+
 
 if __name__ == '__main__':
     start_http_server(8000)
@@ -254,5 +291,6 @@ if __name__ == '__main__':
         execution_time_metrics_exporter()
         export_rotativo_metrics()
         delete_temp_parquets()
+        export_replicator_metrics()
 
         time.sleep(3600)  # Atualize a cada 3600 segundos (1 hora)
