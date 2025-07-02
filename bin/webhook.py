@@ -41,14 +41,6 @@ def send_notification(webhook_url, failed_string, failed_string_see_more, git_ru
                                                     'url': git_run_url
                                                 }
                                             }
-                                        },
-                                        {
-                                            'text': 'Artifacts path',
-                                            'onClick': {
-                                                'openLink': {
-                                                    'url': "https://results-test-do-not-delete.magaluobjects.com/" + object_path
-                                                }
-                                            }
                                         }
                                     ]
                                 }
@@ -65,10 +57,9 @@ def send_notification(webhook_url, failed_string, failed_string_see_more, git_ru
     print(f"Notification sent for {filename}. Status: {response.status_code}")
 
 def process_file(file_path):
-    """Processa um arquivo de log e retorna as falhas"""
     with open(file_path, "r") as file:
         lines = file.readlines()
-    
+
     failed_line = [line.strip() for line in lines if line.startswith("FAILED")]
     failed_string = "\n".join(failed_line)
 
@@ -78,7 +69,6 @@ def process_file(file_path):
     return failed_string, failed_string_see_more
 
 def count_fails(file_path):
-    """Conta o número de falhas em um arquivo"""
     with open(file_path, "r") as f:
         return f.read().count("\nFAILED ")
 
@@ -86,7 +76,7 @@ def main():
     if len(sys.argv) != 6:
         print("Usage: python script.py WEBHOOK_URL LOG_PATH GITHUB_REPOSITORY GITHUB_RUN_ID OBJECT_PATH")
         return
-    
+
     webhook_url = sys.argv[1]
     log_path = sys.argv[2]
     github_repository = sys.argv[3]
@@ -94,7 +84,6 @@ def main():
     object_path = sys.argv[5]
     git_run_url = f"https://github.com/{github_repository}/actions/runs/{github_run_id}"
 
-    # Determine if path is file or directory
     if os.path.isfile(log_path):
         files_to_process = [log_path]
     elif os.path.isdir(log_path):
@@ -107,20 +96,19 @@ def main():
         print("No log files found to process")
         return
 
-    any_failures = False  # Flag para verificar se houve alguma falha
+    any_failures = False
+    first_file = files_to_process[0]
 
     for file_path in files_to_process:
         print(f"\nProcessing file: {file_path}")
-        
         try:
             num_falhas = count_fails(file_path)
             failed_string, failed_string_see_more = process_file(file_path)
-            
+
             print(f"Found {num_falhas} failures")
             print("Failed tests:", failed_string or "None")
             print("Assertion errors:", failed_string_see_more or "None")
-            
-            # Só envia notificação se houver falhas
+
             if num_falhas > 0:
                 any_failures = True
                 send_notification(
@@ -132,13 +120,32 @@ def main():
                     file_path,
                     object_path
                 )
-            
+
         except Exception as e:
             print(f"Error processing {file_path}: {str(e)}")
-            continue
+            send_notification(
+                webhook_url,
+                f"Exception while processing file: {file_path}",
+                str(e),
+                git_run_url,
+                1,
+                file_path,
+                object_path
+            )
+            any_failures = True
 
+    # Teste: envia notificação mesmo sem falhas
     if not any_failures:
-        print("\nNo failures found in any files. Notification not sent.")
+        print("\nNo failures found in any files. Sending test notification anyway...")
+        send_notification(
+            webhook_url,
+            "Webhook test — no failures",
+            "No assertion errors — just testing webhook",
+            git_run_url,
+            0,
+            first_file,
+            object_path
+        )
 
 if __name__ == "__main__":
     main()
