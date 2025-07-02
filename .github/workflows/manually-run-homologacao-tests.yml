@@ -25,6 +25,7 @@ on:
 
 jobs:
   run-tests:
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -49,29 +50,43 @@ jobs:
             name: "'bucket_versioning and not mgc'"
           - test: "'bulk_delete'"
             name: "'bulk_delete'"
+
         config:
           - path: "../../../params.example.yaml"
             name: "example"
-    uses: ./.github/workflows/run-tests-with-report.yml
-    with:
-      name: "${{ matrix.marker.name }}_1hours.${{ matrix.config.name }}"
-      prefix_object_key: "homologacao/${{inputs.object_key_prefix}}"
-      mark: ${{matrix.marker.test}}
-      container: ${{ inputs.container }}
-      profile: ${{ inputs.profile }}
-    secrets:
-      PROFILES: ${{ secrets.PROFILES }}
 
-  # send-webhook:
-  #   name: Webhook Send
-  #   needs: run-tests
-  #   if: always()
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout Repo
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
 
-  #     - name: Send webhook
-  #       run: |
-  #         cd /app
-  #         ./bin/webhook.py "${{ vars.WEBHOOK_URL }}" "src/s3_specs/docs/s3-specs/artifact/" "${{ github.repository }}" "${{ github.run_id }}" "homologacao/${{inputs.object_key_prefix}}"
+      - name: Set timestamp
+        id: timestamp
+        run: echo "timestamp=$(date +'%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
+
+      - name: Run tests with report
+        id: run_tests
+        uses: ./.github/workflows/run-tests-with-report.yml
+        with:
+          name: "${{ matrix.marker.name }}_1hours.${{ matrix.config.name }}"
+          prefix_object_key: "homologacao/${{inputs.object_key_prefix}}"
+          mark: ${{ matrix.marker.test }}
+          container: ${{ inputs.container }}
+          profile: ${{ inputs.profile }}
+        env:
+          PROFILES: ${{ secrets.PROFILES }}
+
+      - name: Upload Reports
+        if: always()
+        run: |
+          mgc workspace set br-se1
+          mgc os objects upload-dir './reports_pdf/' results-test-do-not-delete/${{ steps.run_tests.outputs.prefix_object_key }}/      
+
+      - name: Send webhook
+        if: always()
+        run: |
+          python3 bin/webhook.py \
+            "${{ vars.WEBHOOK_URL }}" \
+            "src/s3_specs/docs/s3-specs/artifact/" \
+            "${{ github.repository }}" \
+            "${{ github.run_id }}" \
+            "${{ steps.run_tests.outputs.prefix_object_key }}"
