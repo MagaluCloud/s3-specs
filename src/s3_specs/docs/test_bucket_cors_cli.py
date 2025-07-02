@@ -1,9 +1,10 @@
-import pytest
 import json
-import tempfile
 import logging
+import tempfile
+
+import pytest
+
 from s3_specs.docs.tools.utils import execute_subprocess
-from s3_specs.docs.s3_helpers import change_cors_json
 
 pytestmark = [pytest.mark.homologacao, pytest.mark.cli, pytest.mark.cors]
 
@@ -12,332 +13,345 @@ cors_test_cases = [
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["GET"],
-                "allowed_origins": ["https://allowed.com"],
-                "allowed_headers": ["Authorization"],
-                "expose_headers": ["x-custom-header"],
-                "max_age": 1234,
+                "AllowedMethods": ["GET"],
+                "AllowedOrigins": ["https://allowed.com"],
+                "AllowedHeaders": ["Authorization"],
+                "ExposeHeaders": ["x-custom-header"],
+                "MaxAgeSeconds": 1234,
             },
-            "expect_fail": False
+            "expect_fail": False,
         },
-        id="simple-valid-config"
+        id="simple-valid-config",
     ),
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["GET", "PUT"],
-                "allowed_origins": ["https://allowed.com", "https://other.com"],
-                "allowed_headers": ["Authorization", "Content-Type"],
-                "expose_headers": [],
-                "max_age": 3600,
+                "AllowedMethods": ["GET", "PUT"],
+                "AllowedOrigins": ["https://allowed.com", "https://other.com"],
+                "AllowedHeaders": ["Authorization", "Content-Type"],
+                "ExposeHeaders": [],
+                "MaxAgeSeconds": 3600,
             },
-            "expect_fail": False
+            "expect_fail": False,
         },
-        id="multiple-methods-and-origins"
+        id="multiple-methods-and-origins",
     ),
-
     # ===== Wildcard Tests =====
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["GET"],
-                "allowed_origins": [],
-                "allowed_headers": ["*"],
-                "expose_headers": [],
-                "max_age": 300,
+                "AllowedMethods": ["GET"],
+                "AllowedOrigins": [],
+                "AllowedHeaders": ["*"],
+                "ExposeHeaders": [],
+                "MaxAgeSeconds": 300,
             },
-            "expect_fail": True
+            "expect_fail": True,
         },
-        id="wildcard-header-no-origins"
+        id="wildcard-header-no-origins",
     ),
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["GET"],
-                "allowed_origins": ["*"],
-                "allowed_headers": [],
-                "expose_headers": [],
-                "max_age": 0,
+                "AllowedMethods": ["GET"],
+                "AllowedOrigins": ["*"],
+                "AllowedHeaders": [],
+                "ExposeHeaders": [],
+                "MaxAgeSeconds": 0,
             },
-            "expect_fail": False
+            "expect_fail": False,
         },
-        id="wildcard-origin-empty-headers"
+        id="wildcard-origin-empty-headers",
     ),
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["GET", "POST", "PUT"],
-                "allowed_origins": ["*"],
-                "allowed_headers": ["*"],
-                "expose_headers": ["*"],
-                "max_age": 7200,
+                "AllowedMethods": ["GET", "POST", "PUT"],
+                "AllowedOrigins": ["*"],
+                "AllowedHeaders": ["*"],
+                "ExposeHeaders": ["*"],
+                "MaxAgeSeconds": 7200,
             },
-            "expect_fail": False
+            "expect_fail": False,
         },
-        id="wildcard-both-origins-and-headers"
+        id="wildcard-both-origins-and-headers",
     ),
-
     # ===== HTTP Methods Tests =====
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
-                "allowed_origins": ["https://test.com"],
-                "allowed_headers": ["*"],
-                "expose_headers": [],
-                "max_age": 3600,
+                "AllowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+                "AllowedOrigins": ["https://test.com"],
+                "AllowedHeaders": ["*"],
+                "ExposeHeaders": [],
+                "MaxAgeSeconds": 3600,
             },
-            "expect_fail": False
+            "expect_fail": False,
         },
-        id="all-standard-http-methods"
+        id="all-standard-http-methods",
     ),
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["POST"],
-                "allowed_origins": ["https://site1.com"],
-                "allowed_headers": ["Authorization", "Content-Type"],
-                "expose_headers": ["x-amz-request-id", "x-custom-header", "x-another-header"],
-                "max_age": 1800,
+                "AllowedMethods": ["POST"],
+                "AllowedOrigins": ["https://site1.com"],
+                "AllowedHeaders": ["Authorization", "Content-Type"],
+                "ExposeHeaders": [
+                    "x-amz-request-id",
+                    "x-custom-header",
+                    "x-another-header",
+                ],
+                "MaxAgeSeconds": 1800,
             },
-            "expect_fail": False
+            "expect_fail": False,
         },
-        id="post-with-multiple-headers"
+        id="post-with-multiple-headers",
     ),
-
     # ===== Validation / Error Tests =====
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["GET", "FAKE"],
-                "allowed_origins": ["*"],
-                "allowed_headers": ["*"],
-                "expose_headers": ["x-test"],
-                "max_age": 3600,
+                "AllowedMethods": ["GET", "FAKE"],
+                "AllowedOrigins": ["*"],
+                "AllowedHeaders": ["*"],
+                "ExposeHeaders": ["x-test"],
+                "MaxAgeSeconds": 3600,
             },
-            "expect_fail": True
+            "expect_fail": True,
         },
-        id="invalid-method-fake"
+        id="invalid-method-fake",
     ),
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["FAKE1", "FAKE2"],
-                "allowed_origins": ["*"],
-                "allowed_headers": ["*"],
-                "expose_headers": [],
-                "max_age": 600,
+                "AllowedMethods": ["FAKE1", "FAKE2"],
+                "AllowedOrigins": ["*"],
+                "AllowedHeaders": ["*"],
+                "ExposeHeaders": [],
+                "MaxAgeSeconds": 600,
             },
-            "expect_fail": True
+            "expect_fail": True,
         },
-        id="only-invalid-methods"
+        id="only-invalid-methods",
     ),
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["GET"],
-                "allowed_origins": ["https://allowed.com"],
-                "allowed_headers": ["Authorization"],
-                "expose_headers": ["x-custom-header"],
-                "max_age": 0,
+                "AllowedMethods": ["GET"],
+                "AllowedOrigins": ["https://allowed.com"],
+                "AllowedHeaders": ["Authorization"],
+                "ExposeHeaders": ["x-custom-header"],
+                "MaxAgeSeconds": 0,
             },
-            "expect_fail": False
+            "expect_fail": False,
         },
-        id="max-age-zero"
+        id="max-age-zero",
     ),
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["GET"],
-                "allowed_origins": ["https://allowed.com"],
-                "allowed_headers": ["Authorization"],
-                "expose_headers": ["x-custom-header"],
-                "max_age": 1,
+                "AllowedMethods": ["GET"],
+                "AllowedOrigins": ["https://allowed.com"],
+                "AllowedHeaders": ["Authorization"],
+                "ExposeHeaders": ["x-custom-header"],
+                "MaxAgeSeconds": 1,
             },
-            "expect_fail": False
+            "expect_fail": False,
         },
-        id="max-age-one"
+        id="max-age-one",
     ),
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["GET"],
-                "allowed_origins": ["https://allowed.com"],
-                "allowed_headers": ["Authorization"],
-                "expose_headers": ["x-custom-header"],
-                "max_age": 86400,
+                "AllowedMethods": ["GET"],
+                "AllowedOrigins": ["https://allowed.com"],
+                "AllowedHeaders": ["Authorization"],
+                "ExposeHeaders": ["x-custom-header"],
+                "MaxAgeSeconds": 86400,
             },
-            "expect_fail": False
+            "expect_fail": False,
         },
-        id="max-age-one-day"
+        id="max-age-one-day",
     ),
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["GET"],
-                "allowed_origins": ["https://allowed.com"],
-                "allowed_headers": ["Authorization"],
-                "expose_headers": ["x-custom-header"],
-                "max_age": 604800,
+                "AllowedMethods": ["GET"],
+                "AllowedOrigins": ["https://allowed.com"],
+                "AllowedHeaders": ["Authorization"],
+                "ExposeHeaders": ["x-custom-header"],
+                "MaxAgeSeconds": 604800,
             },
-            "expect_fail": False
+            "expect_fail": False,
         },
-        id="max-age-one-week"
+        id="max-age-one-week",
     ),
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["GET"],
-                "allowed_origins": ["https://allowed.com"],
-                "allowed_headers": ["Authorization"],
-                "expose_headers": ["x-custom-header"],
-                "max_age": -1,
+                "AllowedMethods": ["GET"],
+                "AllowedOrigins": ["https://allowed.com"],
+                "AllowedHeaders": ["Authorization"],
+                "ExposeHeaders": ["x-custom-header"],
+                "MaxAgeSeconds": -1,
             },
-            "expect_fail": True
+            "expect_fail": True,
         },
-        id="negative-max-age"
+        id="negative-max-age",
     ),
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["GET"],
-                "allowed_origins": ["https://allowed.com"],
-                "allowed_headers": ["Authorization"],
-                "expose_headers": ["x-custom-header"],
-                "max_age": 2147483647,
+                "AllowedMethods": ["GET"],
+                "AllowedOrigins": ["https://allowed.com"],
+                "AllowedHeaders": ["Authorization"],
+                "ExposeHeaders": ["x-custom-header"],
+                "MaxAgeSeconds": 2147483647,
             },
-            "expect_fail": False
+            "expect_fail": False,
         },
-        id="very-large-max-age"
+        id="very-large-max-age",
     ),
     pytest.param(
         {
             "args": {
-                "allowed_methods": [],
-                "allowed_origins": ["https://allowed.com"],
-                "allowed_headers": ["Authorization"],
-                "expose_headers": ["x-custom-header"],
-                "max_age": 1234,
+                "AllowedMethods": [],
+                "AllowedOrigins": ["https://allowed.com"],
+                "AllowedHeaders": ["Authorization"],
+                "ExposeHeaders": ["x-custom-header"],
+                "MaxAgeSeconds": 1234,
             },
-            "expect_fail": True
+            "expect_fail": True,
         },
-        id="empty-allowed-methods"
+        id="empty-allowed-methods",
     ),
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["get", "POST", "Put"],
-                "allowed_origins": ["https://test.com"],
-                "allowed_headers": ["Authorization"],
-                "expose_headers": ["x-custom-header"],
-                "max_age": 1234,
+                "AllowedMethods": ["get", "POST", "Put"],
+                "AllowedOrigins": ["https://test.com"],
+                "AllowedHeaders": ["Authorization"],
+                "ExposeHeaders": ["x-custom-header"],
+                "MaxAgeSeconds": 1234,
             },
-            "expect_fail": True
+            "expect_fail": True,
         },
-        id="case-sensitive-methods"
+        id="case-sensitive-methods",
     ),
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["GET"],
-                "allowed_origins": ["https://allowed.com"],
-                "allowed_headers": ["X-Custom-Header", "x-test_header", "X-Header-With-123"],
-                "expose_headers": ["X-Expose-Header", "x-another_header"],
-                "max_age": 1234,
-            },
-            "expect_fail": False
-        },
-        id="special-characters-in-headers"
-    ),
-    pytest.param(
-        {
-            "args": {
-                "allowed_methods": ["GET"],
-                "allowed_origins": ["*"],
-                "allowed_headers": ["X-Very-Long-Header-Name-" + "A" * 100],
-                "expose_headers": ["X-Very-Long-Header-Name-" + "A" * 100],
-                "max_age": 1234,
-            },
-            "expect_fail": False
-        },
-        id="very-long-header-names"
-    ),
-    pytest.param(
-        {
-            "args": {
-                "allowed_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-                "allowed_origins": ["https://app.example.com"],
-                "allowed_headers": [
-                    "Authorization", "Content-Type", "X-Requested-With",
-                    "Accept", "Origin", "Access-Control-Request-Method",
-                    "Access-Control-Request-Headers"
+                "AllowedMethods": ["GET"],
+                "AllowedOrigins": ["https://allowed.com"],
+                "AllowedHeaders": [
+                    "X-Custom-Header",
+                    "x-test_header",
+                    "X-Header-With-123",
                 ],
-                "expose_headers": [
-                    "ETag", "x-amz-request-id", "x-amz-id-2",
-                    "x-amz-version-id", "x-amz-delete-marker"
-                ],
-                "max_age": 3600,
+                "ExposeHeaders": ["X-Expose-Header", "x-another_header"],
+                "MaxAgeSeconds": 1234,
             },
-            "expect_fail": False
+            "expect_fail": False,
         },
-        id="common-headers-combination"
+        id="special-characters-in-headers",
     ),
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["GET"],
-                "allowed_origins": [
+                "AllowedMethods": ["GET"],
+                "AllowedOrigins": ["*"],
+                "AllowedHeaders": ["X-Very-Long-Header-Name-" + "A" * 100],
+                "ExposeHeaders": ["X-Very-Long-Header-Name-" + "A" * 100],
+                "MaxAgeSeconds": 1234,
+            },
+            "expect_fail": False,
+        },
+        id="very-long-header-names",
+    ),
+    pytest.param(
+        {
+            "args": {
+                "AllowedMethods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                "AllowedOrigins": ["https://app.example.com"],
+                "AllowedHeaders": [
+                    "Authorization",
+                    "Content-Type",
+                    "X-Requested-With",
+                    "Accept",
+                    "Origin",
+                    "Access-Control-Request-Method",
+                    "Access-Control-Request-Headers",
+                ],
+                "ExposeHeaders": [
+                    "ETag",
+                    "x-amz-request-id",
+                    "x-amz-id-2",
+                    "x-amz-version-id",
+                    "x-amz-delete-marker",
+                ],
+                "MaxAgeSeconds": 3600,
+            },
+            "expect_fail": False,
+        },
+        id="common-headers-combination",
+    ),
+    pytest.param(
+        {
+            "args": {
+                "AllowedMethods": ["GET"],
+                "AllowedOrigins": [
                     "https://secure.com",
                     "http://insecure.com",
                 ],
-                "allowed_headers": ["Authorization"],
-                "expose_headers": ["x-custom-header"],
-                "max_age": 1234,
+                "AllowedHeaders": ["Authorization"],
+                "ExposeHeaders": ["x-custom-header"],
+                "MaxAgeSeconds": 1234,
             },
-            "expect_fail": False
+            "expect_fail": False,
         },
-        id="different-protocols"
+        id="different-protocols",
     ),
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["OPTIONS", "GET", "POST"],
-                "allowed_origins": ["https://webapp.com"],
-                "allowed_headers": ["*"],
-                "expose_headers": [],
-                "max_age": 86400,
+                "AllowedMethods": ["OPTIONS", "GET", "POST"],
+                "AllowedOrigins": ["https://webapp.com"],
+                "AllowedHeaders": ["*"],
+                "ExposeHeaders": [],
+                "MaxAgeSeconds": 86400,
             },
-            "expect_fail": False
+            "expect_fail": False,
         },
-        id="options-method-preflight"
+        id="options-method-preflight",
     ),
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["GET"],
-                "allowed_origins": ["https://valid.com", ""],
-                "allowed_headers": ["Authorization", ""],
-                "expose_headers": ["", "x-custom"],
-                "max_age": 1234,
+                "AllowedMethods": ["GET"],
+                "AllowedOrigins": ["https://valid.com", ""],
+                "AllowedHeaders": ["Authorization", ""],
+                "ExposeHeaders": ["", "x-custom"],
+                "MaxAgeSeconds": 1234,
             },
-            "expect_fail": True
+            "expect_fail": True,
         },
-        id="edge-case-empty-strings"
+        id="edge-case-empty-strings",
     ),
     pytest.param(
         {
             "args": {
-                "allowed_methods": ["GET"],
-                "allowed_origins": ["https://allowed.com"],
-                "allowed_headers": ["X-Header-ção", "X-测试-Header"],
-                "expose_headers": ["X-Exposé-Header"],
-                "max_age": 1234,
+                "AllowedMethods": ["GET"],
+                "AllowedOrigins": ["https://allowed.com"],
+                "AllowedHeaders": ["X-Header-ção", "X-测试-Header"],
+                "ExposeHeaders": ["X-Exposé-Header"],
+                "MaxAgeSeconds": 1234,
             },
-            "expect_fail": False
+            "expect_fail": False,
         },
-        id="unicode-in-headers"
+        id="unicode-in-headers",
     ),
 ]
+
 
 @pytest.mark.aws
 @pytest.mark.parametrize("test_case", cors_test_cases)
@@ -347,19 +361,25 @@ def test_cors_put_get_with_awscli(existing_bucket_name, profile_name, test_case)
     cors_args = test_case["args"]
     expect_fail = test_case["expect_fail"]
 
-    cors_config = change_cors_json(bucket_name=bucket_name, cors_args=cors_args)
-    with tempfile.NamedTemporaryFile(mode="w+", suffix=".json", delete=False) as tmp_file:
+    cors_config = {"CORSRules": [cors_args]}
+    with tempfile.NamedTemporaryFile(
+        mode="w+", suffix=".json", delete=False
+    ) as tmp_file:
         json.dump(cors_config, tmp_file)
         tmp_file.flush()
         tmp_file_path = tmp_file.name
 
     put_cmd = f"aws s3api put-bucket-cors --bucket {bucket_name} --cors-configuration file://{tmp_file_path} --profile {profile_name}"
-    get_cmd = f"aws s3api get-bucket-cors --bucket {bucket_name} --profile {profile_name}"
+    get_cmd = (
+        f"aws s3api get-bucket-cors --bucket {bucket_name} --profile {profile_name}"
+    )
 
     put_result = execute_subprocess(put_cmd, expected_failure=expect_fail)
 
     if expect_fail:
-        assert put_result.returncode != 0, f"Expected fail, but returned 0: {put_result.stdout}"
+        assert (
+            put_result.returncode != 0
+        ), f"Expected fail, but returned 0: {put_result.stdout}"
         return
     else:
         assert put_result.returncode == 0, f"Command failed: {put_result.stderr}"
@@ -370,44 +390,55 @@ def test_cors_put_get_with_awscli(existing_bucket_name, profile_name, test_case)
     cors = json.loads(get_result.stdout)["CORSRules"][0]
 
     # Validate allowed methods
-    assert sorted(cors.get("AllowedMethods", [])) == sorted(cors_args.get("allowed_methods", []))
-    
+    assert sorted(cors.get("AllowedMethods", [])) == sorted(
+        cors_args.get("AllowedMethods", [])
+    )
+
     # Validate allowed origins
-    assert sorted(cors.get("AllowedOrigins", [])) == sorted(cors_args.get("allowed_origins", []))
+    assert sorted(cors.get("AllowedOrigins", [])) == sorted(
+        cors_args.get("AllowedOrigins", [])
+    )
 
     # Validate allowed headers
-    if cors_args.get("allowed_headers"):
-        assert sorted(cors.get("AllowedHeaders", [])) == sorted(cors_args.get("allowed_headers", []))
+    if cors_args.get("AllowedHeaders"):
+        assert sorted(cors.get("AllowedHeaders", [])) == sorted(
+            cors_args.get("AllowedHeaders", [])
+        )
     else:
         assert "AllowedHeaders" not in cors or not cors.get("AllowedHeaders")
 
     # Validate expose headers
-    if cors_args.get("expose_headers"):
-        assert sorted(cors.get("ExposeHeaders", [])) == sorted(cors_args.get("expose_headers", []))
+    if cors_args.get("ExposeHeaders"):
+        assert sorted(cors.get("ExposeHeaders", [])) == sorted(
+            cors_args.get("ExposeHeaders", [])
+        )
     else:
         assert "ExposeHeaders" not in cors or not cors.get("ExposeHeaders")
 
     # Validate max age
-    if "max_age" in cors_args:
-        assert cors.get("MaxAgeSeconds") == cors_args["max_age"]
+    if "MaxAgeSeconds" in cors_args:
+        assert cors.get("MaxAgeSeconds") == cors_args["MaxAgeSeconds"]
 
 
 @pytest.mark.aws
 def test_cors_configuration_replacement_cli(existing_bucket_name, profile_name):
     """Test that a new CORS configuration completely replaces the previous one using CLI."""
     bucket_name = existing_bucket_name
-    
+
     # First configuration
     first_cors_args = {
-        "allowed_methods": ["GET"],
-        "allowed_origins": ["https://allowed.com"],
-        "allowed_headers": ["Authorization"],
-        "expose_headers": ["x-custom-header"],
-        "max_age": 1234,
+        "AllowedMethods": ["GET"],
+        "AllowedOrigins": ["https://allowed.com"],
+        "AllowedHeaders": ["Authorization"],
+        "ExposeHeaders": ["x-custom-header"],
+        "MaxAgeSeconds": 1234,
     }
-    
-    cors_config1 = change_cors_json(bucket_name=bucket_name, cors_args=first_cors_args)
-    with tempfile.NamedTemporaryFile(mode="w+", suffix=".json", delete=False) as tmp_file1:
+
+    # First configuration - create CORS config directly
+    cors_config1 = {"CORSRules": [first_cors_args]}
+    with tempfile.NamedTemporaryFile(
+        mode="w+", suffix=".json", delete=False
+    ) as tmp_file1:
         json.dump(cors_config1, tmp_file1)
         tmp_file1.flush()
         tmp_file1_path = tmp_file1.name
@@ -415,18 +446,21 @@ def test_cors_configuration_replacement_cli(existing_bucket_name, profile_name):
     put_cmd1 = f"aws s3api put-bucket-cors --bucket {bucket_name} --cors-configuration file://{tmp_file1_path} --profile {profile_name}"
     put_result1 = execute_subprocess(put_cmd1)
     assert put_result1.returncode == 0, f"First command failed: {put_result1.stderr}"
-    
+
     # Second different configuration
     second_cors_args = {
-        "allowed_methods": ["POST", "DELETE"],
-        "allowed_origins": ["https://different.com"],
-        "allowed_headers": ["Content-Type"],
-        "expose_headers": [],
-        "max_age": 7200,
+        "AllowedMethods": ["POST", "DELETE"],
+        "AllowedOrigins": ["https://different.com"],
+        "AllowedHeaders": ["Content-Type"],
+        "ExposeHeaders": [],
+        "MaxAgeSeconds": 7200,
     }
-    
-    cors_config2 = change_cors_json(bucket_name=bucket_name, cors_args=second_cors_args)
-    with tempfile.NamedTemporaryFile(mode="w+", suffix=".json", delete=False) as tmp_file2:
+
+    # Second configuration - create CORS config directly
+    cors_config2 = {"CORSRules": [second_cors_args]}
+    with tempfile.NamedTemporaryFile(
+        mode="w+", suffix=".json", delete=False
+    ) as tmp_file2:
         json.dump(cors_config2, tmp_file2)
         tmp_file2.flush()
         tmp_file2_path = tmp_file2.name
@@ -436,12 +470,16 @@ def test_cors_configuration_replacement_cli(existing_bucket_name, profile_name):
     assert put_result2.returncode == 0, f"Second command failed: {put_result2.stderr}"
 
     # Verify the old configuration was completely replaced
-    get_cmd = f"aws s3api get-bucket-cors --bucket {bucket_name} --profile {profile_name}"
+    get_cmd = (
+        f"aws s3api get-bucket-cors --bucket {bucket_name} --profile {profile_name}"
+    )
     get_result = execute_subprocess(get_cmd)
-    assert get_result.returncode == 0, f"Failed to fetch final CORS: {get_result.stderr}"
+    assert (
+        get_result.returncode == 0
+    ), f"Failed to fetch final CORS: {get_result.stderr}"
 
     cors = json.loads(get_result.stdout)["CORSRules"][0]
-    
+
     # Verify the new configuration
     assert cors.get("AllowedMethods") == ["POST", "DELETE"]
     assert "GET" not in cors.get("AllowedMethods", [])
