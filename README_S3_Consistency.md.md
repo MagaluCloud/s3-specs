@@ -14,6 +14,10 @@ Ele pode ser usado para validar diferentes comportamentos de consistência em bu
 - [Overwriter Read Test](#overwriter-read-test)
 - [Exportação para Prometheus](#exportação-para-prometheus)
 
+
+## Dependencias
+ - python
+ - uv
 ---
 
 # Testes CRUD
@@ -53,6 +57,7 @@ Este arquivo é exportado automaticamente e lido pelo exporter Prometheus.
 ---
 
 # Replicator Test
+
 Este teste contínuo simula uma situação onde um erro de upload ocorre (ex: erro 500), mas o objeto pode acabar sendo replicado mesmo assim.
 
 ## Objetivo
@@ -129,7 +134,7 @@ python3 bin/continuous_consistency_monitor.py \
 | `--buckets`            | **Obrigatório**                   | Buckets a serem monitorados                    |
 | `--object-limit`       | `1000`                            | Número fixo de objetos ativos por bucket       |
 | `--prefix`             | `"rotativo-test/"`                | Prefixo para uploads                           |
-| `--profile`            | `"se1"`                           | Perfil AWS CLI                                 |
+| `--profile`            | `"br-se1"`                        | Perfil AWS CLI                                 |
 | `--max-workers`        | `100`                             | Uploads paralelos                              |
 | `--threads-por-bucket` | `1`                               | Threads por bucket                             |
 | `--csv-path`           | `"./output/rotativo_metrics.csv"` | Arquivo CSV de saída                           |
