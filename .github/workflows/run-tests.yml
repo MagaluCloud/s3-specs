@@ -70,3 +70,13 @@ jobs:
               with:
                 name: output_artifact_${{ steps.format_name.outputs.formatted_name }}
                 path: "/s3-specs/artifact/actions_pytest_output_${{ steps.format_name.outputs.formatted_log_name }}.log"
+            - name: Send webhook notification
+              if: always()
+              run: |
+                uv run python3 ./bin/webhook.py \
+                  "${{ vars.WEBHOOK_URL }}" \
+                  "/s3-specs/artifact/actions_pytest_output_${{ steps.format_name.outputs.formatted_log_name }}.log" \
+                  "${{ github.repository }}" \
+                  "${{ github.run_id }}" \
+                  "${{ steps.format_name.outputs.formatted_name }}"
+
