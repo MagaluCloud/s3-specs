@@ -37,6 +37,9 @@ def parse_args():
 
 def run_tests(args):
     category_name = f"{args.category}"
+    log_filename = f"{category_name}_{args.mark}_{args.profile}.log"
+    log_output = HTML_REPORTS_DIR / log_filename
+
     html_output = HTML_REPORTS_DIR / f"{category_name}_{args.mark}_{args.profile}.html"
     json_output = HTML_REPORTS_DIR / f"{category_name}_{args.mark}_{args.profile}_report.json"
     
@@ -61,11 +64,14 @@ def run_tests(args):
     elif args.mark:
         command.extend(["-m", args.mark])
 
-    try:
-        return subprocess.run(command).returncode
-    except KeyboardInterrupt:
-        print("\nTestes interrompidos. Gerando relatório parcial...")
-        return 1
+    with open(log_output, "w") as log_file:
+        try:
+            result = subprocess.run(command, stdout=log_file, stderr=subprocess.STDOUT)
+            return result.returncode
+        except KeyboardInterrupt:
+            print("\nTestes interrompidos. Gerando relatório parcial...")
+            return 1
+
 
 def generate_pdf(category=None):
     json_output = HTML_REPORTS_DIR / f"{category}_report.json" if category else Path("report.json")

@@ -1,0 +1,32 @@
+name: Recurrent 1h tests
+
+on:
+  schedule:
+    - cron: "0 */1 * * *"       # Every hour at 00 min
+
+jobs:
+  run_1h_tests:
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        profile:
+          - br-se1
+          - br-ne1
+        marker:
+          # 1h tests
+          - test: "'basic or cold_storage or presign'"
+            name: "'basic or cold_storage or presign'"
+        config:
+          - path: "../../../params.example.yaml"
+            name: "example"
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      name: "${{ matrix.marker.name }}_1hours.${{ matrix.config.name }}"
+      config: ${{ matrix.config.path }}
+      profile: ${{ matrix.profile }}
+      flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line --log-cli-level=info"
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}
+
+  
