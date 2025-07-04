@@ -1,4 +1,4 @@
-name: Recurrent 6h tests
+name: Recurrent 6h  tests
 
 on:
   schedule:
