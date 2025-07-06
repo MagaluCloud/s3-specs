@@ -4,13 +4,13 @@ import sys
 import os
 import glob
 
-def send_notification(webhook_url, failed_string, failed_string_see_more, git_run_url, num_falhas, filename, object_path):
+def send_notification(webhook_url, failed_string, failed_string_see_more, git_run_url, num_falhas, filename, object_path, profile):
     app_message = {
         'cardsV2': [{
             'cardId': 'createCardMessage',
             'card': {
                 'header': {
-                    'title': 'Test Results:',
+                    'title': f'Test Results: on profile {profile}',
                     'subtitle': f'{num_falhas} failed' if num_falhas else 'All tests passed',
                     'imageUrl': 'https://avatars.githubusercontent.com/u/146738539?s=200&v=4',
                     'imageType': 'CIRCLE'
@@ -73,16 +73,18 @@ def count_fails(file_path):
         return f.read().count("\nFAILED ")
 
 def main():
-    if len(sys.argv) != 6:
-        print("Usage: python script.py WEBHOOK_URL LOG_PATH GITHUB_REPOSITORY GITHUB_RUN_ID OBJECT_PATH")
+    if len(sys.argv) != 8:
+        print("Usage: python script.py WEBHOOK_URL LOG_PATH GITHUB_REPOSITORY GITHUB_RUN_ID OBJECT_PATH PROFILE GITHUB_JOB")
         return
 
     webhook_url = sys.argv[1]
     log_path = sys.argv[2]
     github_repository = sys.argv[3]
     github_run_id = sys.argv[4]
-    object_path = sys.argv[5]
-    git_run_url = f"https://github.com/{github_repository}/actions/runs/{github_run_id}"
+    github_job = sys.argv[5]
+    object_path = sys.argv[6]
+    profile = sys.argv[7]
+    git_run_url = f"https://github.com/{github_repository}/actions/runs/{github_run_id}/job/{github_job}"
 
     if os.path.isfile(log_path):
         files_to_process = [log_path]
