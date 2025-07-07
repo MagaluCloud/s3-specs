@@ -134,7 +134,7 @@ def main():
                 file_path,
                 object_path
             )
-            any_failures = True
+            any_failures = True 
 
 if __name__ == "__main__":
     main()
