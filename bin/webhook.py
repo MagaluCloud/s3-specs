@@ -81,10 +81,9 @@ def main():
     log_path = sys.argv[2]
     github_repository = sys.argv[3]
     github_run_id = sys.argv[4]
-    github_job = sys.argv[5]
     object_path = sys.argv[6]
     profile = sys.argv[7]
-    git_run_url = f"https://github.com/{github_repository}/actions/runs/{github_run_id}/job/{github_job}"
+    git_run_url = f"https://github.com/{github_repository}/actions/runs/{github_run_id}"
 
     if os.path.isfile(log_path):
         files_to_process = [log_path]
@@ -135,7 +134,7 @@ def main():
                 file_path,
                 object_path
             )
-            any_failures = True
+            any_failures = True 
 
 if __name__ == "__main__":
     main()
