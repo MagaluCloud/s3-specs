@@ -120,9 +120,10 @@ def main():
                     git_run_url,
                     num_falhas,
                     file_path,
-                    object_path
+                    object_path,
+                    profile
                 )
-
+ 
         except Exception as e:
             print(f"Error processing {file_path}: {str(e)}")
             send_notification(
