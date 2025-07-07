@@ -78,5 +78,6 @@ jobs:
                   "/s3-specs/artifact/actions_pytest_output_${{ steps.format_name.outputs.formatted_log_name }}.log" \
                   "${{ github.repository }}" \
                   "${{ github.run_id }}" \
-                  "${{ steps.format_name.outputs.formatted_name }}"
-
+                  "${{ github.job }}" \
+                  "${{ steps.format_name.outputs.formatted_name }}" \
+                  "${{ inputs.profile }}"
