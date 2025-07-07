@@ -123,7 +123,7 @@ def main():
                     object_path,
                     profile
                 )
-
+ 
         except Exception as e:
             print(f"Error processing {file_path}: {str(e)}")
             send_notification(
