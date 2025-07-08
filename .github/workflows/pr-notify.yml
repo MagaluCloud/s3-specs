@@ -1,4 +1,4 @@
-name: Notify GChat when PR ready
+name: Notify GChat when PR is ready
 
 on:
   pull_request:
@@ -8,13 +8,13 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-    - name: Send notification to Google Chat
-      uses: fjogeleit/http-request-action@v1
-      with:
-        url: ${{ vars.PR_WEBHOOK_URL }}
-        method: POST
-        headers: '{"Content-Type":"application/json"}'
-        body: |
-          {
-            "text": "Pull Request pronto para revisão: #${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}\n${{ github.event.pull_request.html_url }}"
-          }
+      - name: Send notification to Google Chat
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.GCHAT_WEBHOOK_URL }}
+          method: POST
+          contentType: application/json
+          data: |
+            {
+              "text": "Pull Request pronto para revisão:\n#${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}\n${{ github.event.pull_request.html_url }}"
+            }
