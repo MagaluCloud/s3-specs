@@ -74,4 +74,6 @@ jobs:
                   "reports_html/" \
                   "${{ github.repository }}" \
                   "${{ github.run_id }}" \
-                  "${{ inputs.prefix_object_key }}/"
+                  "${{ github.job }}" \
+                  "${{ inputs.prefix_object_key }}/" \
+                  "${{ inputs.profile }}"
