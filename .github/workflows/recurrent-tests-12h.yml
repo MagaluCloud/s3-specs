@@ -3,6 +3,7 @@ name: Recurrent 12h tests
 on:
   schedule: 
     - cron: "30 */12 * * *"    # Every 12 hours at HH:30
+  workflow_dispatch:
 
 jobs:
   run_12h_tests:
