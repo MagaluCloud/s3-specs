@@ -48,10 +48,3 @@ jobs:
       container: "ghcr.io/magalucloud/s3-specs:tests_${{matrix.tools.value}}"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
-
-  cleanup-tests:
-    needs: [run-tests]
-    if: always() 
-    uses: ./.github/workflows/cleanup-tests.yml
-    secrets:
-      PROFILES: ${{ secrets.PROFILES }}
