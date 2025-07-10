@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - skip-test-crossaccount
+      - fix/mgc_race
+
 jobs:
   build:
     permissions:

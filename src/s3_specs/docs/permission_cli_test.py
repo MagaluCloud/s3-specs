@@ -60,7 +60,7 @@ download_commands = [
 ]
 
 @pytest.mark.parametrize("cmd_template", list_commands)
-def test_list_objects(active_mgc_workspace_second, fixture_public_bucket, cmd_template, profile_name_second):
+def test_list_objects(active_mgc_workspace_second, active_mgc_workspace_second_env, fixture_public_bucket, cmd_template, profile_name_second):
     """Verifica se é possível listar objetos em um bucket público usando diferentes CLIs."""
     bucket_name, obj_key = fixture_public_bucket
     cmd = cmd_template["command"].format(
@@ -68,7 +68,7 @@ def test_list_objects(active_mgc_workspace_second, fixture_public_bucket, cmd_te
         profile_name_second=profile_name_second
     )
     logging.info(f"Executing list command: {cmd}")
-    result = execute_subprocess(cmd)
+    result = execute_subprocess(cmd, env=active_mgc_workspace_second_env)
     assert result.returncode == 0, (
         f"List command failed with exit code {result.returncode}\n"
         f"Command: {cmd}\n"
@@ -84,6 +84,7 @@ def test_list_objects(active_mgc_workspace_second, fixture_public_bucket, cmd_te
 @pytest.mark.parametrize("cmd_template", download_commands)
 def test_download_object_expected_failure(
     active_mgc_workspace_second,
+    active_mgc_workspace_second_env,
     fixture_public_bucket,
     cmd_template,
     profile_name_second,
@@ -112,7 +113,7 @@ def test_download_object_expected_failure(
 
     logging.info(f"Executing download command (EXPECTED TO FAIL): {cmd}")
 
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False)
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False, env=active_mgc_workspace_second_env)
 
     assert expected_output_in_stderr in result.stderr, (
         f"Erro esperado '{expected_output_in_stderr}' não encontrado no stderr:\n{result.stderr}"
@@ -124,6 +125,7 @@ def test_download_object_expected_failure(
 @pytest.mark.parametrize("cmd_template", list_commands)
 def test_list_objects_expected_failure(
     active_mgc_workspace_second,
+    active_mgc_workspace_second_env,
     fixture_private_bucket,
     cmd_template,
     profile_name_second,
@@ -152,7 +154,7 @@ def test_list_objects_expected_failure(
 
     logging.info(f"Executing list bucket command (EXPECTED TO FAIL): {cmd}")
 
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False)
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False, env=active_mgc_workspace_second_env)
 
     # Verifica que o erro esperado está no stderr
     assert expected_output_in_stderr in result.stderr, (
@@ -192,6 +194,7 @@ cli_commands = [
 @pytest.mark.parametrize("cli_info", cli_commands)
 def test_put_object_acl(
     active_mgc_workspace_second,
+    active_mgc_workspace_second_env,
     multiple_s3_clients,
     fixture_private_bucket,
     profile_name,
@@ -243,7 +246,7 @@ def test_put_object_acl(
          pytest.fail(f"Falha ao gerar o comando para {cli_name} com ACL {acl_info}")
 
     logging.info(f"Executando: {cmd}")
-    result = execute_subprocess(cmd)
+    result = execute_subprocess(cmd, env=active_mgc_workspace_second_env)
 
     assert result.returncode == 0, (
         f"Falha ao executar put-object-acl.\n"
@@ -285,6 +288,7 @@ cli_validate_templates = {
 )
 def test_set_acl_boto3_validate_cli_read(
     active_mgc_workspace_second,
+    active_mgc_workspace_second_env,
     multiple_s3_clients,
     fixture_private_bucket,
     profile_name_second,
@@ -348,7 +352,7 @@ def test_set_acl_boto3_validate_cli_read(
 
 
     try:
-        result_validate = execute_subprocess(cmd_validate, expected_failure=expect_cmd_fail)
+        result_validate = execute_subprocess(cmd_validate, expected_failure=expect_cmd_fail, env=active_mgc_workspace_second_env)
     except Exception as e:
         pytest.fail(f"execute_subprocess failed or expectation not met: {e}\nCommand: {cmd_validate}\nExpected failure: {expect_cmd_fail}")
 
