@@ -1,0 +1,22 @@
+name: Build test OCI Image On Push
+
+on:
+  push:
+    branches:
+      - test_branch_mgc
+jobs:
+  build:
+    permissions:
+      packages: write  
+      contents: read 
+    strategy:
+      max-parallel: 1
+      matrix:
+        include:
+          - image: tools_dev
+            name: tools_dev
+          - image: tests_dev
+            name: tests_dev
+    uses: ./.github/workflows/generate-docker-image.yml
+    with:
+      name: ${{ matrix.name }}  
