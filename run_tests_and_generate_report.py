@@ -52,6 +52,10 @@ def run_tests(args):
         f"--json-report-file={json_output}",
         f"--html={html_output}",
         "--self-contained-html",
+        "-s",
+        "-vv",
+        "-n", "auto",
+        "--no-header",
         "--profile",
         f"{args.profile}"
     ]
@@ -64,13 +68,23 @@ def run_tests(args):
     elif args.mark:
         command.extend(["-m", args.mark])
 
-    with open(log_output, "w") as log_file:
-        try:
-            result = subprocess.run(command, stdout=log_file, stderr=subprocess.STDOUT)
-            return result.returncode
-        except KeyboardInterrupt:
-            print("\nTestes interrompidos. Gerando relatório parcial...")
-            return 1
+    try:
+        with open(log_output, "w") as log_file:
+            print(f"\n>> Executando comando: {' '.join(command)}\n")
+            process = subprocess.Popen(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=0
+            )
+            for line in process.stdout:
+                print(line, end="", flush=True)
+                log_file.write(line)        
+            return process.wait()
+    except KeyboardInterrupt:
+        print("\nTestes interrompidos. Gerando relatório parcial...")
+        return 1
 
 
 def generate_pdf(category=None):
