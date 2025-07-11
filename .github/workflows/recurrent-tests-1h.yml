@@ -3,6 +3,7 @@ name: Recurrent 1h tests
 on:
   schedule:
     - cron: "0 */1 * * *"       # Every hour at 00 min
+  workflow_dispatch:
 
 jobs:
   run_1h_tests:

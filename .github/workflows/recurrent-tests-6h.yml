@@ -3,6 +3,7 @@ name: Recurrent 6h  tests
 on:
   schedule:
     - cron: "15 */6 * * *"    # Every 6 hours at HH:15
+  workflow_dispatch:
 
 jobs:
   run_6h_tests:
