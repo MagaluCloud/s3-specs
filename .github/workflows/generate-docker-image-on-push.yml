@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - skip-test-crossaccount
+  workflow_dispatch:
 jobs:
   build:
     permissions:
