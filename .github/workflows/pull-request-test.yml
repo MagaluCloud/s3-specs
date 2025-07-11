@@ -23,13 +23,12 @@ jobs:
           MODIFIED_IN_DOCS=$(echo "$FILES_CHANGED" | grep -qE '.*/docs/' && echo "true" || echo "false")
           echo "modified_in_docs=$MODIFIED_IN_DOCS" >> $GITHUB_OUTPUT
           echo "tests_list=$TESTS" >> $GITHUB_OUTPUT
+          echo "Modified Testes -> $TESTS"
 
           if [ -n "$TESTS" ]; then
             echo "has_tests=true" >> $GITHUB_OUTPUT
-            echo "$TESTS"
           else
             echo "has_tests=false" >> $GITHUB_OUTPUT
-            echo "not has tests"
           fi
 
   run_new_tests:
