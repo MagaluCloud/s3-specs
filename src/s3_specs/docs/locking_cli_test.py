@@ -32,7 +32,7 @@ from s3_specs.docs.s3_helpers import (
     get_object_retention_with_determination,
 )
 from datetime import datetime, timedelta, timezone
-pytestmark = [pytest.mark.locking, pytest.mark.cli]
+pytestmark = [pytest.mark.locking, pytest.mark.cli, pytest.mark.homologacao, pytest.mark.mgc, pytest.mark.skip_if_dev]
 # -
 
 # ## Exemplos
@@ -239,7 +239,7 @@ def test_permanent_delete_object_on_locked_bucket(cmd_template, active_mgc_works
 
     cmd_str = f"{mgc_path} object-storage objects versions {bucket_name}/{object_key} --raw "
     result = subprocess.run(split(cmd_str), capture_output=True, text=True)
-    assert object_version in result.stdout, "Unexpected output: {result.stdout}"
+    assert object_version in result.stdout, f"Unexpected output: {result.stdout}"
 
 run_example(__name__, "test_permanent_delete_object_on_locked_bucket", config=config)
 # -

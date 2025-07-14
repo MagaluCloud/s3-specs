@@ -52,11 +52,15 @@ filterwarnings = "ignore::DeprecationWarning:botocore.auth"
 env = ["JUPYTER_PLATFORM_DIRS=1"]
 addopts = "--json-report --json-report-file=reports/report.json --html=reports/report.html --self-contained-html"
 markers = [
+    "only_run_in_region(regions): Only run the test in a specific region",
+    "skip_if_dev: Skip the tests if running as dev",
+    "homologacao: Run tests used in homologation",
     "acl: Canned ACL (access control list)",
     "locking: Bucket Lock configuration and Object lock retention",
     "policy: Bucket Policy",
     "cold_storage: Storage Classes",
     "basic: Basic S3 functionality",
+    "bulk_delete: bulk_delete",
     "presign: Presigned URLs",
     "bucket_versioning: Bucket Versioning",
     "cli: Tests using CLI",
@@ -64,13 +68,15 @@ markers = [
     "big_objects: Tests with files bigger than 5 mb",
     "consistency: Tests for measure consistency time",
     "benchmark: Tests for benchmark",
-    "rapid: quick expected execution magnitude",
+    "quick: quick expected execution magnitude",
     "regular: regular time expected execution magnitude",
     "slow: slow expected execution magnitude",
     "mgc: mgc cli",
     "aws: aws cli",
     "rclone: rclone cli",
     "service_account: Service Account",
+    "bucket_sharing: Bucket Sharing",
+    "rbac: Only run rbac tests, which require a specific configuration"
 ]
 
 [tool.s3-tester]
@@ -87,4 +93,5 @@ markers = [
   "ObjectVersioning",
   "ColdStorage",
   "ServiceAccounts",
+  "BulkDelete"
 ]

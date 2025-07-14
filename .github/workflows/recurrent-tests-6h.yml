@@ -1,0 +1,32 @@
+name: Recurrent 6h  tests
+
+on:
+  schedule:
+    - cron: "15 */6 * * *"    # Every 6 hours at HH:15
+  workflow_dispatch:
+
+jobs:
+  run_6h_tests:
+    strategy:
+      max-parallel: 2
+      fail-fast: false
+
+      matrix:
+        profile:
+          - br-se1
+          - br-ne1
+        marker:
+            # 6h tests
+          - test: "'policy or bucket_versioning or acl or locking'"
+            name: "'policy or bucket_versioning or acl or locking'"
+        config:
+          - path: "../../../params.example.yaml"
+            name: "example"
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      name: "${{ matrix.marker.name }}_6hours.${{ matrix.config.name }}"
+      config: ${{ matrix.config.path }}
+      profile: ${{ matrix.profile }}
+      flags: "--no-header -vv -n 1 --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line --log-cli-level=info"
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}

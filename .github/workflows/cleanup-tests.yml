@@ -4,6 +4,9 @@ on:
   workflow_call:
     secrets:
       PROFILES: { required: true }
+    inputs:
+      profile: {required: true, type: string}
+  workflow_dispatch:
 
 jobs:
   cleanup:
@@ -35,7 +38,5 @@ jobs:
 
       - name: Cleanup Test Buckets (Optional)
         run: |
-          uv run ./bin/purge_test_buckets.py br-se1
-          uv run ./bin/purge_test_buckets.py br-ne1
-          uv run ./bin/purge_test_buckets.py br-se1-second
+          uv run ./bin/purge_test_buckets.py ${{inputs.profile}}
         continue-on-error: true

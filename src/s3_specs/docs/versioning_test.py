@@ -46,7 +46,7 @@ from s3_specs.docs.utils.versioning import fixture_multipart_upload
 config = "../params/br-se1.yaml"
 
 # +
-pytestmark = pytest.mark.bucket_versioning
+pytestmark = [pytest.mark.bucket_versioning, pytest.mark.quick, pytest.mark.homologacao]
 
 # ## Deletar objeto com duas versões em uma bucket com versionamento
 # Este teste tem como objetivo verificar a exclusão bem-sucedida de um objeto da lista padrão de objetos 
@@ -156,6 +156,7 @@ run_example(__name__, "test_multipart_upload_versioned_with_cold_storage_class",
 # que o gerenciamento de versões e o comportamento da classe de armazenamento "Cold" estão funcionando corretamente.
 
 # +
+@pytest.mark.only_run_in_region("br-se1", "us-east-1")
 def test_delete_object_version1_cold_storage_class(s3_client, versioned_bucket_with_one_object_cold_storage_class):
     bucket_name, object_key, version_v1 = versioned_bucket_with_one_object_cold_storage_class
 
@@ -214,6 +215,7 @@ run_example(__name__, "test_delete_object_version1_cold_storage_class", config=c
 # e o comportamento da classe de armazenamento "Cold" funcionam corretamente.
 
 # +
+@pytest.mark.only_run_in_region("br-se1", "us-east-1")
 def test_delete_object_version2_cold_storage_class(s3_client, versioned_bucket_with_one_object_cold_storage_class):
     bucket_name, object_key, version_v1 = versioned_bucket_with_one_object_cold_storage_class
 

@@ -46,7 +46,7 @@ from s3_specs.docs.s3_helpers import run_example
 from botocore.exceptions import ClientError
 from s3_specs.docs.utils.cold_storage import fixture_multipart_upload_cold, calculate_checksum_fixture
 
-pytestmark = pytest.mark.cold_storage
+pytestmark = [pytest.mark.cold_storage, pytest.mark.quick, pytest.mark.homologacao, pytest.mark.cli, pytest.mark.only_run_in_region("br-se1", "us-east-1")]
 # -
 
 # ## Exemplos
@@ -236,9 +236,7 @@ def test_multipart_upload_with_cold_storage_class(s3_client, existing_bucket_nam
     assert len(list_parts_response) == 2, "Expected list part return has the same size of interaction index"
 
     list_parts_etag = [part.get("ETag") for part in list_parts_response]
-    assert response_part.get("ETag") in list_parts_etag, "Expected ETag being equal"
-
-
+    assert response_part.get("ETag") in list_parts_etag, pytest.mark.quick
     response = s3_client.complete_multipart_upload(
         Bucket=bucket_name,
         Key=object_key,

@@ -10,7 +10,7 @@ import os
 
 config = "../params/br-se1.yaml"
 
-pytestmark = [pytest.mark.big_objects, pytest.mark.cli]
+pytestmark = [pytest.mark.big_objects, pytest.mark.cli, pytest.mark.skip_if_dev]
 
 
 size_list = [
@@ -35,8 +35,8 @@ commands = [
         marks=pytest.mark.aws,
         id="aws-upload-big"
     ),
-    pytest.param(          # RCLONE PROBLEMS
-       {"command": "rclone copy {src_path} {profile_name}:{bucket_name} --progress",
+    pytest.param(
+       {"command": "rclone copy {src_path} {profile_name}:{bucket_name}/{object_key}  --progress",
         "expected": "Transferred:"},
        marks=pytest.mark.rclone,
        id="rclone-upload-big"
@@ -104,7 +104,7 @@ commands = [
         id="aws-upload-big"
     ),
     pytest.param(
-       {"command": "rclone copy {src_path} {profile_name}:{bucket_name} --progress",
+       {"command": "rclone copy {src_path} {profile_name}:{bucket_name}/{object_key} --progress",
         "expected": "Transferred:"},
        marks=pytest.mark.rclone,
        id="rclone-upload-big"
