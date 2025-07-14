@@ -48,7 +48,8 @@ RUN curl -Lo rclone.zip "https://downloads.rclone.org/v${RCLONE_VERSION}/rclone-
 
 
 # Install MGC CLI DEV on branch 
-RUN git clone --single-branch --branch ${MGC_BRANCH} https://github.com/MagaluCloud/magalu.git mgc-cli && \
+ARG MGC_BRANCH=main
+RUN git clone --single-branch --branch "${MGC_BRANCH}" https://github.com/MagaluCloud/magalu.git mgc-cli && \
     cd mgc-cli/mgc/cli/ && \
     go install && \
     go build -o mgc && \
