@@ -19,10 +19,6 @@ on:
       mgc_branch:
         required: true
         type: string
-
-  push: ## para debug
-    branches:
-      - test_branch_mgc
         
 jobs:
   build:
@@ -40,5 +36,4 @@ jobs:
     uses: ./.github/workflows/generate-docker-image.yml
     with:
       name: ${{ matrix.name }}  
-      # mgc_branch: ${{ inputs.mgc_branch }}
-      mgc_branch: feat/per-run-profile  # <-- hardcoded para debug
+      mgc_branch: ${{ inputs.mgc_branch }}
