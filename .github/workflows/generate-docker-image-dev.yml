@@ -20,9 +20,9 @@ on:
         required: true
         type: string
 
-    push: ## para debug
-      branches:
-        - test_branch_mgc
+  push: ## para debug
+    branches:
+      - test_branch_mgc
         
 jobs:
   build:
