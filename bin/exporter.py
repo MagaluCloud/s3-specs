@@ -58,7 +58,7 @@ execution_status_counter = Counter(
 
 rotativo_gauge = Gauge(
     's3_rotativo_inconsistencies',
-    'Inconsistências por execução nos testes rotativos de consistência',
+    'Inconsistências por execução nos testes rotativos de consistência (bucket é um ID numérico)',
     ['bucket', 'timestamp', 'type']
 )
 
@@ -273,8 +273,6 @@ def export_replicator_metrics():
     for _, row in df.iterrows():
         replicator_gauge.labels(
             timestamp=row['timestamp'],
-            bucket=row['bucket'],
-            prefix=row['prefix'],
             total_missing=int(row['total_missing']),
             found_after_wait=int(row['found_after_wait'])
         ).set(1)
