@@ -6,6 +6,10 @@ on:
       name:
         required: true
         type: string
+      mgc_branch:
+        required: false
+        type: string
+        default: "main"
   workflow_dispatch:
 
 env:
@@ -40,3 +44,5 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.name }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.name }}-${{ github.sha }}
+          build-args: |
+            MGC_BRANCH=${{ inputs.mgc_branch }}
