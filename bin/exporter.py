@@ -65,7 +65,7 @@ rotativo_gauge = Gauge(
 
 tps_gauge = Gauge(
     'objs_benchmark_tps',
-    'Taxa de transações por segundo (TPS) para operações de benchmark',
+    'Taxa de transações por segundo (TPS) para operações de benchmark (bucket e operação em ID numérico) ',
     ['region', 'size', 'workers', 'quantity', 'operation', 'bucket']
 )
 
@@ -76,9 +76,11 @@ tps_list_duration_gauge = Gauge(
 )
 
 def read_csv_and_update_metrics():
+    # Limpe as métricas existentes
     objs_consistency_time.clear()
     avg_gauge.clear()
 
+    # Processar o report-inconsistencies.csv (Novo formato)
     inconsistencies_file = paths.get('inconsistencies_file')
     if os.path.exists(inconsistencies_file):
         print(f'Processing file: {inconsistencies_file}')
@@ -100,6 +102,7 @@ def read_csv_and_update_metrics():
     else:
         print(f"Arquivo {inconsistencies_file} não encontrado.")
 
+    # Processar o processed_data.csv (Formato anterior)
     processed_files = glob.glob(paths.get('benchmark_file'))
     if processed_files:
         latest_processed_file = max(processed_files, key=os.path.getmtime)
@@ -140,7 +143,8 @@ def execution_time_metrics_exporter():
     except FileNotFoundError:
         print(f"Arquivo {tests_file_path} não encontrado.")
         return
-
+    
+    # Merge to retrieve the categories
     df_category = df_category.merge(
         df_tests,
         how='inner',
@@ -148,8 +152,10 @@ def execution_time_metrics_exporter():
         right_on=['name', 'execution_datetime']
     ).drop_duplicates()
 
+    # Get useful columns
     cleaned_time_metric_df = df_category[['name', 'category', 'execution_type', 'avg_time', 'min_time', 'total_time']]
 
+    # Melt o DataFrame
     melted_df = pd.melt(
         cleaned_time_metric_df,
         id_vars=['name', 'execution_type', 'category'],
@@ -158,6 +164,7 @@ def execution_time_metrics_exporter():
         value_name='time_values'
     ).reset_index(drop=True)
 
+    # Set metrics
     for record in melted_df.to_dict('records'):
         execution_time_gauge.labels(
             name=record['name'],
@@ -177,6 +184,7 @@ def test_metrics_exporter():
         print(f"Arquivo {file_path} não encontrado.")
         return
 
+    # Define the status mapping (optional, depending on how you want to track)
     status_mapping = {
         'PASSED': 'passed',
         'SKIPPED': 'skipped',
@@ -184,10 +192,13 @@ def test_metrics_exporter():
         'ERROR': 'error',
     }
 
+    # Clean the dataframe
     cleaned_status_df = df.drop(columns=['artifact_name', 'execution_datetime', 'arguments'])
 
+    # Convert status to more readable labels if needed
     cleaned_status_df['status'] = cleaned_status_df['status'].map(status_mapping)
 
+    # Increment the counter for each status occurrence
     for _, row in cleaned_status_df.iterrows():
         execution_status_counter.labels(
             name=row['name'],
@@ -198,6 +209,7 @@ def test_metrics_exporter():
     print("Test metrics exported...")
 
 def delete_temp_parquets():
+    # deleting temporary parquets
     parquets_paths = 'output'
 
     try:
@@ -226,6 +238,7 @@ def export_rotativo_metrics():
         print(f"CSV {csv_path}. Nenhuma métrica exportada.")
         return
 
+    # Sanitize campos
     df['bucket'] = df['bucket'].astype(str).str.strip()
     df['timestamp'] = df['timestamp'].astype(str).str.strip().str.split('.').str[0]
 
@@ -329,6 +342,7 @@ def export_new_benchmark_metrics():
 if __name__ == '__main__':
     start_http_server(8000)
     while True:
+        # Retrieving metrics
         read_csv_and_update_metrics()
         test_metrics_exporter()
         execution_time_metrics_exporter()

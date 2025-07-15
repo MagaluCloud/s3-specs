@@ -41,6 +41,13 @@ def main():
     sizes = [int(s) for s in args.sizes.split(",")]
     list_buckets = args.list_buckets.split(",") if args.list_buckets else []
     test_buckets = args.buckets.split(",")
+    bucket_id_map = {name: str(i + 1) for i, name in enumerate(set(test_buckets + list_buckets))}
+    operation_id_map = {
+        "upload": "1",
+        "download": "2",
+        "delete": "3",
+        "list": "4"
+    }
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
     if not os.path.exists(args.output):
         with open(args.output, "w") as f:
@@ -94,7 +101,10 @@ def main():
                                 )
 
                                 with open(args.output, "a") as f:
-                                    f.write(f"{datetime.now(timezone.utc).isoformat()},{args.profile},{operation},{bucket_name},{size},{args.quantity},{args.workers},{duration_ms},{tps:.2f},{success}\n")
+                                    bucket_id = bucket_id_map.get(bucket_name, bucket_name)
+                                    operation_id = operation_id_map.get(operation, "0")
+                                    f.write(f"{datetime.utcnow().timestamp()},{args.profile},{operation_id},{bucket_id},{size},{args.quantity},{args.workers},{duration_ms},{tps:.2f},{success}\n")
+
 
             print("Loop completo. Reiniciando...")
 
