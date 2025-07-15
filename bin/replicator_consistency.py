@@ -99,7 +99,7 @@ class ReplicatorTest:
         return [key for key in keys if key in found_keys]
 
     def write_csv_result(self, found, total):
-        now = datetime.utcnow().isoformat()
+        now = datetime.utcnow().timestamp()
         exists_count = len(found)
 
         header = ["timestamp", "bucket", "prefix", "total_missing", "found_after_wait"]
@@ -109,7 +109,7 @@ class ReplicatorTest:
             writer = csv.writer(csvfile)
             if write_header:
                 writer.writerow(header)
-            writer.writerow([now, self.bucket_name, self.prefix, total, exists_count])
+            writer.writerow([now, total, exists_count])
 
         print(f"[CSV] Resultado: {exists_count}/{total} encontrados após espera.")
 
