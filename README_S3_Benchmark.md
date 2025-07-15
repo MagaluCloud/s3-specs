@@ -68,7 +68,7 @@ timestamp,region,operation,bucket,size,quantity,workers,duration_ms,tps,success
 ## Requisitos
 
 - Python 3
-- `mgc-cli` instalado e funcional
+- [mgc-cli](https://docs.magalu.cloud/docs/storage/object-storage/compatible-tools/mgc-cli-compatibility) instalado e funcional
 - Permissões adequadas nos buckets
 - Dependências:
   - Nenhuma extra (somente bibliotecas padrão do Python)
