@@ -5,6 +5,27 @@ import time
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+bucket_type_map = {
+    "auto-standard": "1",
+    "auto-versioned": "2",
+    "manual-standard": "3",
+    "manual-versioned": "4"
+}
+
+operation_map = {
+    "put": "1",
+    "delete": "2",
+    "list": "3",
+    "overwrite": "4"
+}
+
+command_map = {
+    "head-object": "1",
+    "get-object": "2",
+    "list-objects": "3",
+    "count-objects": "4"
+}
+
 # Função para fazer upload de objetos
 def upload_objects(bucket_name, prefix, dir_name, workers):
     """
@@ -407,6 +428,9 @@ def overwrite_and_validate_reads(bucket_name, object_key, quantity, profile_name
         logging.info(f"[{bucket_type}] Todas as {quantity} sobrescritas foram validadas com sucesso.")
         with open("output/report_inconsistencies.csv", "a") as f:
             f.write(f"{quantity},1,overwrite_{quantity}_times,{profile_name},{bucket_type},{elapsed:.2f},{read_repeats}\n")
+            bucket_id = bucket_type_map.get(bucket_type, bucket_type)
+            operation_id = operation_map["overwrite"]
+            f.write(f"{quantity},1,{operation_id}_{quantity},{profile_name},{bucket_id},{elapsed:.2f},{read_repeats}\n")
     else:
         logging.error(f"[{bucket_type}] Falha de consistência em uma ou mais sobrescritas.")
         pytest.fail(f"[{bucket_type}] Nem todas as sobrescritas foram consistentes após {read_repeats} leituras.")

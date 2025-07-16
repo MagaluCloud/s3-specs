@@ -5,7 +5,10 @@ from s3_specs.docs.utils.consistency import (
     create_temp_objects,
     upload_objects,
     validate_key_with_n_successes,
-    validate_key_absent
+    validate_key_absent,
+    bucket_type_map,
+    command_map,
+    operation_map
 )
 
 # Testes de consistência para objetos adicionais
@@ -46,7 +49,11 @@ def test_object_validations(available_buckets, profile_name, quantity, workers):
         with open('output/report_inconsistencies.csv', 'a') as f:
             for command in attempts_per_command:
                 elapsed = timestamps.get(command, -1)
-                f.write(f"{quantity},{workers},{command}_after_put,{profile_name},{bucket_type},{elapsed:.2f},{attempts_per_command[command]}\n")
+                bucket_id = bucket_type_map.get(bucket_type, bucket_type)
+                command_id = command_map.get(command, "0")
+                operation_id = operation_map["put"]
+
+                f.write(f"{quantity},{workers},{operation_id}_{command_id},{profile_name},{bucket_id},{elapsed:.2f},{attempts_per_command[command]}\n")
 
 # Testes de consistência para objetos deletados
 @pytest.mark.slow
@@ -87,4 +94,8 @@ def test_deleted_object_validations(available_buckets, profile_name, quantity, w
         with open('output/report_inconsistencies.csv', 'a') as f:
             for command in attempts_per_command:
                 elapsed = timestamps.get(command, -1)
-                f.write(f"{quantity},{workers},{command}_after_delete,{profile_name},{bucket_type},{elapsed:.2f},{attempts_per_command[command]}\n")
+                bucket_id = bucket_type_map.get(bucket_type, bucket_type)
+                command_id = command_map.get(command, "0")
+                operation_id = operation_map["delete"]
+
+                f.write(f"{quantity},{workers},{operation_id}_{command_id},{profile_name},{bucket_id},{elapsed:.2f},{attempts_per_command[command]}\n")
