@@ -153,10 +153,18 @@ def active_mgc_workspace(profile_name, mgc_path):
     result = subprocess.run([mgc_path, "workspace", "set", profile_name],
                             capture_output=True, text=True)
     if result.returncode != 0:
-        pytest.skip("This test requires an mgc profile name")
+        raise Exception(f"Failed setting correct profile for mgc cli: {result.stderr}")
 
     logging.info(f"mcg workspace set stdout: {result.stdout}")
     return profile_name
+
+
+@pytest.fixture
+def active_mgc_workspace_second_env(profile_name_second):
+    env = os.environ.copy()
+    env['MGC_WORKSPACE'] = profile_name_second
+    return env
+
 
 @pytest.fixture
 def s3_client(default_profile):

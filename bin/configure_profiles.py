@@ -74,13 +74,18 @@ def configure_profiles(profiles):
             access_key = profile_data.get("access_key")
             secret_key = profile_data.get("secret_key")
             region = profile_data.get("region")
+            missing_fields = [k for k, v
+                              in {"endpoint": endpoint, "access_key": access_key, "secret_key": secret_key, "region": region}.items()
+                              if v is None]
 
             if not (endpoint and access_key and secret_key and region):
-                print(f"Perfil {profile_name} está incompleto. Ignorando...")
+                print(f"Perfil {profile_name} está incompleto. Falta {
+                      missing_fields}. Ignorando...")
                 continue
-            
-            if (access_key == "YOUR-KEY-ID-HERE" or secret_key == "YOUR-SECRET-KEY-HERE" ):
-                print(f"Perfil {profile_name} está incompleto. Ignorando...")
+
+            if (access_key == "YOUR-KEY-ID-HERE" or secret_key == "YOUR-SECRET-KEY-HERE"):
+                print(f"Perfil {
+                      profile_name} está incompleto. Por favor, configure as chaves. Ignorando...")
                 continue
 
             set_aws_profiles(profile_name=profile_name, data=profile_data)
