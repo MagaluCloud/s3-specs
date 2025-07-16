@@ -1,0 +1,65 @@
+name: Bucket Monitor
+
+on:
+  workflow_call:
+    inputs:
+      container:
+        required: false
+        type: string
+        default: "ghcr.io/magalucloud/s3-specs:tests_oldest"
+      runner:
+        required: false
+        type: string
+        default: "ubuntu-24.04"
+    secrets:
+      PROFILES:
+        required: true
+
+  workflow_dispatch:
+
+  schedule:
+    - cron: '0 3 * * *' 
+    - cron: '0 15 * * *'
+
+jobs:
+  monitor-buckets:
+    runs-on: ${{ inputs.runner || 'ubuntu-24.04' }}
+    container:
+      image: ${{ inputs.container || 'ghcr.io/magalucloud/s3-specs:tests_oldest' }}
+      options: --pull always
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Copy pyproject.toml from app
+        run: |
+          cp /app/pyproject.toml .
+
+      - name: Show tools version
+        run: |
+          echo "rclone version: $(rclone --version)"
+          echo "python version: $(python --version)"
+
+      - name: Configure Profiles
+        run: |
+          echo "${{ secrets.PROFILES }}" > profiles.yaml
+          sha256sum profiles.yaml
+          sha256sum ./bin/configure_profiles.py
+          echo "Configuring Profiles..."
+          uv run python ./bin/configure_profiles.py ./profiles.yaml
+
+      - name: Install dependencies
+        run: |
+          uv add pyyaml requests
+
+      - name: Run Bucket Monitor
+        run: |
+          GIT_RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          uv run python3 ./bin/bucket_monitor.py \
+            "${{ vars.WEBHOOK_URL }}" \
+            "profiles.yaml" \
+            "$GIT_RUN_URL"
