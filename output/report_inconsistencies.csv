@@ -1,1 +1,1 @@
-quantity,workers,command,region,bucket_state,elapsed
+quantity,workers,command,region,bucket_state,elapsed,attempts

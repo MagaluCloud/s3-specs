@@ -6,6 +6,7 @@ on:
       PROFILES: { required: true }
     inputs:
       profile: {required: true, type: string}
+  workflow_dispatch:
 
 jobs:
   cleanup:

@@ -162,7 +162,7 @@ run_example(__name__, "test_delete_bucket", config=config)
 # abaixo poderá ser executado com sucesso:
 
 # +
-@pytest.mark.skip(reason="Not yet implemented")
+# @pytest.mark.skip(reason="Not yet implemented")
 @pytest.mark.parametrize("fixture_multiple_buckets, list_buckets_kwargs", [
     ({'prefix': "test-multiple-foo-", "names": ["1", "2"]}, {"Prefix": 'test-multiple-foo-'}),
 ], indirect=["fixture_multiple_buckets"]) 

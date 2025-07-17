@@ -25,6 +25,12 @@ from s3_specs.docs.s3_helpers import (
     delete_all_objects_and_wait,
     delete_all_objects_with_version_and_wait,
 )
+from s3_specs.docs.utils.consistency import (
+    setup_standard_bucket,
+    setup_versioned_bucket,
+    resolve_bucket,
+    available_buckets
+)
 from datetime import datetime, timedelta
 from botocore.exceptions import ClientError
 
@@ -33,6 +39,8 @@ def pytest_addoption(parser):
     parser.addoption("--config", action="store", help="Path to the YAML config file")
     parser.addoption("--profile", action="store", help="profile to use for the tests")
     parser.addoption("--run-dev", action="store_true", help="Rodar testes no modo dev")
+    parser.addoption("--manual-standard", action="store", default=None, help="Bucket padrão (não versionado) manual")
+    parser.addoption("--manual-versioned", action="store", default=None, help="Bucket versionado manual")
 
 
 @pytest.fixture(autouse=True)

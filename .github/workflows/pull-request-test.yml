@@ -1,52 +1,97 @@
-# Tests that must pass in order for a PR to be allowed on the main branch
-# it is expected that they finish fast, thal ALL tests pass
-# and no verbose logging / debugging is enabled.
-#
-# They should run as much as possible in parallel.
+name: Pull Request Tests
 
-name: Pull Request Essential Tests
-
-# on:
-#     pull_request:
-#       types: [ready_for_review]
 on:
-  workflow_dispatch:
-
+    pull_request:
+      types: [ready_for_review]
+      
 jobs:
-  run_tests:
+  get_new_tests:
+    runs-on: ubuntu-latest
+    outputs:
+      tests_list: ${{ steps.set_tests.outputs.tests_list }}
+      has_tests: ${{ steps.set_tests.outputs.has_tests }}
+      modified_in_docs: ${{ steps.set_tests.outputs.modified_in_docs }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - id: set_tests
+        run: |
+          git fetch origin main --depth=1
+          FILES_CHANGED=$(git diff --name-only origin/main HEAD)
+          TESTS=$(echo "$FILES_CHANGED" | grep -E '^*_test\.py$' | sed -n 's|.*/docs/||p' | paste -sd " " -)
+          MODIFIED_IN_DOCS=$(echo "$FILES_CHANGED" | grep -qE '.*/docs/' && echo "true" || echo "false")
+          echo "modified_in_docs=$MODIFIED_IN_DOCS" >> $GITHUB_OUTPUT
+          echo "tests_list=$TESTS" >> $GITHUB_OUTPUT
+          echo "Modified Testes -> $TESTS"
+
+          if [ -n "$TESTS" ]; then
+            echo "has_tests=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_tests=false" >> $GITHUB_OUTPUT
+          fi
+
+  run_new_tests:
+    needs: get_new_tests
+    if: ${{ needs.get_new_tests.outputs.has_tests == 'true' }}
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      name: "manual_test"
+      tests: ${{ needs.get_new_tests.outputs.tests_list }}
+      config: '../../../params.example.yaml'
+      flags: '-v'
+      runner: 'ubuntu-24.04'
+      container: 'ghcr.io/magalucloud/s3-specs:tests_oldest'
+      profile: 'br-se1'
+    secrets:
+      PROFILES: ${{ secrets.PROFILES }}
+  
+  run-tests:
+    needs: [get_new_tests]
+    if: ${{ needs.get_new_tests.outputs.modified_in_docs == 'true' }}
     strategy:
+      fail-fast: false
       max-parallel: 2
-      fail-fast: true
       matrix:
+        tools:
+          - name: latest
+            value: latest
+
         marker:
-          - test: cold_storage
-            name: cold_storage
-          - test: basic
-            name: basic
-          - test: presign
-            name: presign
+          - test: "'basic'"
+            name: "'basic'"
+          - test: "'cold_storage'"
+            name: "'cold_storage'"
+          - test: "'presign'"
+            name: "'presign'"
+          - test: "'acl'"
+            name: "'acl'"
+          - test: "'locking'"
+            name: "'locking'"
+          - test: "'policy'"
+            name: "'policy'"
+          - test: "'bucket_versioning'"
+            name: "'bucket_versioning'"
+          - test: "'bulk_delete'"
+            name: "'bulk_delete'"
         config:
           - path: "../../../params.example.yaml"
             name: "example"
     uses: ./.github/workflows/run-tests.yml
     with:
-      name: "${{ matrix.marker.name }}.${{ matrix.config.name }}"
-      config: ${{ matrix.config.path }}
-      flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line"
+      name: "${{ matrix.marker.name }}_1hours.${{ matrix.config.name }}"
+      config: '../../../params.example.yaml'
+      flags: '-v -m ${{ matrix.marker.name }} -n auto'
+      runner: 'ubuntu-24.04'
+      container: 'ghcr.io/magalucloud/s3-specs:tests_oldest'
+      profile: 'br-se1'
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
   tests-success:
-    runs-on: ubuntu-24.04
-    needs: [run_tests]
+    needs: [run_new_tests, get_new_tests]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
     steps:
-      - name: ok
-        run:
-          exit 0
-
-  # cleanup-tests:
-  #   needs: [tests-success]
-  #   if: always() 
-  #   uses: ./.github/workflows/cleanup-tests.yml
-  #   secrets:
-  #     PROFILES: ${{ secrets.PROFILES }}
+      - name: Mark success
+        run: echo "success"

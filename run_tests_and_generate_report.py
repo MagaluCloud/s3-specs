@@ -37,6 +37,9 @@ def parse_args():
 
 def run_tests(args):
     category_name = f"{args.category}"
+    log_filename = f"{category_name}_{args.mark}_{args.profile}.log"
+    log_output = HTML_REPORTS_DIR / log_filename
+
     html_output = HTML_REPORTS_DIR / f"{category_name}_{args.mark}_{args.profile}.html"
     json_output = HTML_REPORTS_DIR / f"{category_name}_{args.mark}_{args.profile}_report.json"
     
@@ -49,6 +52,10 @@ def run_tests(args):
         f"--json-report-file={json_output}",
         f"--html={html_output}",
         "--self-contained-html",
+        "-s",
+        "-vv",
+        "-n", "auto",
+        "--no-header",
         "--profile",
         f"{args.profile}"
     ]
@@ -62,10 +69,23 @@ def run_tests(args):
         command.extend(["-m", args.mark])
 
     try:
-        return subprocess.run(command).returncode
+        with open(log_output, "w") as log_file:
+            print(f"\n>> Executando comando: {' '.join(command)}\n")
+            process = subprocess.Popen(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=0
+            )
+            for line in process.stdout:
+                print(line, end="", flush=True)
+                log_file.write(line)        
+            return process.wait()
     except KeyboardInterrupt:
         print("\nTestes interrompidos. Gerando relatório parcial...")
         return 1
+
 
 def generate_pdf(category=None):
     json_output = HTML_REPORTS_DIR / f"{category}_report.json" if category else Path("report.json")
