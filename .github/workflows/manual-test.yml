@@ -26,6 +26,7 @@ on:
             - 'ghcr.io/magalucloud/s3-specs:tests_latest'
             - 'ghcr.io/magalucloud/s3-specs:tests_nightly'
             - 'ghcr.io/magalucloud/s3-specs:tests_oldest'
+            - 'ghcr.io/magalucloud/s3-specs:tests_dev'
 
         profile:
           description: 'Profile em que os testes serão executados'

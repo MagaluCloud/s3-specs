@@ -3,6 +3,7 @@ name: Build test OCI Image Daily
 on:
   schedule:
     - cron: '0 0 * * *' # Executa todo dia às 00:00 UTC
+  workflow_dispatch:
 
 jobs:
   build:

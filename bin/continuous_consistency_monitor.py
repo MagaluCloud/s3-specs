@@ -128,7 +128,7 @@ def write_csv(timestamp, bucket_name, esperados, encontrados, debug_csv, csv_pat
         print(f"Todos os objetos esperados foram listados em {bucket_name}.")
 
 
-def loop_monitor(bucket_name, args):
+def loop_monitor(bucket_name, bucket_id, args):
     """
     Loop principal que monitora o bucket S3 especificado.
     Faz upload de objetos, remove o mais antigo e verifica a consistência.
@@ -146,8 +146,7 @@ def loop_monitor(bucket_name, args):
     index += args.object_limit
 
     while True:
-        timestamp = datetime.utcnow().isoformat()
-
+        timestamp = datetime.utcnow().timestamp()
         novos = upload_batch(index, 1, bucket_name, args.prefix, args.profile,
                              args.retry_count, args.retry_delay, args.max_workers)
         objetos_ativos.extend(novos)
@@ -157,7 +156,7 @@ def loop_monitor(bucket_name, args):
         delete_object(key_remover, bucket_name, args.profile, args.retry_count, args.retry_delay)
 
         lista_real = list_objects(bucket_name, args.prefix, args.profile, args.retry_count, args.retry_delay)
-        write_csv(timestamp, bucket_name, objetos_ativos, lista_real, args.debug, args.csv_path)
+        write_csv(timestamp, bucket_id, objetos_ativos, lista_real, args.debug, args.csv_path)
 
         print(f"Loop completo ({bucket_name}). Esperados: {len(objetos_ativos)}, Encontrados: {len(lista_real)}")
         time.sleep(2)
@@ -191,10 +190,12 @@ def main():
         with open(args.csv_path, "w") as f:
             f.write("timestamp,bucket,expected,found,missing,unexpected\n")
 
+    bucket_id_map = {bucket: i + 1 for i, bucket in enumerate(bucket_list)}
+
     with ThreadPoolExecutor(max_workers=len(bucket_list) * args.threads_por_bucket) as executor:
         for bucket in bucket_list:
-            executor.submit(loop_monitor, bucket, args)
-
+            bucket_id = bucket_id_map[bucket]
+            executor.submit(loop_monitor, bucket, bucket_id, args)
 
 if __name__ == "__main__":
     main()
