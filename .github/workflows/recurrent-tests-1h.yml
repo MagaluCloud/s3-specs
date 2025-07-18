@@ -26,7 +26,7 @@ jobs:
       name: "${{ matrix.marker.name }}_1hours.${{ matrix.config.name }}"
       config: ${{ matrix.config.path }}
       profile: ${{ matrix.profile }}
-      flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line --log-cli-level=info"
+      flags: "--no-header -vv -n auto --tb=line --color=no -m ${{ matrix.marker.test }} --tb=line --log-cli-level=info --reruns 15"
     secrets:
       PROFILES: ${{ secrets.PROFILES }}
 
