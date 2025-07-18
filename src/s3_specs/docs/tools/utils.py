@@ -51,7 +51,9 @@ def generate_valid_bucket_name(base_name="my-unique-bucket"):
             new_name.append(char)
 
     # assuming max bucket name size is 63
-    return "".join(new_name)[:63]
+    bucket_name = "".join(new_name)[:63]
+    print(f"{bucket_name=}")
+    return bucket_name
 
 def convert_unit(size = {'size': 100, 'unit': 'mb'}) -> int:
     """
