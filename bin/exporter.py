@@ -4,6 +4,7 @@ import argparse
 import time
 import glob
 import os
+import shutil
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--parquet_path',
@@ -11,10 +12,10 @@ parser.add_argument('--parquet_path',
                     required=False,
                     help='Path of folder containing the execution_time and test parquet artifacts')
 
-
 args = parser.parse_args()
 
 exported_keys = set()
+exported_benchmark_keys = set()
 
 paths = {
     'report_folder': './output/',
@@ -22,10 +23,10 @@ paths = {
     'inconsistencies_file': './output/report_inconsistencies.csv',
     'benchmark_file': './output/benchmark_results.csv',
     'rotativo_metrics_file': './output/rotativo_metrics.csv',
-    'replicator_file': './output/replicator_results.csv'
+    'replicator_file': './output/replicator_results.csv',
+    'new_benchmark_results_file': './output/new_benchmark_results.csv'
 }
 
-# Definir as métricas Gauge
 replicator_gauge = Gauge(
     'replicator_consistency',
     'Métricas de consistência em replicação',
@@ -60,6 +61,18 @@ rotativo_gauge = Gauge(
     's3_rotativo_inconsistencies',
     'Inconsistências por execução nos testes rotativos de consistência (bucket é um ID numérico)',
     ['bucket', 'timestamp', 'type']
+)
+
+tps_gauge = Gauge(
+    'objs_benchmark_tps',
+    'Taxa de transações por segundo (TPS) para operações de benchmark (bucket e operação em ID numérico) ',
+    ['region', 'size', 'workers', 'quantity', 'operation', 'bucket']
+)
+
+tps_list_duration_gauge = Gauge(
+    's3_list_operation_duration_ms',
+    'Duração da operação de listagem em milissegundos',
+    ['region', 'bucket']
 )
 
 def read_csv_and_update_metrics():
@@ -130,7 +143,7 @@ def execution_time_metrics_exporter():
     except FileNotFoundError:
         print(f"Arquivo {tests_file_path} não encontrado.")
         return
-
+    
     # Merge to retrieve the categories
     df_category = df_category.merge(
         df_tests,
@@ -150,7 +163,6 @@ def execution_time_metrics_exporter():
         var_name='time_metric',
         value_name='time_values'
     ).reset_index(drop=True)
-
 
     # Set metrics
     for record in melted_df.to_dict('records'):
@@ -194,9 +206,7 @@ def test_metrics_exporter():
             status=row['status']
         ).inc(1)
 
-        print("Test metrics exported...")
-    else:
-        print(f"Arquivo {file_path} não encontrado. Nenhum teste foi exportado.")
+    print("Test metrics exported...")
 
 def delete_temp_parquets():
     # deleting temporary parquets
@@ -244,8 +254,8 @@ def export_rotativo_metrics():
 
         bucket = row['bucket']
         timestamp = row['timestamp']
-        rotativo_gauge.labels(bucket=bucket, timestamp=timestamp, type='missing').set(float(row['missing']))
-        rotativo_gauge.labels(bucket=bucket, timestamp=timestamp, type='unexpected').set(float(row['unexpected']))
+        rotativo_gauge.labels(bucket=bucket, timestamp=timestamp, type='expected').set(float(row['expected']))
+        rotativo_gauge.labels(bucket=bucket, timestamp=timestamp, type='found').set(float(row['found']))
 
         novas_metricas += 1
 
@@ -279,6 +289,55 @@ def export_replicator_metrics():
 
     print("Replicator metrics exported.")
 
+def export_new_benchmark_metrics():
+    csv_path = paths.get('new_benchmark_results_file')
+
+    if not os.path.exists(csv_path):
+        print(f"Arquivo {csv_path} não encontrado.")
+        return
+    try:
+        df = pd.read_csv(csv_path)
+    except Exception as e:
+        print(f"Erro ao ler {csv_path}: {e}")
+        return
+    
+    if df.empty:
+        print(f"CSV {csv_path}. Nenhuma métrica exportada.")
+        return
+
+
+    df['bucket'] = df['bucket'].astype(str).str.strip()
+    df['timestamp'] = df['timestamp'].astype(str).str.strip().str.split('.').str[0]
+    
+    tps_gauge.clear()
+    novas_metricas = 0
+
+    for _, row in df.iterrows():
+        key = f"{row['bucket']}:{row['timestamp']}"
+        if key in exported_benchmark_keys:
+            continue
+        exported_benchmark_keys.add(key)
+
+        if row['operation'] == 'list':
+            tps_list_duration_gauge.labels(
+                region=row['region'],
+                bucket=row['bucket']
+            ).set(float(row['duration_ms']))
+
+        if row['operation'] != 'list':
+            tps_gauge.labels(
+                region=row['region'],
+                size=str(row['size']),
+                workers=str(row['workers']),
+                quantity=str(row['quantity']),
+                operation=row['operation'],
+                bucket=row['bucket']
+            ).set(float(row['tps']))
+
+        novas_metricas += 1
+
+    print(f"Exportadas {novas_metricas} métricas do arquivo {csv_path}")
+
 
 if __name__ == '__main__':
     start_http_server(8000)
@@ -290,5 +349,6 @@ if __name__ == '__main__':
         export_rotativo_metrics()
         delete_temp_parquets()
         export_replicator_metrics()
+        export_new_benchmark_metrics()
 
-        time.sleep(3600)  # Atualize a cada 3600 segundos (1 hora)
+        time.sleep(3600)  # Atualiza a cada 1 hora
