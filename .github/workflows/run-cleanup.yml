@@ -13,6 +13,7 @@ jobs:
         profile:
           - br-se1
           - br-ne1
+          - homologacao
     uses: ./.github/workflows/cleanup-tests.yml
     with:
       profile: ${{ matrix.profile }}
