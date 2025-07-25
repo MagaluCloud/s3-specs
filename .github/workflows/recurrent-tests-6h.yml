@@ -17,8 +17,8 @@ jobs:
           - br-ne1
         marker:
             # 6h tests
-          - test: "'policy or bucket_versioning or acl or locking'"
-            name: "'policy or bucket_versioning or acl or locking'"
+          - test: "'policy or bucket_versioning or acl or locking or cors'"
+            name: "'policy or bucket_versioning or acl or locking or cors'"
         config:
           - path: "../../../params.example.yaml"
             name: "example"
