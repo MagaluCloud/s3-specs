@@ -48,9 +48,45 @@ Arquivo: `output/report_inconsistencies.csv`
 
 ```
 quantity,workers,command,region,bucket_state,elapsed,attempts
-512,256,head-object_after_put,se1,default,2.35,4
-10,1,overwrite_10_times,se1,versioned,1.50,3
+512,256,1_1,se1,1,2.35,4
 ```
+
+- `quantity`: Número total de objetos envolvidos na operação.
+- `workers`: Número de threads concorrentes utilizadas na operação.
+- `command`: Código que representa o tipo de operação e comando.
+  - Formato: operation_command
+  - Exemplo: 1_1 significa:
+      -operation = 1 → put
+      command = 1 → head-object
+    Mapas usados:
+    ```json
+      command_map = {
+        "head-object": "1",
+        "get-object": "2",
+        "list-objects": "3",
+        "count-objects": "4"
+    }
+      operation_map = {
+        "put": "1",
+        "delete": "2",
+        "list": "3",
+        "overwrite": "4"
+    }
+    ```
+- `region`: Nome do perfil usado na execução.
+- `bucket_state`: Tipo de bucket onde o teste foi realizado.
+    - Exemplo: 1 → auto-standard
+    ```json
+    bucket_type_map = {
+        "auto-standard": "1",
+        "auto-versioned": "2",
+        "manual-standard": "3",
+        "manual-versioned": "4"
+    }
+    ```
+- `elapsed`: Tempo total em segundos
+- `attempts`: Número de tentativas até a operação concluir.
+
 
 Este arquivo é exportado automaticamente e lido pelo exporter Prometheus.
 
@@ -102,8 +138,8 @@ python3 bin/replicator_consistency.py \
 
 - CSV
 ```
-timestamp,bucket,prefix,total_missing,found_after_wait
-2025-06-26T13:00:00Z,my-bucket,replicator-test/,1,1
+timestamp,total_missing,found_after_wait
+1756242000,1,1
 ```
 
 ---
@@ -144,7 +180,7 @@ python3 bin/continuous_consistency_monitor.py \
 ## Exemplo de saída (CSV)
 ```csv
 timestamp,bucket,expected,found,missing,unexpected
-2025-06-26T14:22:11Z,my-bucket,500,499,1,0
+1756242000,1,500,499,1,0
 ```
 
 # Overwriter Read Test
@@ -171,8 +207,17 @@ O script grava os resultados no mesmo arquivo report_inconsistencies.csv com o s
 
 ```
 quantity,workers,command,region,bucket_state,elapsed,attempts
-10,1,overwrite_10_times,se1,versioned,1.24,3
+10,1,4_10,se1,3,1.24,3
 ```
+
+- `quantity`: Número total de objetos utilizados no teste.
+- `workers`: Número de workers concorrentes usados. Neste caso, fixado em 1.
+- `command`: Representa o tipo de operação e o número de objetos, no formato {operation_id}_{quantity}. Ex: 4_10 → overwrite com 10 objetos.
+- `region`: Nome do perfil de execução (ex: se1). Pode representar uma região ou cluster.
+- `bucket_state`: Tipo de bucket usado, conforme o bucket_type_map. Ex: 3 → manual-standard.
+- `elapsed`: Tempo total da operação em segundos.
+- `attempts`: Quantidade de vezes que a leitura foi repetida por objeto.
+
 
 # Exportação para Prometheus
 O arquivo bin/metrics_exporter.py expõe todas as métricas em uma porta HTTP (default: :8000) para coleta pelo Prometheus.
