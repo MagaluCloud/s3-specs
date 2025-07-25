@@ -49,13 +49,22 @@ O script gera ou anexa ao arquivo `output/new_benchmark_results.csv` com o segui
 
 ```csv
 timestamp,region,operation,bucket,size,quantity,workers,duration_ms,tps,success
-2025-07-12T14:00:00.000000+00:00,default,upload,my-bucket,1,1000,256,1580,632.91,1
+1756242000,br-se1,1,1,1,1000,256,1580,632.91,1
 ```
 
 - `timestamp`: Momento da execução
 - `region`: Nome do perfil (substitui região aqui)
-- `operation`: Tipo da operação (`upload`, `download`, `delete`, `list`)
-- `bucket`: Nome do bucket utilizado
+- `operation`: Código que representa a operação
+Mapa usado:
+```json
+operation_id_map = {
+        "upload": "1",
+        "download": "2",
+        "delete": "3",
+        "list": "4"
+    }
+```
+- `bucket`: Buckets ordenados por ID
 - `size`: Tamanho dos arquivos usados
 - `quantity`: Número de arquivos
 - `workers`: Workers utilizados na execução
