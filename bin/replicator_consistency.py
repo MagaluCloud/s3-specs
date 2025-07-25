@@ -102,7 +102,7 @@ class ReplicatorTest:
         now = datetime.utcnow().timestamp()
         exists_count = len(found)
 
-        header = ["timestamp", "bucket", "prefix", "total_missing", "found_after_wait"]
+        header = ["timestamp", "total_missing", "found_after_wait"]
         write_header = not os.path.exists(self.output_csv_path)
 
         with open(self.output_csv_path, "a", newline="") as csvfile:
