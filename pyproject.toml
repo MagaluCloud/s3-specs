@@ -78,6 +78,7 @@ markers = [
     "bucket_sharing: Bucket Sharing",
     "rbac: Only run rbac tests, which require a specific configuration",
     "cors: Bucket Cors tests",
+    "lifecycle: Bucket lifecycle tests",
 ]
 
 [tool.s3-tester]
@@ -94,5 +95,6 @@ markers = [
   "ObjectVersioning",
   "ColdStorage",
   "ServiceAccounts",
-  "BulkDelete"
+  "BulkDelete",
+  "Lifecycle"
 ]
