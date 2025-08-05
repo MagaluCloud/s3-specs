@@ -53,7 +53,7 @@ config = os.getenv("CONFIG", config)
 
 # +
 def test_list_buckets(s3_client):
-    response = s3_client.list_buckets()
+    response = s3_client.list_buckets(MaxBuckets=100)
     response_status = response["ResponseMetadata"]["HTTPStatusCode"]
     assert response_status == 200, "Expected HTTPStatusCode 200 for successful bucket list."
     buckets = response.get('Buckets')

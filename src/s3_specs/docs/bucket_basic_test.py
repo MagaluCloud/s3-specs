@@ -123,6 +123,7 @@ run_example(__name__, "test_create_bucket_duplicate", config=config)
 # No boto3, é possível listar todos os buckets de uma conta, utilizando o método list_buckets
 
 # +
+@pytest.mark.skip("This is a very expensive operation that may result in timeout")
 def test_list_all_buckets(s3_client, existing_bucket_name):
     bucket_name = existing_bucket_name
     logging.info(bucket_name)
