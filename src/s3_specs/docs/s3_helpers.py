@@ -322,6 +322,12 @@ def change_policies_json(bucket, policy_args: dict, tenants: list) -> json:
     logging.info(f"POLICY: {json.dumps(policy)}")
     return json.dumps(policy)
 
+def create_policy_json(bucket_name, policy_template):
+    """Helper function to replace bucket placeholders in policy template"""
+    policy_str = json.dumps(policy_template)
+    policy_str = policy_str.replace('"BUCKET_NAME"', f'"{bucket_name}"')
+    policy_str = policy_str.replace('"BUCKET_NAME/*"', f'"{bucket_name}/*"')
+    return policy_str
 
 def get_tenants(multiple_s3_clients):
     """
