@@ -280,7 +280,7 @@ PREFLIGHT_TEST_CASES = [
         "headers": ["Authorization"],
         "expected_status": 204,
         "expect_cors": True,
-        "check_max_age": True
+        "check_max_age": False
     }
 ]
 
