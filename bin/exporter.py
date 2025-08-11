@@ -30,7 +30,7 @@ paths = {
 replicator_gauge = Gauge(
     'replicator_consistency',
     'Métricas de consistência em replicação',
-    ['timestamp', 'bucket', 'prefix', 'total_missing', 'found_after_wait']
+    ['timestamp', 'total_missing', 'found_after_wait']
 )
 
 objs_consistency_time = Gauge(
