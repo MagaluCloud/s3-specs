@@ -66,6 +66,7 @@ def set_mgc_profiles(profile_name, data):
     cli_file_path = os.path.join(profile_dir, "cli.yaml")
     with open(cli_file_path, "w") as cli_file:
         cli_file.write(f"region: {data.get('region')}\n")
+        cli_file.write(f"serverurl:: {data.get('endpoint')}\n")
 
 def configure_profiles(profiles):
     try:
