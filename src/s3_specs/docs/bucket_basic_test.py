@@ -172,9 +172,11 @@ def test_list_prefixed_buckets(s3_client, fixture_multiple_buckets, list_buckets
     logging.info(bucket_names)
     logging.info(list_buckets_kwargs)
     response = s3_client.list_buckets(**list_buckets_kwargs)
+    prefix = list_buckets_kwargs["Prefix"]
     logging.info(response)
     response_bucket_names = [ bucket["Name"] for bucket in response["Buckets"]]
-    assert len(response_bucket_names) == len(bucket_names)
+    assert all(name.startswith(prefix) for name in response_bucket_names), \
+        f"Nem todos os buckets começam com o prefixo '{prefix}': {response_bucket_names}"
 
 run_example(__name__, "test_list_prefixed_buckets", config=config)
 # -
