@@ -6,7 +6,7 @@ from botocore.exceptions import ClientError
 from s3_specs.docs.s3_helpers import run_example
 
 
-pytestmark = [pytest.mark.rbac]
+pytestmark = [pytest.mark.rbac, pytest.mark.skip_if_dev]
 
 config = "../params/br-ne1.yaml"
 config = os.getenv("CONFIG", config)
