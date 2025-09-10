@@ -47,6 +47,7 @@ def list_old_test_buckets(profile_name, connect_timeout_sec=60, read_timeout_sec
 def delete_bucket_policy(s3, bucket_name):
     """Delete bucket policy if it exists."""
     try:
+        print(f"Deleting bucket policy for `{bucket_name}`")
         s3.delete_bucket_policy(Bucket=bucket_name)
     except ClientError as e:
         if e.response['Error']['Code'] != 'NoSuchBucketPolicy':
@@ -55,6 +56,7 @@ def delete_bucket_policy(s3, bucket_name):
 def delete_all_objects(s3, bucket_name):
     """Delete all objects first, then delete versions if needed."""
     paginator = s3.get_paginator('list_objects_v2')
+    print(f"Deleting all object in bucket `{bucket_name}`")
 
     try:
         for page in paginator.paginate(Bucket=bucket_name):
@@ -73,6 +75,7 @@ def delete_all_object_versions(s3, bucket_name):
     """Delete all object versions and delete markers, suppressing unnecessary output."""
     paginator = s3.get_paginator('list_object_versions')
     locked_objects = []
+    print(f"Deleting all object versions of `{bucket_name}`")
 
     try:
         for page in paginator.paginate(Bucket=bucket_name):
@@ -81,6 +84,7 @@ def delete_all_object_versions(s3, bucket_name):
                 for obj in page.get('Versions', []) + page.get('DeleteMarkers', [])
             ]
             if objects:
+                print(f"Deleting {objects=}")
                 response = s3.delete_objects(Bucket=bucket_name, Delete={'Objects': objects})
                 if "Errors" in response:
                     for error in response["Errors"]:
@@ -90,10 +94,12 @@ def delete_all_object_versions(s3, bucket_name):
     except ClientError as e:
         print(f"⚠️ Failed to retrieve object versions in {bucket_name}: {e}")
 
+    print(f"Done deleting versions of bucket `{bucket_name}`")
     return bool(locked_objects)  # Returns True if locked objects were found
 
 def delete_bucket(s3, bucket_name, failures, locked_buckets, deleted_buckets):
     """Attempt to delete a bucket, logging only important failures."""
+    print(f"Attempting to delete bucket `{bucket_name}`")
     try:
         delete_bucket_policy(s3, bucket_name)
 
