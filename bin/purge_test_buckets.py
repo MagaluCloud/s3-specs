@@ -107,23 +107,25 @@ def delete_bucket(s3, bucket_name, failures, locked_buckets, deleted_buckets):
         #     locked_buckets.append(bucket_name)
         #     return
 
-        # s3.delete_bucket(Bucket=bucket_name)
-        subprocess.run([
-            "mgc", "object-storage", "buckets", "delete", bucket_name, "--no-confirm"
-        ], check=True)
+        s3.delete_bucket(Bucket=bucket_name)
         deleted_buckets.append(bucket_name)
     except (BotoCoreError, ClientError) as e:
         error_message = str(e)
         failures.append((bucket_name, error_message))
+    print(f"Success deleting bucket `{bucket_name}`")
+
+def _add_force_delete_header(model, params, request_signer, **kwargs):
+    params["headers"]["X-Force-Container-Delete"] = "true"
 
 def purge_old_test_buckets(profile_name):
     """Main function to purge only test buckets older than 2 hours."""
     session = boto3.Session(profile_name=profile_name)
     s3 = session.client('s3')
+    event_system = s3.meta.events
+    event_system.register_first('before-call.s3.DeleteBucket', _add_force_delete_header)
     failures = []
     locked_buckets = []
     deleted_buckets = []
-    os.environ["MGC_PROFILE"] = profile_name  # noqa: F821
 
     old_test_buckets = list_old_test_buckets(profile_name)
     if not old_test_buckets:
