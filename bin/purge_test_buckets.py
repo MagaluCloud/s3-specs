@@ -1,3 +1,5 @@
+import os
+import subprocess
 import boto3
 import concurrent.futures
 import datetime
@@ -95,11 +97,14 @@ def delete_bucket(s3, bucket_name, failures, locked_buckets, deleted_buckets):
     try:
         delete_bucket_policy(s3, bucket_name)
 
-        if delete_all_objects(s3, bucket_name):  # Skip deletion if locked objects found
-            locked_buckets.append(bucket_name)
-            return
+        # if delete_all_objects(s3, bucket_name):  # Skip deletion if locked objects found
+        #     locked_buckets.append(bucket_name)
+        #     return
 
-        s3.delete_bucket(Bucket=bucket_name)
+        # s3.delete_bucket(Bucket=bucket_name)
+        subprocess.run([
+            "mgc", "object-storage", "buckets", "delete", bucket_name, "--no-confirm"
+        ], check=True)
         deleted_buckets.append(bucket_name)
     except (BotoCoreError, ClientError) as e:
         error_message = str(e)
@@ -112,6 +117,7 @@ def purge_old_test_buckets(profile_name):
     failures = []
     locked_buckets = []
     deleted_buckets = []
+    os.environ["MGC_PROFILE"] = profile_name  # noqa: F821
 
     old_test_buckets = list_old_test_buckets(profile_name)
     if not old_test_buckets:
