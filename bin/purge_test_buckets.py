@@ -60,7 +60,7 @@ def delete_all_objects(s3, bucket_name):
 
     try:
         for page in paginator.paginate(Bucket=bucket_name):
-            objects = [{'Key': obj['Key']} for obj in page.get('Contents', [])]
+            objects = [{'Key': obj['Key']} for obj in page.get('Contents', [])] 
             if objects:
                 response = s3.delete_objects(Bucket=bucket_name, Delete={'Objects': objects})
                 if "Errors" in response:
@@ -97,15 +97,37 @@ def delete_all_object_versions(s3, bucket_name):
     print(f"Done deleting versions of bucket `{bucket_name}`")
     return bool(locked_objects)  # Returns True if locked objects were found
 
-def delete_bucket(s3, bucket_name, failures, locked_buckets, deleted_buckets):
+def delete_bucket(profile_name, bucket_name, failures, locked_buckets, deleted_buckets):
     """Attempt to delete a bucket, logging only important failures."""
     print(f"Attempting to delete bucket `{bucket_name}`")
+    s3 = get_s3_client(profile_name, force_delete=True)
+    is_lock_enabled = False
+    try:
+        response = s3.get_object_lock_configuration(Bucket=bucket_name)
+        is_lock_enabled = response.get('ObjectLockConfiguration', {}).get('ObjectLockEnabled') == 'Enabled'
+        default_retention = response.get('ObjectLockConfiguration', {}).get('Rule', {}).get('DefaultRetention', {})
+    except ClientError as e:
+        pass
+    
+    if is_lock_enabled:
+        print(f"Bucket `{bucket_name}` has object lock enabled with default retention {default_retention}. Trying without force delete...")
+        s3 = get_s3_client(profile_name, force_delete=False)
+        try:
+            locked_buckets.append(bucket_name)
+            delete_bucket_policy(s3, bucket_name)
+            if delete_all_objects(s3, bucket_name):
+                locked_buckets.append(bucket_name)
+                return
+
+            s3.delete_bucket(Bucket=bucket_name)
+            deleted_buckets.append(bucket_name)
+            return
+        except ClientError as e:
+            print(f"⚠️ Failed to check/delete policy for locked bucket {bucket_name}: {e}")
+            failures.append((bucket_name, str(e)))
+            return
     try:
         delete_bucket_policy(s3, bucket_name)
-
-        # if delete_all_objects(s3, bucket_name):  # Skip deletion if locked objects found
-        #     locked_buckets.append(bucket_name)
-        #     return
 
         s3.delete_bucket(Bucket=bucket_name)
         deleted_buckets.append(bucket_name)
@@ -117,12 +139,17 @@ def delete_bucket(s3, bucket_name, failures, locked_buckets, deleted_buckets):
 def _add_force_delete_header(model, params, request_signer, **kwargs):
     params["headers"]["X-Force-Container-Delete"] = "true"
 
-def purge_old_test_buckets(profile_name):
-    """Main function to purge only test buckets older than 2 hours."""
+def get_s3_client(profile_name, force_delete=False):
+    """Get S3 client with optional force delete header."""
     session = boto3.Session(profile_name=profile_name)
     s3 = session.client('s3')
     event_system = s3.meta.events
-    event_system.register_first('before-call.s3.DeleteBucket', _add_force_delete_header)
+    if force_delete:
+        event_system.register_first('before-call.s3.DeleteBucket', _add_force_delete_header)
+    return s3
+
+def purge_old_test_buckets(profile_name):
+    """Main function to purge only test buckets older than 2 hours."""
     failures = []
     locked_buckets = []
     deleted_buckets = []
@@ -136,7 +163,7 @@ def purge_old_test_buckets(profile_name):
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         future_to_bucket = {
-            executor.submit(delete_bucket, s3, bucket, failures, locked_buckets, deleted_buckets): bucket
+            executor.submit(delete_bucket, profile_name, bucket, failures, locked_buckets, deleted_buckets): bucket
             for bucket in old_test_buckets
         }
         for future in concurrent.futures.as_completed(future_to_bucket):
