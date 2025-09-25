@@ -4,12 +4,15 @@ profiles:
   -
     profile_name: "br-ne1"
     policy_wait_time: 120
+    lock_wait_time: 60
   -
     profile_name: "br-ne1-second"
     policy_wait_time: 120
+    lock_wait_time: 60
   -
     profile_name: "br-ne1-sa" 
     policy_wait_time: 120
+    lock_wait_time: 60
     sa_key_email: "service account email"
     sa_tenant_id: "service account tenant"
   
