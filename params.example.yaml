@@ -5,16 +5,19 @@ profiles:
     profile_name: "br-ne1"
     policy_wait_time: 120
     lock_wait_time: 60
+    bucket: "bucket name"
   -
     profile_name: "br-ne1-second"
     policy_wait_time: 120
     lock_wait_time: 60
+    bucket: "bucket name"
   -
     profile_name: "br-ne1-sa" 
     policy_wait_time: 120
     lock_wait_time: 60
     sa_key_email: "service account email"
     sa_tenant_id: "service account tenant"
+    bucket: "bucket name"
   
   # Também pode ser passado apenas as keys junto ao endpoint e region, porém não funciona em testes de service account
   # -
@@ -22,3 +25,10 @@ profiles:
   #   endpoint_url: "https://br-se1.magaluobjects.com/"
   #   aws_access_key_id: "YOUR-KEY-ID-HERE"
   #   aws_secret_access_key: "YOUR-SECRET-KEY-HERE"
+
+  # Para testes de consistency, é necessário passar o nome do bucket configurado:
+  # -
+    # profile_name: "br-ne1"
+    # policy_wait_time: 120
+    # lock_wait_time: 60
+    # bucket: "nome-do-bucket-consistency"
