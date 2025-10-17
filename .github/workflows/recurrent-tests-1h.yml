@@ -12,6 +12,7 @@ jobs:
       max-parallel: 1
       matrix:
         profile:
+          - homologacao
           - br-se1
           - br-ne1
         marker:
