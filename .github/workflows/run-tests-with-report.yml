@@ -57,7 +57,7 @@ jobs:
             - name: Run tests ${{ inputs.name }}
               shell: bash
               run: |
-                uv run python3 run_tests_and_generate_report.py ${{ inputs.category }} --mark ${{ inputs.mark }} --profile ${{ inputs.profile }}
+                uv run python3 run_tests_and_generate_report.py ${{ inputs.category }} --mark ${{ inputs.mark }} --profile ${{ inputs.profile }} --reruns 15
             
             - name: Upload Reports
               if: always()

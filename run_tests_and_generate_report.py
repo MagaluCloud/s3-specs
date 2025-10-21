@@ -33,6 +33,7 @@ def parse_args():
     parser.add_argument("category", choices=CATEGORY_MAPPING.keys(), help="Categoria de testes a executar")
     parser.add_argument("--mark", help="Marcação adicional do pytest", default="")
     parser.add_argument("--profile", help="Profile a ser executado os testes", default="br-se1")
+    parser.add_argument("--reruns", type=int, help="Número de vezes para reexecutar testes falhos", default=0)
     return parser.parse_args()
 
 def run_tests(args):
@@ -56,6 +57,8 @@ def run_tests(args):
         "-vv",
         "-n", "auto",
         "--no-header",
+        "--reruns",
+        f"{args.reruns}",
         "--profile",
         f"{args.profile}"
     ]
